@@ -1,0 +1,4 @@
+interface:
+  display_name: Effect Feedback Maintainer
+  short_description: 维护 Effect harness feedback intake
+  default_prompt: 使用 $effect-feedback-maintainer，判断 target project 的 Effect 踩坑是否应进入 harness feedback。

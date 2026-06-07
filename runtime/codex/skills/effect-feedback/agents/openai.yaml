@@ -1,0 +1,4 @@
+interface:
+  display_name: Effect Feedback
+  short_description: 记录 Effect target 实践反馈
+  default_prompt: 使用 $effect-feedback，把 target repo 的 Effect 踩坑整理成反馈条目。

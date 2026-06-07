@@ -1,0 +1,4 @@
+interface:
+  display_name: Effect Pin Update
+  short_description: 更新 Effect harness 的 source pin
+  default_prompt: 使用 $effect-pin-update，更新 Effect harness 的 source pin、package baseline 和验证证据。
