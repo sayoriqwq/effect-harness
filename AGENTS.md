@@ -1,6 +1,6 @@
 # Agent Bootstrap
 
-This repo is the shared Effect v4 beta harness. It is not a published runtime API package.
+This repo is the shared Effect v4 beta harness. It is published as a CLI utility package.
 
 Before writing non-trivial Effect code here or in a target project, read:
 

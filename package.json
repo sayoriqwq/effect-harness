@@ -2,19 +2,34 @@
   "name": "effect-harness-workspace",
   "type": "module",
   "version": "0.0.0",
-  "private": true,
+  "private": false,
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "packageManager": "pnpm@10.33.2",
   "description": "Shared Effect v4 beta harness for local target projects.",
   "license": "MIT",
+  "main": "dist/bin/effect-harness.js",
   "bin": {
-    "effect-harness": "bin/effect-harness.ts"
+    "effect-harness": "dist/bin/effect-harness.js"
   },
+  "files": [
+    ".codex",
+    "README.md",
+    "dist",
+    "docs",
+    "repos",
+    "repos/effect.subtree.json",
+    "runtime"
+  ],
   "engines": {
     "node": ">=22.22.1"
   },
   "scripts": {
-    "build": "pnpm typecheck",
-    "dev": "node bin/effect-harness.ts --help",
+    "build": "tsc --project tsconfig.build.json",
+    "prepack": "pnpm build",
+    "dev": "pnpm build && node dist/bin/effect-harness.js --help",
     "effect:patch": "effect-tsgo patch",
     "effect:setup": "effect-tsgo setup",
     "effect:status": "node bin/effect-harness.ts status --harness .",
@@ -24,6 +39,7 @@
     "knip": "knip",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
+    "publish:npm": "pnpm build && node dist/bin/effect-harness.js publish --harness .",
     "prepare": "effect-tsgo patch",
     "test": "vitest run tests/*.test.ts",
     "typecheck": "tsgo --noEmit",

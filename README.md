@@ -2,8 +2,9 @@
 
 `effect-harness` 是一套给 TypeScript / Effect v4 beta 项目使用的本地 harness。
 
-它不提供业务运行时 API，也不作为 npm 包发布。它集中维护 Effect 项目里需要机械保护的
-工程合约：源码 pin、版本基线、官方 guide route、目标仓库 runtime、guardrails 和 verifier。
+它不提供业务运行时 API，也不提供业务示例。它集中维护 Effect 项目里需要机械保护的
+工程合约：源码 pin、版本基线、官方 guide route、目标仓库 runtime、guardrails 和 verifier，并可通过
+`pnpm publish:npm` 发布到 npm 供下游统一安装。
 
 ## 定位
 
@@ -48,6 +49,7 @@
 本地开发时先在本仓库注册一次 CLI：
 
 ```bash
+pnpm build
 pnpm link --global
 ```
 
@@ -94,6 +96,29 @@ pnpm verify
 运行 harness guardrails。它不生成 target project。
 
 `pnpm verify` 会依次运行 self-verify、typecheck、script tests、lint 和 knip。
+
+## 发布
+
+`pnpm publish:npm` 是仓库的发布入口，直接走 `effect-harness publish`。
+发布流程会执行 `pnpm verify`，以可回滚方式改写 `package.json` 版本字段并在结束后恢复原始内容，
+随后调用 npm publish。
+
+可用参数（本地）：
+
+- `--version`：发布版本（支持 `0.1.0` 或 `v0.1.0`）
+- `--tag` / `--npm-tag`：NPM dist-tag，默认 `latest`
+- `--dry-run`：仅演练，不实际发布
+- `--provenance`：开启 npm provenance（CI 默认开启）
+
+CI 发布同样支持通过事件/环境变量输入：
+
+- `PUBLISH_VERSION`
+- `NPM_TAG`
+- `DRY_RUN`
+- `NPM_PROVENANCE`
+- `PUBLISH_PACK_DIR`
+
+发布工作流在 `.github/workflows/publish-npm.yml`，支持 `workflow_dispatch` 与 `release` 事件。
 
 ## Source Pin
 

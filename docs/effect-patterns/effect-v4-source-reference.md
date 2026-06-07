@@ -46,4 +46,4 @@ pnpm effect:status
 1. 把新 split 写入 `repos/effect.subtree.json`。
 2. 更新本文和 `docs/effect-patterns/index.md`。
 3. 运行 `pnpm effect:verify`。
-4. 如果 init 或 runtime contract 变化，用临时目标仓库验证 target contract。
+4. 如果 init 或 runtime contract 变化，用独立目标仓库验证 target contract。

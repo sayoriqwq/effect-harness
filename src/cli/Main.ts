@@ -7,6 +7,7 @@ import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
 import { verifyGuardrails } from '../harness/Guardrails.ts'
 import { initializeTarget } from '../harness/Init.ts'
+import { publishPackage } from '../harness/Publish.ts'
 import { verifyHarness } from '../harness/SelfVerify.ts'
 import { updateSourcePin, verifySourcePin } from '../harness/SourcePin.ts'
 import { showStatus } from '../harness/Status.ts'
@@ -46,6 +47,36 @@ const jsonFlag = Flag.boolean('json').pipe(
 
 const failOnOutdatedFlag = Flag.boolean('fail-on-outdated').pipe(
   Flag.withDescription('Exit non-zero when official Effect sources are newer than the pin'),
+)
+
+const versionFlag = Flag.string('version').pipe(
+  Flag.withDescription('Publish version, supports 0.1.0 or v0.1.0'),
+  Flag.optional,
+)
+
+const tagFlag = Flag.string('tag').pipe(
+  Flag.withDescription('NPM dist-tag for publish'),
+  Flag.optional,
+)
+
+const npmTagFlag = Flag.string('npm-tag').pipe(
+  Flag.withDescription('Alias for --tag'),
+  Flag.optional,
+)
+
+const packDestinationFlag = Flag.string('pack-destination').pipe(
+  Flag.withDescription('Directory for pnpm pack artifacts'),
+  Flag.optional,
+)
+
+const publishDryRunFlag = Flag.boolean('dry-run').pipe(
+  Flag.withDescription('Prepare publish without uploading to npm'),
+  Flag.optional,
+)
+
+const provenanceFlag = Flag.boolean('provenance').pipe(
+  Flag.withDescription('Enable npm provenance metadata'),
+  Flag.optional,
 )
 
 const snapshotFlag = Flag.file('snapshot').pipe(
@@ -125,9 +156,31 @@ function makeCli(config: CliConfig) {
     Command.withDescription('Update the pinned official Effect source subtree'),
   )
 
+  const publish = Command.make('publish', {
+    harness,
+    version: versionFlag,
+    tag: tagFlag,
+    npmTag: npmTagFlag,
+    dryRun: publishDryRunFlag,
+    provenance: provenanceFlag,
+    packDestination: packDestinationFlag,
+  }, Effect.fnUntraced(function* ({ harness, version, tag, npmTag, dryRun, provenance, packDestination }) {
+    const resolvedTag = Option.getOrElse(npmTag, () => Option.getOrUndefined(tag) ?? 'latest')
+    yield* publishPackage({
+      harness,
+      version: Option.getOrUndefined(version),
+      npmTag: resolvedTag,
+      dryRun: Option.getOrUndefined(dryRun),
+      provenance: Option.getOrUndefined(provenance),
+      packDestination: Option.getOrUndefined(packDestination),
+    })
+  })).pipe(
+    Command.withDescription('Publish effect-harness as an npm package'),
+  )
+
   return Command.make('effect-harness').pipe(
     Command.withDescription('Effect v4 beta harness CLI'),
-    Command.withSubcommands([init, status, verify, selfVerify, sourceVerify, guardrails, updatePin]),
+    Command.withSubcommands([init, status, verify, selfVerify, sourceVerify, guardrails, updatePin, publish]),
   )
 }
 
