@@ -97,6 +97,33 @@ it.effect('guardrails catch data-first Effect catch handlers that silently swall
   }
 }))
 
+it.effect('guardrails catch assertion-based tsgo suggestion cleanup', () => Effect.sync(() => {
+  const root = tempDir()
+  const sourceRoot = join(root, 'src')
+  mkdirSync(sourceRoot)
+  writeFileSync(join(sourceRoot, 'bad.ts'), [
+    'import * as Effect from "effect/Effect"',
+    '',
+    'declare const program: Effect.Effect<ReadonlyArray<string>, Error>',
+    'export const fallback = program.pipe(Effect.orElseSucceed(() => [] as ReadonlyArray<string>))',
+    'export const lifted = Effect.succeed(null as string | null)',
+    'export const decoded = Effect.orElseSucceed(Effect.fail("bad"), () => ({ ok: false as const }))',
+    '',
+  ].join('\n'))
+
+  try {
+    const result = runGuardrails(root)
+
+    assert.notEqual(result.status, 0)
+    assert.match(result.stderr, /Do not silence @effect\/tsgo fallback diagnostics with assertions/u)
+    assert.match(result.stderr, /Do not wrap asserted values in Effect\.succeed/u)
+    assert.match(result.stderr, /Do not force result discriminants with `as const`/u)
+  }
+  finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}))
+
 it.effect('guardrails catch forbidden imports without matching plain strings', () => Effect.sync(() => {
   const root = tempDir()
   const sourceRoot = join(root, 'src')

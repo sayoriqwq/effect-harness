@@ -71,6 +71,73 @@ it.effect('target verifier rejects caret ranges for pinned Effect baseline depen
   }
 }))
 
+it.effect('target verifier rejects stale pnpm catalog entries for catalog dependencies', () => Effect.sync(() => {
+  const root = tempDir()
+  const target = join(root, 'target')
+
+  try {
+    makeTarget(target)
+
+    const packageJsonPath = join(target, 'package.json')
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
+    packageJson.dependencies.effect = 'catalog:'
+    writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
+    writeFileSync(join(target, 'pnpm-workspace.yaml'), [
+      'packages:',
+      '  - apps/*',
+      '',
+      'catalog:',
+      '  effect: 4.0.0-beta.0',
+      '',
+    ].join('\n'))
+
+    const result = runCli([
+      'verify',
+      '--target',
+      target,
+      '--harness',
+      repoRoot,
+    ])
+
+    assert.notEqual(result.status, 0)
+    assert.match(result.stderr, /pnpm-workspace\.yaml catalog effect is 4\.0\.0-beta\.0; expected 4\.0\.0-beta\.83/u)
+  }
+  finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}))
+
+it.effect('target verifier scans monorepo app source directories with guardrails', () => Effect.sync(() => {
+  const root = tempDir()
+  const target = join(root, 'target')
+
+  try {
+    makeTarget(target)
+    const sourceRoot = join(target, 'apps/cli/src')
+    mkdirSync(sourceRoot, { recursive: true })
+    writeFileSync(join(sourceRoot, 'bad.ts'), [
+      'import * as Effect from "effect/Effect"',
+      '',
+      'export const lifted = Effect.succeed(null as string | null)',
+      '',
+    ].join('\n'))
+
+    const result = runCli([
+      'verify',
+      '--target',
+      target,
+      '--harness',
+      repoRoot,
+    ])
+
+    assert.notEqual(result.status, 0)
+    assert.match(result.stderr, /Do not wrap asserted values in Effect\.succeed/u)
+  }
+  finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}))
+
 it.effect('target verifier accepts a target with harness contracts', () => Effect.sync(() => {
   const root = tempDir()
   const target = join(root, 'target')

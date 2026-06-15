@@ -156,6 +156,17 @@ effect-harness init
 - 不把 `repos/effect/AGENTS.md`、`repos/effect/.agents/skills/*`、`repos/effect/.specs/*`
   当作 downstream 默认 guide。
 
+## TSGO Suggestion Cleanup
+
+- 软约束：把 `@effect/tsgo` suggestion 当成类型边界问题处理。优先用明确 return type、
+  命名 discriminated union/helper、`satisfies`、`Effect.satisfiesSuccessType` 或
+  `Function.satisfies` 表达边界。
+- 硬约束：guardrails 会拒绝 `Effect.orElseSucceed` fallback 里的 assertion、
+  `Effect.succeed(null as ...)` 这类 lifted assertion，以及 `{ ok: true/false as const }`
+  临时结果 wrapper。
+- 例外：确实来自第三方 IO 或不可表达的外部边界时，可以使用局部 assertion，但要先在
+  Effect 外声明边界，不要用 assertion 让 diagnostic 消失。
+
 ## Failure Handling
 
 - API、pattern 或 testing 写法不确定时，先读 `repos/effect/LLMS.md` 和

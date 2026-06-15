@@ -6,7 +6,7 @@ import * as Path from 'effect/Path'
 import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
 import { syncCraftSkills, verifyCraftSkills } from '../harness/CraftSkills.ts'
-import { verifyGuardrails } from '../harness/Guardrails.ts'
+import { targetGuardrailIncludes, verifyGuardrails } from '../harness/Guardrails.ts'
 import { initializeTarget } from '../harness/Init.ts'
 import { publishPackage } from '../harness/Publish.ts'
 import { verifyHarness } from '../harness/SelfVerify.ts'
@@ -157,7 +157,7 @@ function makeCli(config: CliConfig) {
   }, Effect.fnUntraced(function* ({ target }) {
     yield* verifyGuardrails({
       root: target,
-      includes: ['src', 'tests', 'scripts'],
+      includes: targetGuardrailIncludes,
     })
   })).pipe(
     Command.withDescription('Scan target source for Effect harness guardrail violations'),

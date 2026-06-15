@@ -46,7 +46,7 @@ pnpm effect:verify
 | v3-to-v4 migration | `repos/effect/migration/v3-to-v4.md` | 改 import 或 API 前使用官方 migration map。 |
 | API definition lookup | `repos/effect/packages/effect/src/`、`repos/effect/packages/` | source 只读参考；application code 只 import installed packages。 |
 | Testing | `repos/effect/LLMS.md`、`repos/effect/ai-docs/src/09_testing/`、reference-only `repos/effect/.patterns/testing.md` | 测试文件从 `@effect/vitest` import；Effect-native tests 使用 `it.effect`、`it.live` 或 `layer(...)`。 |
-| `@effect/tsgo` setup 和 diagnostics | official `@effect/tsgo`、patched `tsgo --noEmit`、target `tsconfig.json` | 保留直接 setup/patch/typecheck 路径；verifier 表达 target strictness。 |
+| `@effect/tsgo` setup 和 diagnostics | official `@effect/tsgo`、patched `tsgo --noEmit`、target `tsconfig.json` | 保留直接 setup/patch/typecheck 路径；suggestion cleanup 用类型边界表达，guardrails 拒绝 assertion 消音。 |
 | Source pin 和 drift | `repos/effect.subtree.json`、`pnpm effect:status`、`pnpm effect:verify` | 本地 harness contract；更新 pin 必须显式验证。 |
 | Harness exposure | `docs/harness-exposure.md` | 只暴露 docs、skills、runtime、verifier contracts。 |
 | 项目实践反馈 | `docs/harness-feedback/index.md`、target `.codex/skills/effect-feedback/` | 先做官方覆盖检查，再决定是否写入 feedback。 |

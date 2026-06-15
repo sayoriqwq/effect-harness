@@ -6,6 +6,7 @@ import { analyzeGuardrailFile } from './GuardrailRules.ts'
 
 const sourceExtensions = new Set(['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts'])
 const defaultExcludes = new Set(['.git', '.turbo', 'dist', 'node_modules', 'repos', 'docs'])
+export const targetGuardrailIncludes = ['src', 'tests', 'scripts', 'apps', 'libs', 'packages'] as const
 
 export interface GuardrailOptions {
   readonly root: string

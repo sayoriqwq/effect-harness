@@ -34,3 +34,20 @@ paths、downstream project shape details 或 generic Effect API tutorials。
 - Verifier or guardrail:
 - Status:
 ```
+
+## Assertion-based tsgo suggestion cleanup
+
+- Evidence: A target update produced non-blocking `@effect/tsgo` suggestions. The first cleanup used
+  `Effect.orElseSucceed(() => [] as ...)`, `Effect.succeed(null as ...)`, and
+  `{ ok: false as const }` result wrappers instead of declaring the type boundary.
+- Official coverage check: The pinned Effect source shows typed `orElseSucceed` fallbacks,
+  `Effect.fn(...)` transform arguments, and `satisfies` helpers, but it does not give target agents
+  a harness-level rule for avoiding assertion-based suggestion cleanup.
+- Missing harness contract: Target agents need to distinguish soft review guidance from hard verifier
+  failures when a tsgo suggestion can be silenced with `as`.
+- Proposed landing: Add target skill guidance for type-boundary fixes and an AST guardrail for the
+  recurring assertion-silencing shapes.
+- Verifier or guardrail: `effect-harness guardrails` rejects assertion fallback cleanup in
+  `Effect.orElseSucceed`, asserted values lifted directly by `Effect.succeed`, and ad-hoc
+  `ok: true/false as const` result wrappers.
+- Status: Landed.

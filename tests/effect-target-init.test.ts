@@ -103,6 +103,92 @@ it.effect('effect-harness init installs consumer runtime and target contract', (
   }
 }))
 
+it.effect('effect-harness init preserves target catalog dependencies and updates catalog versions', () => Effect.sync(() => {
+  const root = tempDir()
+  const target = makeTarget(root)
+
+  try {
+    const packageJsonPath = join(target, 'package.json')
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
+      dependencies: Record<string, string>
+      devDependencies: Record<string, string>
+    }
+    packageJson.dependencies = {
+      '@effect/platform-node': 'catalog:',
+      'effect': 'catalog:',
+    }
+    packageJson.devDependencies = {
+      '@effect/language-service': 'catalog:',
+      '@effect/tsgo': 'catalog:',
+      '@effect/vitest': 'catalog:',
+      '@typescript/native-preview': 'catalog:',
+    }
+    writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
+    writeFileSync(join(target, 'pnpm-workspace.yaml'), [
+      'packages:',
+      '  - apps/*',
+      '',
+      'catalog:',
+      '  effect: 4.0.0-beta.0',
+      '  \'@effect/platform-node\': 4.0.0-beta.0',
+      '  \'@effect/vitest\': 4.0.0-beta.0',
+      '  \'@effect/tsgo\': 0.1.0',
+      '  \'@effect/language-service\': 0.1.0',
+      '  \'@typescript/native-preview\': 7.0.0-dev.0',
+      '',
+    ].join('\n'))
+
+    const result = runCli(['init', '--target', target, '--harness', repoRoot])
+    assert.equal(result.status, 0, result.stderr)
+
+    const updatedPackageJson = readJson(packageJsonPath)
+    assert.equal(updatedPackageJson.dependencies.effect, 'catalog:')
+    assert.equal(updatedPackageJson.dependencies['@effect/platform-node'], 'catalog:')
+    assert.equal(updatedPackageJson.devDependencies['@effect/vitest'], 'catalog:')
+    assert.equal(updatedPackageJson.devDependencies['@effect/tsgo'], 'catalog:')
+    assert.equal(updatedPackageJson.devDependencies['@effect/language-service'], 'catalog:')
+    assert.equal(updatedPackageJson.devDependencies['@typescript/native-preview'], 'catalog:')
+
+    const workspace = readFileSync(join(target, 'pnpm-workspace.yaml'), 'utf8')
+    assert.match(workspace, /effect: 4\.0\.0-beta\.83/u)
+    assert.match(workspace, /'@effect\/platform-node': 4\.0\.0-beta\.83/u)
+    assert.match(workspace, /'@effect\/vitest': 4\.0\.0-beta\.83/u)
+    assert.match(workspace, /'@effect\/tsgo': 0\.14\.4/u)
+    assert.match(workspace, /'@effect\/language-service': 0\.86\.2/u)
+    assert.match(workspace, /'@typescript\/native-preview': 7\.0\.0-dev\.20260615\.1/u)
+
+    const verify = runCli(['verify', '--target', target, '--harness', repoRoot])
+    assert.equal(verify.status, 0, verify.stderr)
+  }
+  finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}))
+
+it.effect('effect-harness init preserves an existing patched tsgo typecheck script', () => Effect.sync(() => {
+  const root = tempDir()
+  const target = makeTarget(root)
+
+  try {
+    const packageJsonPath = join(target, 'package.json')
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8')) as {
+      scripts: Record<string, string>
+    }
+    packageJson.scripts.typecheck = 'tsgo --noEmit --project apps/cli/tsconfig.json'
+    writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
+
+    const result = runCli(['init', '--target', target, '--harness', repoRoot])
+    assert.equal(result.status, 0, result.stderr)
+
+    const updatedPackageJson = readJson(packageJsonPath)
+    assert.equal(updatedPackageJson.scripts.typecheck, 'tsgo --noEmit --project apps/cli/tsconfig.json')
+    assert.equal(updatedPackageJson.scripts['typecheck:tsc'], undefined)
+  }
+  finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}))
+
 it.effect('effect-harness init removes legacy local harness wrapper scripts', () => Effect.sync(() => {
   const root = tempDir()
   const target = makeTarget(root)

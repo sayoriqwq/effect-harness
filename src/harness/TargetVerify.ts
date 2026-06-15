@@ -4,8 +4,9 @@ import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
 import { readJson, readJsonLike } from '../platform/Json.ts'
 import { HarnessError } from './Errors.ts'
-import { verifyGuardrails } from './Guardrails.ts'
-import { decodeManifest, decodePackageJson, decodeTsConfig } from './Model.ts'
+import { targetGuardrailIncludes, verifyGuardrails } from './Guardrails.ts'
+import { decodeManifest, decodePackageJson, decodeTsConfig, packageTargets } from './Model.ts'
+import { catalogVersion } from './PnpmWorkspace.ts'
 import { verifySourcePin } from './SourcePin.ts'
 import { assertEffectVitestTests } from './TestContract.ts'
 
@@ -107,6 +108,43 @@ function assertDependency(errors: Array<string>, packageJson: PackageJson, name:
     errors.push(`${name} is ${version}; expected ${expected} or catalog:.`)
   }
 }
+
+function catalogDependencyNames(packageJson: PackageJson): ReadonlyArray<string> {
+  return packageTargets
+    .map(packageTarget => packageTarget.name)
+    .filter(name => dependencyVersion(packageJson, name) === 'catalog:')
+}
+
+const assertPnpmCatalog = Effect.fnUntraced(function* (
+  errors: Array<string>,
+  root: string,
+  packageJson: PackageJson,
+  baseline: Readonly<Record<string, string>>,
+) {
+  const names = catalogDependencyNames(packageJson)
+  if (names.length === 0) {
+    return
+  }
+
+  const fs = yield* FileSystem.FileSystem
+  const workspacePath = `${root}/pnpm-workspace.yaml`
+  if (!(yield* fs.exists(workspacePath))) {
+    errors.push('package.json uses catalog: for Effect baseline packages, but pnpm-workspace.yaml is missing.')
+    return
+  }
+
+  const text = yield* fs.readFileString(workspacePath)
+  for (const name of names) {
+    const expected = baseline[name]
+    const actual = catalogVersion(text, name)
+    if (actual === undefined) {
+      errors.push(`pnpm-workspace.yaml catalog is missing ${name}; package.json uses catalog:.`)
+    }
+    else if (actual !== expected) {
+      errors.push(`pnpm-workspace.yaml catalog ${name} is ${actual}; expected ${expected}.`)
+    }
+  }
+})
 
 function assertScript(errors: Array<string>, packageJson: PackageJson, name: string): void {
   if (!packageJson.scripts?.[name]) {
@@ -385,6 +423,7 @@ export const verifyTarget = Effect.fnUntraced(function* (options: TargetVerifyOp
     assertDependency(errors, packageJson, '@effect/tsgo', baseline['@effect/tsgo'])
     assertDependency(errors, packageJson, '@effect/language-service', baseline['@effect/language-service'])
     assertDependency(errors, packageJson, '@typescript/native-preview', baseline['@typescript/native-preview'])
+    yield* assertPnpmCatalog(errors, options.target, packageJson, baseline)
 
     if (dependencyVersion(packageJson, '@effect/cli')) {
       errors.push('Target must not depend on legacy @effect/cli.')
@@ -414,7 +453,7 @@ export const verifyTarget = Effect.fnUntraced(function* (options: TargetVerifyOp
   yield* verifySourcePin(options.harness)
   yield* verifyGuardrails({
     root: options.target,
-    includes: ['src', 'tests', 'scripts'],
+    includes: targetGuardrailIncludes,
   })
   yield* Console.log(`Effect target verified against harness: ${options.target}`)
 })

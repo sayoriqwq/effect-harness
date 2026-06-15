@@ -6,7 +6,8 @@ import * as Path from 'effect/Path'
 import { formatJson, readJson, readJsonLike } from '../platform/Json.ts'
 import { copyRuntimeDirectory, ensureDirectory, writeManagedFile } from '../platform/ManagedFiles.ts'
 import { HarnessError } from './Errors.ts'
-import { decodeManifest, decodePackageJson, decodeTsConfig } from './Model.ts'
+import { decodeManifest, decodePackageJson, decodeTsConfig, packageTargets } from './Model.ts'
+import { replaceCatalogVersion } from './PnpmWorkspace.ts'
 
 const agentsStart = '<!-- effect-harness:start -->'
 const agentsEnd = '<!-- effect-harness:end -->'
@@ -19,11 +20,22 @@ const legacyHarnessScriptFiles = [
   'scripts/effect-source-subtree.mjs',
   'scripts/effect-source-subtree.ts',
 ] as const
+type DependencySection = 'dependencies' | 'devDependencies' | 'peerDependencies' | 'optionalDependencies'
 
 export interface InitOptions {
   readonly target: string
   readonly harness: string
   readonly dryRun: boolean
+}
+
+function dependencyEntry(packageJson: PackageJson, name: string): { readonly section: DependencySection, readonly version: string } | undefined {
+  for (const section of ['dependencies', 'devDependencies', 'peerDependencies', 'optionalDependencies'] as const) {
+    const version = packageJson[section]?.[name]
+    if (version !== undefined) {
+      return { section, version }
+    }
+  }
+  return undefined
 }
 
 function removeDependency(packageJson: PackageJson, name: string): void {
@@ -34,13 +46,23 @@ function removeDependency(packageJson: PackageJson, name: string): void {
   }
 }
 
+function dependencyVersion(packageJson: PackageJson, name: string): string | undefined {
+  return dependencyEntry(packageJson, name)?.version
+}
+
 function setDependency(packageJson: PackageJson, section: 'dependencies' | 'devDependencies', name: string, version: string | undefined): void {
   if (version === undefined) {
     return
   }
+  const current = dependencyEntry(packageJson, name)
+  const nextVersion = current?.version === 'catalog:' ? 'catalog:' : version
+  if (current?.section === section && current.version === nextVersion) {
+    return
+  }
+
   removeDependency(packageJson, name)
   packageJson[section] ??= {}
-  packageJson[section][name] = version
+  packageJson[section][name] = nextVersion
 }
 
 function ensureScript(packageJson: PackageJson, name: string, command: string): void {
@@ -106,6 +128,19 @@ function appendEffectVerify(packageJson: PackageJson): void {
   }
 }
 
+function ensureTypecheckScript(packageJson: PackageJson): void {
+  packageJson.scripts ??= {}
+  const previousTypecheck = packageJson.scripts.typecheck
+  if (previousTypecheck && /\btsgo\s+--noEmit\b/u.test(previousTypecheck)) {
+    return
+  }
+
+  if (previousTypecheck && !packageJson.scripts['typecheck:tsc']) {
+    packageJson.scripts['typecheck:tsc'] = previousTypecheck
+  }
+  ensureScript(packageJson, 'typecheck', 'tsgo --noEmit')
+}
+
 const updatePackageJson = Effect.fnUntraced(function* (
   target: string,
   harness: string,
@@ -136,16 +171,50 @@ const updatePackageJson = Effect.fnUntraced(function* (
   ensureScript(packageJson, 'effect:status', `node "${binPath}" status --harness "${harness}"`)
   ensureScript(packageJson, 'effect:verify', `node "${binPath}" verify --target . --harness "${harness}"`)
 
-  packageJson.scripts ??= {}
-  const previousTypecheck = packageJson.scripts?.typecheck
-  if (previousTypecheck && !/\btsgo\s+--noEmit\b/u.test(previousTypecheck) && !packageJson.scripts?.['typecheck:tsc']) {
-    packageJson.scripts['typecheck:tsc'] = previousTypecheck
-  }
-  ensureScript(packageJson, 'typecheck', 'tsgo --noEmit')
+  ensureTypecheckScript(packageJson)
   appendEffectVerify(packageJson)
 
   yield* writeManagedFile(packagePath, formatJson(packageJson), options, changes)
+  yield* updatePnpmCatalog(target, manifest, packageJson, options, changes)
 })
+
+function updatePnpmCatalog(
+  target: string,
+  manifest: EffectSubtreeManifest,
+  packageJson: PackageJson,
+  options: { readonly dryRun: boolean },
+  changes: Array<string>,
+) {
+  return Effect.gen(function* () {
+    const names = packageTargets
+      .map(packageTarget => packageTarget.name)
+      .filter(name => dependencyVersion(packageJson, name) === 'catalog:')
+
+    if (names.length === 0) {
+      return
+    }
+
+    const path = yield* Path.Path
+    const fs = yield* FileSystem.FileSystem
+    const workspacePath = path.join(target, 'pnpm-workspace.yaml')
+    const exists = yield* fs.exists(workspacePath)
+    if (!exists) {
+      return yield* new HarnessError({
+        message: 'package.json uses catalog: for Effect baseline packages, but pnpm-workspace.yaml is missing.',
+      })
+    }
+
+    let text = yield* fs.readFileString(workspacePath)
+    for (const name of names) {
+      const version = manifest.packageBaseline[name]
+      if (version !== undefined) {
+        text = replaceCatalogVersion(text, name, version)
+      }
+    }
+
+    yield* writeManagedFile(workspacePath, text, options, changes)
+  })
+}
 
 const updateTsconfig = Effect.fnUntraced(function* (
   target: string,

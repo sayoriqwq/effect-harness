@@ -23,6 +23,13 @@ Use this skill for Effect code in this target repo.
 - Use installed packages: `effect`, `@effect/platform-node`, `@effect/vitest`.
 - Use `Context.Service` for services on this baseline.
 - Use patched `tsgo --noEmit` as the primary Effect diagnostic loop.
+- Treat `@effect/tsgo` suggestions as type-boundary work, not assertion cleanup.
+- Do not silence suggestions with `as` inside `Effect.orElseSucceed` fallbacks,
+  `Effect.succeed(...)`, or ad-hoc `{ ok: true/false as const }` result wrappers.
+- Prefer `Schema.Finite`, explicit fallback return types, named result unions/helpers,
+  `satisfies`, `Effect.satisfiesSuccessType`, or `Function.satisfies`.
+- Pass `Effect.fn` transforms as extra arguments to `Effect.fn(...)`; do not `.pipe(...)`
+  transforms onto an `Effect.fn` declaration.
 - Use `assert` from `@effect/vitest`; do not use `expect`.
 
 ## Verification

@@ -2,6 +2,12 @@ import * as ts from 'typescript'
 
 const contextTagMessage = 'Use Context.Service for v4 beta service definitions.'
 const silentCatchMessage = 'Do not silently swallow Effect errors with Effect.void or Effect.unit.'
+const assertionFallbackMessage
+  = 'Do not silence @effect/tsgo fallback diagnostics with assertions; type the fallback return or use a named result helper.'
+const assertionSucceedMessage
+  = 'Do not wrap asserted values in Effect.succeed to silence @effect/tsgo; declare the type boundary before lifting into Effect.'
+const assertionDiscriminantMessage
+  = 'Do not force result discriminants with `as const`; use a named union boundary or typed helper.'
 
 const bannedEffectMembers = new Map<string, string>([
   ['asVoid', 'Avoid Effect.asVoid; return void or map to an explicit value.'],
@@ -54,6 +60,29 @@ function addViolation(
 
 function stringLiteralValue(node: ts.Node | undefined): string | undefined {
   return node !== undefined && ts.isStringLiteral(node) ? node.text : undefined
+}
+
+function isAssertionExpression(node: ts.Node | undefined): node is ts.AsExpression | ts.TypeAssertion {
+  return node !== undefined && (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node))
+}
+
+function containsAssertionExpression(node: ts.Node | undefined): boolean {
+  if (node === undefined) {
+    return false
+  }
+
+  if (isAssertionExpression(node)) {
+    return true
+  }
+
+  let found = false
+  ts.forEachChild(node, (child) => {
+    if (!found && containsAssertionExpression(child)) {
+      found = true
+    }
+  })
+
+  return found
 }
 
 function importedName(element: ts.ImportSpecifier): string {
@@ -132,6 +161,45 @@ function isVoidReturningHandler(node: ts.Node | undefined, bindings: ImportBindi
   }
 
   return false
+}
+
+function functionContainsAssertionReturn(node: ts.Node | undefined): boolean {
+  if (node === undefined) {
+    return false
+  }
+
+  if (ts.isArrowFunction(node)) {
+    if (!ts.isBlock(node.body)) {
+      return containsAssertionExpression(node.body)
+    }
+
+    return node.body.statements.some(statement =>
+      ts.isReturnStatement(statement) && containsAssertionExpression(statement.expression),
+    )
+  }
+
+  if (ts.isFunctionExpression(node)) {
+    return node.body.statements.some(statement =>
+      ts.isReturnStatement(statement) && containsAssertionExpression(statement.expression),
+    )
+  }
+
+  return false
+}
+
+function isOkPropertyName(name: ts.PropertyName): boolean {
+  return (ts.isIdentifier(name) && name.text === 'ok')
+    || (ts.isStringLiteral(name) && name.text === 'ok')
+}
+
+function isBooleanLiteralExpression(expression: ts.Expression): boolean {
+  return expression.kind === ts.SyntaxKind.TrueKeyword || expression.kind === ts.SyntaxKind.FalseKeyword
+}
+
+function isBooleanAsConst(sourceFile: ts.SourceFile, expression: ts.Expression): boolean {
+  return ts.isAsExpression(expression)
+    && isBooleanLiteralExpression(expression.expression)
+    && expression.type.getText(sourceFile) === 'const'
 }
 
 function collectModuleSourceViolation(
@@ -278,6 +346,38 @@ function collectSilentCatchViolation(
   }
 }
 
+function collectAssertionSilencingViolation(
+  sourceFile: ts.SourceFile,
+  node: ts.CallExpression,
+  bindings: ImportBindings,
+  violations: Array<GuardrailViolation>,
+): void {
+  const path = expressionPath(node.expression)
+
+  if (isEffectMember(path, bindings, 'orElseSucceed')) {
+    for (const argument of node.arguments) {
+      if (functionContainsAssertionReturn(argument)) {
+        addViolation(sourceFile, argument, assertionFallbackMessage, violations)
+      }
+    }
+    return
+  }
+
+  if (isEffectMember(path, bindings, 'succeed') && isAssertionExpression(node.arguments[0])) {
+    addViolation(sourceFile, node.arguments[0]!, assertionSucceedMessage, violations)
+  }
+}
+
+function collectAssertionDiscriminantViolation(
+  sourceFile: ts.SourceFile,
+  node: ts.PropertyAssignment,
+  violations: Array<GuardrailViolation>,
+): void {
+  if (isOkPropertyName(node.name) && isBooleanAsConst(sourceFile, node.initializer)) {
+    addViolation(sourceFile, node.initializer, assertionDiscriminantMessage, violations)
+  }
+}
+
 function collectMemberViolation(
   sourceFile: ts.SourceFile,
   node: ts.PropertyAccessExpression,
@@ -308,9 +408,13 @@ function walk(
   if (ts.isCallExpression(node)) {
     collectDynamicImportViolation(sourceFile, node, violations)
     collectSilentCatchViolation(sourceFile, node, bindings, violations)
+    collectAssertionSilencingViolation(sourceFile, node, bindings, violations)
   }
-  else if (ts.isPropertyAccessExpression(node)) {
+  if (ts.isPropertyAccessExpression(node)) {
     collectMemberViolation(sourceFile, node, bindings, violations)
+  }
+  if (ts.isPropertyAssignment(node)) {
+    collectAssertionDiscriminantViolation(sourceFile, node, violations)
   }
 
   ts.forEachChild(node, child => walk(sourceFile, child, bindings, violations))

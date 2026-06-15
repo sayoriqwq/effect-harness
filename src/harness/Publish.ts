@@ -229,16 +229,17 @@ export const publishPackage = Effect.fnUntraced(function* (options: PublishOptio
   }
 })
 
-function parseBooleanEnv(value: string | undefined) {
+function parseBooleanEnv(value: string | undefined): Effect.Effect<boolean | undefined, HarnessError> {
   const normalized = parseOptionalString(value)
-  return normalized === undefined
-    ? Effect.succeed(undefined as boolean | undefined)
-    : parseBooleanValue(normalized)
+  return normalized === undefined ? Effect.sync((): boolean | undefined => undefined) : parseBooleanValue(normalized)
 }
 
-function parseBooleanField(event: Record<string, unknown>, path: readonly string[]) {
+function parseBooleanField(
+  event: Record<string, unknown>,
+  path: readonly string[],
+): Effect.Effect<boolean | undefined, HarnessError> {
   const value = parsePath(event, path)
-  return value === undefined ? Effect.succeed(undefined as boolean | undefined) : parseBooleanValue(value)
+  return value === undefined ? Effect.sync((): boolean | undefined => undefined) : parseBooleanValue(value)
 }
 
 function parseStringField(event: Record<string, unknown>, path: readonly string[]) {
