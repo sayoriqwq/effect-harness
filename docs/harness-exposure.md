@@ -57,12 +57,16 @@ package-specific docgen/release/validation machinery。
 ## Local Harness Inventory
 
 - `repos/effect.subtree.json`：source pin 和 package baseline manifest。
+- `repos/craft-skills.manifest.json`：Craft skill source locator、projection target 和 checksum manifest。
 - `bin/effect-harness.ts`：目标仓库使用的 TS CLI。
 - `src/cli/`：Effect native command layer。
 - `src/harness/`：source pin、official status、AST guardrails、target verifier、init contract。
 - `src/platform/`：JSON、file writes、child process boundary。
 - `eslint.config.mjs`：本仓库快速 lint feedback，覆盖直接 banned import / member access。
 - `.codex/skills/`：本仓库维护用 skills，不投递给目标仓库。
+- `.codex/skills/pin/`、`.codex/skills/setup-effect-area/` 和
+  `.codex/skills/update-effect-harness/`：Craft-owned skills 的 managed projection；语义
+  source 仍是 Craft repo。
 - `runtime/codex/`：投递给目标仓库的 Codex runtime。
 - `docs/effect-patterns/`：官方 route index 和本地 contract 入口。
 - `docs/target-agent-guide.md`：人工合并和审查 init 产物的 guide。
@@ -86,6 +90,9 @@ package-specific docgen/release/validation machinery。
 | `.codex/skills/effect-target-contract/` | maintain init output, verifier, target runtime | no |
 | `.codex/skills/effect-feedback-maintainer/` | maintain harness feedback intake | no |
 | `.codex/skills/effect-pin-update/` | update official pin and baseline | no |
+| `.codex/skills/pin/` | managed projection of Craft `pin` skill | no |
+| `.codex/skills/setup-effect-area/` | managed projection of Craft `setup-effect-area` skill | no |
+| `.codex/skills/update-effect-harness/` | managed projection of Craft `update-effect-harness` skill | no |
 | `runtime/codex/skills/effect-code/` | target Effect coding/review skill | yes |
 | `runtime/codex/skills/effect-feedback/` | target feedback capture skill | yes |
 | `runtime/codex/agents/effect-worker.md` | target Effect worker descriptor | yes |

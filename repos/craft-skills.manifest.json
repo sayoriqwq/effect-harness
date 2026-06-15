@@ -1,0 +1,34 @@
+{
+  "name": "craft-skills",
+  "source": {
+    "owner": "Craft",
+    "repository": "https://github.com/sayoriqwq/craft.git",
+    "repoPath": "../craft",
+    "ref": "c1c0666fd0943a54b6142a377cf91dca8c3f78d9"
+  },
+  "mechanism": {
+    "syncCommand": "node bin/effect-harness.ts craft-skills sync --harness .",
+    "verifyCommand": "node bin/effect-harness.ts craft-skills check --harness .",
+    "check": "Compare each target projection byte-for-byte with the pinned Craft git blob and its sha256."
+  },
+  "projections": [
+    {
+      "skill": "pin",
+      "sourceFile": "skills/pin/SKILL.md",
+      "targetFile": ".codex/skills/pin/SKILL.md",
+      "sha256": "e51347e961e7e30e27e43a1a25266faf53849627fbd340f59052b2c792494880"
+    },
+    {
+      "skill": "setup-effect-area",
+      "sourceFile": "skills/setup-effect-area/SKILL.md",
+      "targetFile": ".codex/skills/setup-effect-area/SKILL.md",
+      "sha256": "e51d30720a197d20801367518d1ebab42103d2b82bf52f3e60539995563e36c3"
+    },
+    {
+      "skill": "update-effect-harness",
+      "sourceFile": "skills/update-effect-harness/SKILL.md",
+      "targetFile": ".codex/skills/update-effect-harness/SKILL.md",
+      "sha256": "0959cd15c23aa5d4c1c872915a73b293220b5320240d336d2dd230e4a7b35010"
+    }
+  ]
+}

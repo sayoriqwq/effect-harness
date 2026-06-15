@@ -5,6 +5,7 @@ import * as Option from 'effect/Option'
 import * as Path from 'effect/Path'
 import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
+import { syncCraftSkills, verifyCraftSkills } from '../harness/CraftSkills.ts'
 import { verifyGuardrails } from '../harness/Guardrails.ts'
 import { initializeTarget } from '../harness/Init.ts'
 import { publishPackage } from '../harness/Publish.ts'
@@ -76,6 +77,20 @@ const publishDryRunFlag = Flag.boolean('dry-run').pipe(
 
 const provenanceFlag = Flag.boolean('provenance').pipe(
   Flag.withDescription('Enable npm provenance metadata'),
+  Flag.optional,
+)
+
+const craftFlag = Flag.path('craft').pipe(
+  Flag.withDescription('Craft repository root for managed skill source lookup'),
+  Flag.optional,
+  Flag.mapEffect(option => Option.match(option, {
+    onNone: () => Effect.sync((): string | undefined => undefined),
+    onSome: resolveFromCwd,
+  })),
+)
+
+const sourceRefFlag = Flag.string('source-ref').pipe(
+  Flag.withDescription('Craft git ref to project; defaults to the Craft checkout HEAD'),
   Flag.optional,
 )
 
@@ -156,6 +171,39 @@ function makeCli(config: CliConfig) {
     Command.withDescription('Update the pinned official Effect source subtree'),
   )
 
+  const craftSkillsCheck = Command.make('check', {
+    craft: craftFlag,
+    harness,
+  }, Effect.fnUntraced(function* ({ craft, harness }) {
+    yield* verifyCraftSkills({
+      craft,
+      harness,
+    })
+  })).pipe(
+    Command.withDescription('Check effect-harness managed Craft skill projections for drift'),
+  )
+
+  const craftSkillsSync = Command.make('sync', {
+    craft: craftFlag,
+    dryRun: dryRunFlag,
+    harness,
+    sourceRef: sourceRefFlag,
+  }, Effect.fnUntraced(function* ({ craft, dryRun, harness, sourceRef }) {
+    yield* syncCraftSkills({
+      craft,
+      dryRun,
+      harness,
+      sourceRef: Option.getOrUndefined(sourceRef),
+    })
+  })).pipe(
+    Command.withDescription('Sync effect-harness managed Craft skill projections from the Craft source repo'),
+  )
+
+  const craftSkills = Command.make('craft-skills').pipe(
+    Command.withDescription('Maintain managed Craft skill projections inside effect-harness'),
+    Command.withSubcommands([craftSkillsCheck, craftSkillsSync]),
+  )
+
   const publish = Command.make('publish', {
     harness,
     version: versionFlag,
@@ -180,7 +228,7 @@ function makeCli(config: CliConfig) {
 
   return Command.make('effect-harness').pipe(
     Command.withDescription('Effect v4 beta harness CLI'),
-    Command.withSubcommands([init, status, verify, selfVerify, sourceVerify, guardrails, updatePin, publish]),
+    Command.withSubcommands([init, status, verify, selfVerify, sourceVerify, guardrails, updatePin, craftSkills, publish]),
   )
 }
 

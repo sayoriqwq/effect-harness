@@ -44,6 +44,34 @@ export const commandString = Effect.fnUntraced(function* (
   }))
 })
 
+export const commandOutput = Effect.fnUntraced(function* (
+  command: string,
+  args: ReadonlyArray<string>,
+  options?: CommandOptions,
+) {
+  const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
+  return yield* Effect.scoped(Effect.gen(function* () {
+    const handle = yield* spawner.spawn(ChildProcess.make(command, args, options))
+    const [stdout, stderr] = yield* Effect.all([
+      Stream.mkString(Stream.decodeText(handle.stdout)),
+      Stream.mkString(Stream.decodeText(handle.stderr)),
+    ])
+    const exitCode = yield* handle.exitCode
+    if (exitCode !== ChildProcessSpawner.ExitCode(0)) {
+      return yield* new ProcessError({
+        args,
+        command,
+        ...(options?.cwd !== undefined ? { cwd: options.cwd } : {}),
+        exitCode: Number(exitCode),
+        message: `${command} ${args.join(' ')} failed with exit code ${exitCode}`,
+        stderr,
+        stdout,
+      })
+    }
+    return stdout
+  }))
+})
+
 export const commandLines = Effect.fnUntraced(function* (
   command: string,
   args: ReadonlyArray<string>,

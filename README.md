@@ -32,6 +32,7 @@
 
 - `repos/effect/`：上游 Effect v4 beta 源码，只读参考。
 - `repos/effect.subtree.json`：源码 pin manifest，记录仓库、分支、prefix、split 和基线。
+- `repos/craft-skills.manifest.json`：Craft skill source locator 和 managed copy 校验 manifest。
 - `bin/effect-harness.ts`：用户和目标仓库使用的 TS CLI 入口。
 - `src/cli/`：Effect native CLI command 组装，使用 `effect/unstable/cli`。
 - `src/harness/`：init、status、source pin、guardrails、target verify 的 typed harness logic。
@@ -75,6 +76,9 @@ pnpm verify
 | `.codex/skills/effect-target-contract/` | 维护 init 产物、target verifier、目标仓库 runtime contract | 否 |
 | `.codex/skills/effect-feedback-maintainer/` | 维护本仓库 feedback intake | 否 |
 | `.codex/skills/effect-pin-update/` | 更新 `repos/effect`、baseline、lockfile、route docs | 否 |
+| `.codex/skills/pin/` | Craft `pin` skill 的 managed projection | 否 |
+| `.codex/skills/setup-effect-area/` | Craft `setup-effect-area` skill 的 managed projection | 否 |
+| `.codex/skills/update-effect-harness/` | Craft `update-effect-harness` skill 的 managed projection | 否 |
 | `runtime/codex/skills/effect-code/` | 目标仓库编写和审查 Effect code | 是 |
 | `runtime/codex/skills/effect-feedback/` | 目标仓库记录可回传的实践反馈 | 是 |
 | `runtime/codex/agents/effect-worker.md` | 目标仓库的 Effect worker 描述 | 是 |
@@ -85,6 +89,7 @@ pnpm verify
 pnpm install
 pnpm effect:status
 pnpm effect:verify
+pnpm craft-skills:check
 pnpm verify
 ```
 
@@ -93,7 +98,21 @@ pnpm verify
 `pnpm verify` 因上游发布而漂移失败。
 
 `pnpm effect:verify` 会检查 source pin，并对本仓库的 `bin/`、`src/`、`tests/`
-运行 harness guardrails。它不生成 target project。
+运行 harness guardrails，同时检查 Craft managed skill copy 是否与
+`repos/craft-skills.manifest.json` 指向的 Craft source blob 一致。它不生成 target project。
+
+Craft skill source 由 Craft 仓库维护；本仓库只保存 managed projection。同步入口：
+
+```bash
+pnpm craft-skills:sync
+pnpm craft-skills:check
+```
+
+`craft-skills:sync` 从 manifest 中的 Craft repo locator 读取当前 checkout HEAD，更新
+`.codex/skills/pin/`、`.codex/skills/setup-effect-area/`、`.codex/skills/update-effect-harness/`
+和 manifest checksum。
+`craft-skills:check` 对 pinned Craft git blob、manifest checksum 和本地 projection 做
+byte-for-byte 校验。目标仓库仍只接收 `runtime/codex` output。
 
 `pnpm verify` 会依次运行 self-verify、typecheck、script tests、lint 和 knip。
 
