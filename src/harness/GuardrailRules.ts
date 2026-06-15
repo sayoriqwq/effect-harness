@@ -209,7 +209,7 @@ function collectModuleSourceViolation(
   violations: Array<GuardrailViolation>,
 ): void {
   if (source === '@effect/cli' || source.startsWith('@effect/cli/')) {
-    addViolation(sourceFile, node, 'Use effect/unstable/cli for Effect v4 beta; legacy @effect/cli is banned.', violations)
+    addViolation(sourceFile, node, 'Use effect/unstable/cli for Effect v4 beta; @effect/cli is not supported for this baseline.', violations)
   }
 
   if (source.includes('repos/effect')) {

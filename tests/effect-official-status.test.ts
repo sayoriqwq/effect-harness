@@ -37,24 +37,24 @@ it.effect('official status reports package and source drift from a snapshot', ()
       split: 'a'.repeat(40),
       llmDocument: 'repos/effect/LLMS.md',
       packageBaseline: {
-        'effect': '4.0.0-beta.66',
-        '@effect/platform-node': '4.0.0-beta.66',
-        '@effect/vitest': '4.0.0-beta.66',
-        '@effect/tsgo': '0.7.0',
-        '@effect/language-service': '0.80.0',
-        '@typescript/native-preview': '7.0.0-dev.20260513.1',
+        'effect': '4.0.0-beta.83',
+        '@effect/platform-node': '4.0.0-beta.83',
+        '@effect/vitest': '4.0.0-beta.83',
+        '@effect/tsgo': '0.14.4',
+        '@effect/language-service': '0.86.2',
+        '@typescript/native-preview': '7.0.0-dev.20260615.1',
       },
     }, null, 2)}\n`)
 
     const snapshotPath = join(root, 'official.json')
     writeFileSync(snapshotPath, `${JSON.stringify({
       packages: {
-        'effect': '4.0.0-beta.78',
-        '@effect/platform-node': '4.0.0-beta.78',
-        '@effect/vitest': '4.0.0-beta.78',
-        '@effect/tsgo': '0.14.0',
-        '@effect/language-service': '0.86.2',
-        '@typescript/native-preview': '7.0.0-dev.20260606.1',
+        'effect': '4.0.0-beta.99',
+        '@effect/platform-node': '4.0.0-beta.99',
+        '@effect/vitest': '4.0.0-beta.99',
+        '@effect/tsgo': '0.15.0',
+        '@effect/language-service': '0.90.0',
+        '@typescript/native-preview': '7.0.0-dev.20260616.1',
       },
       sourceHead: 'b'.repeat(40),
     }, null, 2)}\n`)
@@ -70,7 +70,7 @@ it.effect('official status reports package and source drift from a snapshot', ()
     assert.equal(output.outdated, true)
     const effectRow = output.packages.find(row => row.name === 'effect')
     assert.ok(effectRow)
-    assert.equal(effectRow.official, '4.0.0-beta.78')
+    assert.equal(effectRow.official, '4.0.0-beta.99')
     assert.equal(output.source.official, 'b'.repeat(40))
   }
   finally {

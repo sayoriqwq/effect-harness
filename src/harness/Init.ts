@@ -11,15 +11,6 @@ import { replaceCatalogVersion } from './PnpmWorkspace.ts'
 
 const agentsStart = '<!-- effect-harness:start -->'
 const agentsEnd = '<!-- effect-harness:end -->'
-const legacyHarnessScriptPattern = /\bscripts\/effect-harness(?:-verify)?\.(?:mjs|ts)\b|\beffect-source-subtree\.(?:mjs|ts)\b/u
-const legacyHarnessScriptFiles = [
-  'scripts/effect-harness.mjs',
-  'scripts/effect-harness.ts',
-  'scripts/effect-harness-verify.mjs',
-  'scripts/effect-harness-verify.ts',
-  'scripts/effect-source-subtree.mjs',
-  'scripts/effect-source-subtree.ts',
-] as const
 type DependencySection = 'dependencies' | 'devDependencies' | 'peerDependencies' | 'optionalDependencies'
 
 export interface InitOptions {
@@ -70,47 +61,6 @@ function ensureScript(packageJson: PackageJson, name: string, command: string): 
   packageJson.scripts[name] = command
 }
 
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
-}
-
-function invokesPackageScript(command: string, name: string): boolean {
-  return new RegExp(`^pnpm\\s+(?:run\\s+)?${escapeRegex(name)}(?:\\s|$)`, 'u').test(command.trim())
-}
-
-function removeLegacyHarnessScripts(packageJson: PackageJson): void {
-  packageJson.scripts ??= {}
-  const removedScripts: Array<string> = []
-
-  for (const [name, command] of Object.entries(packageJson.scripts)) {
-    if (legacyHarnessScriptPattern.test(command)) {
-      delete packageJson.scripts[name]
-      removedScripts.push(name)
-    }
-  }
-
-  const verify = packageJson.scripts.verify
-  if (!verify) {
-    return
-  }
-
-  const verifyParts = verify
-    .split(/\s*&&\s*/u)
-    .map(part => part.trim())
-    .filter(part =>
-      part.length > 0
-      && !legacyHarnessScriptPattern.test(part)
-      && !removedScripts.some(name => invokesPackageScript(part, name)),
-    )
-
-  if (verifyParts.length === 0) {
-    delete packageJson.scripts.verify
-  }
-  else {
-    packageJson.scripts.verify = verifyParts.join(' && ')
-  }
-}
-
 function appendEffectVerify(packageJson: PackageJson): void {
   packageJson.scripts ??= {}
   const verify = packageJson.scripts.verify
@@ -159,7 +109,6 @@ const updatePackageJson = Effect.fnUntraced(function* (
   const packageJson = yield* readJson(packagePath, decodePackageJson)
   const baseline = manifest.packageBaseline
 
-  removeLegacyHarnessScripts(packageJson)
   setDependency(packageJson, 'dependencies', 'effect', baseline.effect)
   setDependency(packageJson, 'dependencies', '@effect/platform-node', baseline['@effect/platform-node'])
   setDependency(packageJson, 'devDependencies', '@effect/vitest', baseline['@effect/vitest'])
@@ -250,26 +199,6 @@ const updateTsconfig = Effect.fnUntraced(function* (
   yield* writeManagedFile(tsconfigPath, formatJson(tsconfig), options, changes)
 })
 
-const removeLegacyHarnessScriptFiles = Effect.fnUntraced(function* (
-  target: string,
-  options: { readonly dryRun: boolean },
-  changes: Array<string>,
-) {
-  const fs = yield* FileSystem.FileSystem
-  const path = yield* Path.Path
-
-  for (const file of legacyHarnessScriptFiles) {
-    const targetPath = path.join(target, file)
-    if (!(yield* fs.exists(targetPath))) {
-      continue
-    }
-    changes.push(`remove ${targetPath}`)
-    if (!options.dryRun) {
-      yield* fs.remove(targetPath)
-    }
-  }
-})
-
 const updateAgents = Effect.fnUntraced(function* (
   target: string,
   harness: string,
@@ -336,7 +265,6 @@ export const initializeTarget = Effect.fnUntraced(function* (options: InitOption
 
   yield* updatePackageJson(options.target, options.harness, manifest, writeOptions, changes)
   yield* updateTsconfig(options.target, writeOptions, changes)
-  yield* removeLegacyHarnessScriptFiles(options.target, writeOptions, changes)
   yield* ensureDirectory(path.join(options.target, '.codex'), writeOptions, changes)
   yield* copyRuntimeDirectory(path.join(runtimeRoot, 'skills'), path.join(options.target, '.codex/skills'), replacements, writeOptions, changes)
   yield* copyRuntimeDirectory(path.join(runtimeRoot, 'agents'), path.join(options.target, '.codex/agents'), replacements, writeOptions, changes)

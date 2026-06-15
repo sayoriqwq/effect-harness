@@ -150,7 +150,7 @@ effect-harness init
 ## Do Not
 
 - 不从 `HARNESS_ROOT/repos/effect` import。
-- 不添加 target-local `scripts/effect-harness.mjs` 或 `scripts/effect-harness.ts` dispatcher。
+- 不添加 target-local effect-harness dispatcher；只使用 init 写入的 direct scripts。
 - 不复制本仓库 `.codex/skills` 到 target repo；target 只接收 `runtime/codex`。
 - 不把 target 的业务 example、产品语义或 release ritual 写回 `effect-harness`。
 - 不把 `repos/effect/AGENTS.md`、`repos/effect/.agents/skills/*`、`repos/effect/.specs/*`

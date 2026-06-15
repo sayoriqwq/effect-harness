@@ -9,7 +9,7 @@ import * as Effect from 'effect/Effect'
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const cliPath = join(repoRoot, 'bin/effect-harness.ts')
 
-const oldSplit = 'a'.repeat(40)
+const pinnedSplit = 'a'.repeat(40)
 const newPackages = {
   'effect': '4.0.0-beta.99',
   '@effect/platform-node': '4.0.0-beta.99',
@@ -63,23 +63,23 @@ function makeUpstream(root: string) {
 
 function makeWorkspaceYaml() {
   return `trustPolicyExclude:
-  - '@effect/platform-node@4.0.0-beta.78'
-  - '@effect/platform-node-shared@4.0.0-beta.78'
-  - '@effect/vitest@4.0.0-beta.78'
-  - effect@4.0.0-beta.78
+  - '@effect/platform-node@4.0.0-beta.83'
+  - '@effect/platform-node-shared@4.0.0-beta.83'
+  - '@effect/vitest@4.0.0-beta.83'
+  - effect@4.0.0-beta.83
 
 packages: []
 
 overrides:
-  '@effect/platform-node-shared': 4.0.0-beta.78
+  '@effect/platform-node-shared': 4.0.0-beta.83
 
 catalog:
   '@effect/language-service': 0.86.2
-  '@effect/platform-node': 4.0.0-beta.78
-  '@effect/tsgo': 0.14.0
-  '@effect/vitest': 4.0.0-beta.78
-  '@typescript/native-preview': 7.0.0-dev.20260606.1
-  effect: 4.0.0-beta.78
+  '@effect/platform-node': 4.0.0-beta.83
+  '@effect/tsgo': 0.14.4
+  '@effect/vitest': 4.0.0-beta.83
+  '@typescript/native-preview': 7.0.0-dev.20260615.1
+  effect: 4.0.0-beta.83
 `
 }
 
@@ -87,32 +87,32 @@ function makeHarness(root: string, repository: string) {
   const harness = join(root, 'harness')
   makeGitRepo(harness)
 
-  writeText(harness, 'repos/effect/LLMS.md', '# Old Effect Guide\n')
-  writeText(harness, 'repos/effect/removed.txt', 'old source only\n')
+  writeText(harness, 'repos/effect/LLMS.md', '# Pinned Effect Guide\n')
+  writeText(harness, 'repos/effect/removed.txt', 'removed source only\n')
   writeText(harness, 'repos/effect.subtree.json', `${JSON.stringify({
     name: 'effect',
     repository,
     branch: 'main',
     prefix: 'repos/effect',
-    split: oldSplit,
+    split: pinnedSplit,
     llmDocument: 'repos/effect/LLMS.md',
     packageBaseline: {
-      'effect': '4.0.0-beta.78',
-      '@effect/platform-node': '4.0.0-beta.78',
-      '@effect/vitest': '4.0.0-beta.78',
-      '@effect/tsgo': '0.14.0',
+      'effect': '4.0.0-beta.83',
+      '@effect/platform-node': '4.0.0-beta.83',
+      '@effect/vitest': '4.0.0-beta.83',
+      '@effect/tsgo': '0.14.4',
       '@effect/language-service': '0.86.2',
-      '@typescript/native-preview': '7.0.0-dev.20260606.1',
+      '@typescript/native-preview': '7.0.0-dev.20260615.1',
     },
   }, null, 2)}\n`)
   writeText(harness, 'pnpm-workspace.yaml', makeWorkspaceYaml())
-  writeText(harness, 'AGENTS.md', '- `effect@4.0.0-beta.78`\n- `@effect/tsgo@0.14.0`\n')
-  writeText(harness, 'README.md', '- `effect@4.0.0-beta.78`\n- `@typescript/native-preview@7.0.0-dev.20260606.1`\n')
-  writeText(harness, 'docs/effect-patterns/index.md', `${oldSplit}\n- \`effect@4.0.0-beta.78\`\n`)
-  writeText(harness, 'docs/effect-patterns/effect-v4-source-reference.md', `${oldSplit}\n- \`@effect/tsgo@0.14.0\`\n`)
-  writeText(harness, 'docs/effect-official-harness-inventory.md', `repos/effect @ ${oldSplit}\n`)
-  writeText(harness, 'tests/effect-target-init.test.ts', `assert.equal(packageJson.dependencies.effect, '4.0.0-beta.78')\n`)
-  writeText(harness, 'tests/effect-target-verify.test.ts', `assert.match(result.stderr, /expected 4\\.0\\.0-beta\\.78 or catalog:/u)\n`)
+  writeText(harness, 'AGENTS.md', '- `effect@4.0.0-beta.83`\n- `@effect/tsgo@0.14.4`\n')
+  writeText(harness, 'README.md', '- `effect@4.0.0-beta.83`\n- `@typescript/native-preview@7.0.0-dev.20260615.1`\n')
+  writeText(harness, 'docs/effect-patterns/index.md', `${pinnedSplit}\n- \`effect@4.0.0-beta.83\`\n`)
+  writeText(harness, 'docs/effect-patterns/effect-v4-source-reference.md', `${pinnedSplit}\n- \`@effect/tsgo@0.14.4\`\n`)
+  writeText(harness, 'docs/effect-official-harness-inventory.md', `repos/effect @ ${pinnedSplit}\n`)
+  writeText(harness, 'tests/effect-target-init.test.ts', `assert.equal(packageJson.dependencies.effect, '4.0.0-beta.83')\n`)
+  writeText(harness, 'tests/effect-target-verify.test.ts', `assert.match(result.stderr, /expected 4\\.0\\.0-beta\\.83 or catalog:/u)\n`)
   commit(harness, 'Initial harness pin')
 
   return harness

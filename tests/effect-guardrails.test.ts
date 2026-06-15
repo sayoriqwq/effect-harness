@@ -132,7 +132,7 @@ it.effect('guardrails catch forbidden imports without matching plain strings', (
     'const harmless = "import { Effect } from \\"repos/effect/packages/effect/src/Effect.ts\\""',
     'export const text = "Context.Tag and Effect.ignore are only mentioned here"',
     'export const dynamic = import("../repos/effect/packages/effect/src/Effect.ts")',
-    'export const legacy = require("@effect/cli")',
+    'export const unsupportedCli = require("@effect/cli")',
     '',
   ].join('\n'))
 
@@ -141,7 +141,7 @@ it.effect('guardrails catch forbidden imports without matching plain strings', (
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /Do not import from repos\/effect/u)
-    assert.match(result.stderr, /legacy @effect\/cli is banned/u)
+    assert.match(result.stderr, /@effect\/cli is not supported/u)
     assert.isFalse(/Use Context\.Service/u.test(result.stderr))
     assert.isFalse(/Do not ignore Effect failures silently/u.test(result.stderr))
   }

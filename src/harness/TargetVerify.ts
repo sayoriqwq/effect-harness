@@ -13,13 +13,8 @@ import { assertEffectVitestTests } from './TestContract.ts'
 const agentsStart = '<!-- effect-harness:start -->'
 const agentsEnd = '<!-- effect-harness:end -->'
 const agentsBlockPattern = /<!-- effect-harness:start -->[\s\S]*?<!-- effect-harness:end -->/u
-const localHarnessDispatcherPattern = /\bscripts\/effect-harness(?:-verify)?\.(?:mjs|ts)\b/u
-const localHarnessDispatcherFiles = [
-  'scripts/effect-harness.mjs',
-  'scripts/effect-harness.ts',
-  'scripts/effect-harness-verify.mjs',
-  'scripts/effect-harness-verify.ts',
-] as const
+const localHarnessDispatcherCommandPattern = /\bscripts\/effect-harness(?:-[\w-]+)?\.(?:mjs|ts)\b/u
+const localHarnessDispatcherFilePattern = /^effect-harness(?:-[\w-]+)?\.(?:mjs|ts)$/u
 
 export interface TargetVerifyOptions {
   readonly target: string
@@ -188,16 +183,22 @@ const assertNoLocalHarnessDispatcher = Effect.fnUntraced(function* (
   const fs = yield* FileSystem.FileSystem
   const scriptEntries = Object.entries(packageJson.scripts ?? {})
   const dispatcherScript = scriptEntries.find(([, command]) =>
-    localHarnessDispatcherPattern.test(command),
+    localHarnessDispatcherCommandPattern.test(command),
   )
 
   if (dispatcherScript) {
     errors.push(`package script ${dispatcherScript[0]} uses a local effect-harness dispatcher; use effect-harness init output instead.`)
   }
 
-  for (const file of localHarnessDispatcherFiles) {
-    if (yield* fs.exists(`${root}/${file}`)) {
-      errors.push(`Target repo must not include ${file}; distribution belongs to effect-harness init.`)
+  const scriptsRoot = `${root}/scripts`
+  if (!(yield* fs.exists(scriptsRoot))) {
+    return
+  }
+
+  const entries = yield* fs.readDirectory(scriptsRoot)
+  for (const entry of entries) {
+    if (localHarnessDispatcherFilePattern.test(entry)) {
+      errors.push(`Target repo must not include scripts/${entry}; distribution belongs to effect-harness init.`)
     }
   }
 })
@@ -426,7 +427,7 @@ export const verifyTarget = Effect.fnUntraced(function* (options: TargetVerifyOp
     yield* assertPnpmCatalog(errors, options.target, packageJson, baseline)
 
     if (dependencyVersion(packageJson, '@effect/cli')) {
-      errors.push('Target must not depend on legacy @effect/cli.')
+      errors.push('Target must not depend on @effect/cli for this baseline.')
     }
 
     assertTypecheckScript(errors, packageJson)

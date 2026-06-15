@@ -29,7 +29,7 @@ Current v4 beta patterns:
 Hard boundaries:
 
 - Never import from `repos/effect` in application or test code.
-- Do not use legacy `@effect/cli`.
+- Do not depend on `@effect/cli`; use `effect/unstable/cli`.
 - Do not introduce `Context.Tag` service definitions for this baseline.
 - Keep target runtime business-neutral. Real project examples stay in target repos until they prove reusable.
 - Do not add target-local dispatcher scripts. This repo exposes runtime, skills, docs, and verifier
