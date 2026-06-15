@@ -276,8 +276,8 @@ export const fromASTBlacklist: Set<string> = new Set([
   "~structural",
   "~sentinels",
   "meta",
+  "arbitrary",
   "toArbitrary",
-  "toArbitraryConstraint",
   "toEquivalence",
   "toFormatter",
   "toCodec",
@@ -362,8 +362,9 @@ export function toJsonSchemaMultiDocument(
     switch (schema._tag) {
       case "Any":
       case "Unknown":
-      case "ObjectKeyword":
         return {}
+      case "ObjectKeyword":
+        return { anyOf: [{ type: "object" }, { type: "array" }] }
       case "Void":
       case "Undefined":
         return { type: "null" }

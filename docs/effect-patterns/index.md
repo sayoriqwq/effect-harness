@@ -16,17 +16,17 @@ dispatcher。
 上游 Effect v4 beta source 以 managed copy 保存在 `repos/effect/`：
 
 ```text
-09809f60f19ec98232f98b33e33e02ecb7e4fbd6
+95545bdc334f4cd27a14f3308e68114e5bed92f2
 ```
 
 Baseline：
 
-- `effect@4.0.0-beta.78`
-- `@effect/platform-node@4.0.0-beta.78`
-- `@effect/vitest@4.0.0-beta.78`
-- `@effect/tsgo@0.14.0`
+- `effect@4.0.0-beta.83`
+- `@effect/platform-node@4.0.0-beta.83`
+- `@effect/vitest@4.0.0-beta.83`
+- `@effect/tsgo@0.14.4`
 - `@effect/language-service@0.86.2`
-- `@typescript/native-preview@7.0.0-dev.20260606.1`
+- `@typescript/native-preview@7.0.0-dev.20260615.1`
 
 命令：
 

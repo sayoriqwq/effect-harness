@@ -13,23 +13,23 @@ catalogs:
       specifier: 0.86.2
       version: 0.86.2
     '@effect/platform-node':
-      specifier: 4.0.0-beta.78
-      version: 4.0.0-beta.78
+      specifier: 4.0.0-beta.83
+      version: 4.0.0-beta.83
     '@effect/tsgo':
-      specifier: 0.14.0
-      version: 0.14.0
+      specifier: 0.14.4
+      version: 0.14.4
     '@effect/vitest':
-      specifier: 4.0.0-beta.78
-      version: 4.0.0-beta.78
+      specifier: 4.0.0-beta.83
+      version: 4.0.0-beta.83
     '@types/node':
       specifier: ^25.6.0
       version: 25.9.2
     '@typescript/native-preview':
-      specifier: 7.0.0-dev.20260606.1
-      version: 7.0.0-dev.20260606.1
+      specifier: 7.0.0-dev.20260615.1
+      version: 7.0.0-dev.20260615.1
     effect:
-      specifier: 4.0.0-beta.78
-      version: 4.0.0-beta.78
+      specifier: 4.0.0-beta.83
+      version: 4.0.0-beta.83
     eslint:
       specifier: ^10.3.0
       version: 10.4.1
@@ -44,7 +44,7 @@ catalogs:
       version: 4.1.8
 
 overrides:
-  '@effect/platform-node-shared': 4.0.0-beta.78
+  '@effect/platform-node-shared': 4.0.0-beta.83
 
 importers:
 
@@ -52,10 +52,10 @@ importers:
     dependencies:
       '@effect/platform-node':
         specifier: 'catalog:'
-        version: 4.0.0-beta.78(effect@4.0.0-beta.78)(ioredis@5.11.1)
+        version: 4.0.0-beta.83(effect@4.0.0-beta.83)(ioredis@5.11.1)
       effect:
         specifier: 'catalog:'
-        version: 4.0.0-beta.78
+        version: 4.0.0-beta.83
     devDependencies:
       '@antfu/eslint-config':
         specifier: 'catalog:'
@@ -65,16 +65,16 @@ importers:
         version: 0.86.2
       '@effect/tsgo':
         specifier: 'catalog:'
-        version: 0.14.0
+        version: 0.14.4
       '@effect/vitest':
         specifier: 'catalog:'
-        version: 4.0.0-beta.78(effect@4.0.0-beta.78)(vitest@4.1.8(@types/node@25.9.2)(vite@8.0.16(@types/node@25.9.2)(jiti@2.7.0)(yaml@2.9.0)))
+        version: 4.0.0-beta.83(effect@4.0.0-beta.83)(vitest@4.1.8(@types/node@25.9.2)(vite@8.0.16(@types/node@25.9.2)(jiti@2.7.0)(yaml@2.9.0)))
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.2
       '@typescript/native-preview':
         specifier: 'catalog:'
-        version: 7.0.0-dev.20260606.1
+        version: 7.0.0-dev.20260615.1
       eslint:
         specifier: 'catalog:'
         version: 10.4.1(jiti@2.7.0)
@@ -194,62 +194,62 @@ packages:
     resolution: {integrity: sha512-SaPln+8srOqDJDUwNTDmP5e+IYpEDr9+1epGznnsLqu8xvo6VnxyWARdeLpqvZJlb0Pgy9ca7ppqvvdWbHPXAg==}
     hasBin: true
 
-  '@effect/platform-node-shared@4.0.0-beta.78':
-    resolution: {integrity: sha512-mo0ddTPATyCMyqzQasYDL7+NI29vozoMplom+qu9f/onDTd4xG5hvEEfGxfL0Ljygui6keG/YE/E9OZVf2z5WA==}
+  '@effect/platform-node-shared@4.0.0-beta.83':
+    resolution: {integrity: sha512-+yr/+PJmKTgmJq1QOINSBPgLu7Cjc4CZcotBXnGjyDEizOmimFgTkN2B8PBJAKIKUWYWfobjXqC+58/VhhPKAw==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      effect: ^4.0.0-beta.78
+      effect: ^4.0.0-beta.83
 
-  '@effect/platform-node@4.0.0-beta.78':
-    resolution: {integrity: sha512-8ONrIS5/R9dq+0BJ6v3kUXNEkfjU6S3GzIYCH5gmHdiriRvIoBhXYNAITfRvZpfx1JPrKuP70cHyuQDjmJcDkQ==}
+  '@effect/platform-node@4.0.0-beta.83':
+    resolution: {integrity: sha512-RmpVGu/+X/Bif3/g1Rzj8oFzTOknoVB3yHCa0b179vytPpKe+Kj9ZwKNcAnKWqHUDkbSPBq1Ca60mvOHr2/+LQ==}
     engines: {node: '>=18.0.0'}
     peerDependencies:
-      effect: ^4.0.0-beta.78
+      effect: ^4.0.0-beta.83
       ioredis: ^5.7.0
 
-  '@effect/tsgo-darwin-arm64@0.14.0':
-    resolution: {integrity: sha512-bNJDM6CrIYIEz2PLMpQjxHAvPzcaiP0IRfLr1a+0Kfr1+bd/Ck5qpt+tLsukWcg+WTiiIJqwp0zP1gBuJA3SIA==}
+  '@effect/tsgo-darwin-arm64@0.14.4':
+    resolution: {integrity: sha512-WE339KqfiyJPkAkO8U79QqbF2cykiurbTUTrMOp0FprbE571LfC1UKscCUeTs2JXpI/iuRkHhR4GifWzQgLonw==}
     cpu: [arm64]
     os: [darwin]
 
-  '@effect/tsgo-darwin-x64@0.14.0':
-    resolution: {integrity: sha512-daJpJhYhG25t8N8cN/u6F6v88UFwttVx6McnyV6VS4qNaOI3F8cYKHkndL6LoouC4rjgEli0BplA7jSxSSvSbQ==}
+  '@effect/tsgo-darwin-x64@0.14.4':
+    resolution: {integrity: sha512-V3iQXLrh5mGyHdWoEA3yvhvYUEjphu9/yaOGCCmvSxL/l41qrQDF4xPI0+30k+nXIWZqRpZe5KAsTxHaoP+vcA==}
     cpu: [x64]
     os: [darwin]
 
-  '@effect/tsgo-linux-arm64@0.14.0':
-    resolution: {integrity: sha512-z67ZXpcPpxZgcatfZSWI7LEgNh+ba5LrqbuHovh9l2ywtOpiXf7d5kU2VPlEA8YVfU7dhnJviDGY8hgJQIIt5g==}
+  '@effect/tsgo-linux-arm64@0.14.4':
+    resolution: {integrity: sha512-PKZe9tBFdwWRCZCwfqRSB0npt+wwFpjiJQFzSsv7OKlD+KqTSARuUIJY5TsJKjqMX6ji8w/fqBVPcXYrAAaZGw==}
     cpu: [arm64]
     os: [linux]
 
-  '@effect/tsgo-linux-arm@0.14.0':
-    resolution: {integrity: sha512-8+3akhHgNCIZu/vXBKd30h+eSmgQge4RmU/7YMw1e+UA30Ch5UVEgPiJDMqtDDCCALL8RKpHbeFKY/cP6N+C4Q==}
+  '@effect/tsgo-linux-arm@0.14.4':
+    resolution: {integrity: sha512-FsfeFBytbCOc5IROT2GMg2GkC6TLncHO4EQkoMZaRTNGBo/mWjyqEHUdG9RG73jPsoLRj3547UeeYtmBfiMrGg==}
     cpu: [arm]
     os: [linux]
 
-  '@effect/tsgo-linux-x64@0.14.0':
-    resolution: {integrity: sha512-nJ/4cU0aWnof2A23/Cmry/M4Ek6F0/Igv+BCX09x5EC8sbn4hGIJ5rlQQqjhj5XF7Zd1BEkN5oxhLzwA6i1veA==}
+  '@effect/tsgo-linux-x64@0.14.4':
+    resolution: {integrity: sha512-/usaoaKNOC2tU8tZlGsPiMdSUGzI6xXfBmZzZMxkIEP0ohAabJGIzKU1GZfJVc63CjsBVhtGvWvURqqntEnEtw==}
     cpu: [x64]
     os: [linux]
 
-  '@effect/tsgo-win32-arm64@0.14.0':
-    resolution: {integrity: sha512-lSwV3IP7MvCr/ElWIBywmjfdRmfq98lFeIVR7NpuuSSicVvpAPv4ACpw6z93SUKSPjJrw7jMvZn9MOrwKuPx8g==}
+  '@effect/tsgo-win32-arm64@0.14.4':
+    resolution: {integrity: sha512-CzlCQZkqRNoyLyInd+xehRcXwnC1k7Uq8n1VNi1PdgwqdC0N4JHjFG2h8OdX6PomXGU+35fQbtu+vuB3nO6WQg==}
     cpu: [arm64]
     os: [win32]
 
-  '@effect/tsgo-win32-x64@0.14.0':
-    resolution: {integrity: sha512-5yRE1NAtBCd1IYSU2rLe/W9NGpyTOqhsJvCs4ZV81j3U6xNk/+kk1jVfMPZXZjal4cIRWI1UVxbt4uSN4pw/lw==}
+  '@effect/tsgo-win32-x64@0.14.4':
+    resolution: {integrity: sha512-4RwdSvS0FXP2oodPk0t5+9biPcekf+U3xfRYQfK/l1ClwfRSUVGIB+1qXfBZb29kVtRj5iSHCoPQA8SACiW2mw==}
     cpu: [x64]
     os: [win32]
 
-  '@effect/tsgo@0.14.0':
-    resolution: {integrity: sha512-UThRMJJwXtCWDlQyNTfPTAWTyG3nuODZWu3txLRXoHg/C8q2IlvKD+ap6RUU1kK+SR+pTa73mZTtkScQAD8N7g==}
+  '@effect/tsgo@0.14.4':
+    resolution: {integrity: sha512-CF3gzHd4waMITH9YZCA3oOIQUW9FidXL7mGOtrNaCuPiHmsZMrB+M4NFX8LDPdslW4jWEbPR084kNu/GUsnbfA==}
     hasBin: true
 
-  '@effect/vitest@4.0.0-beta.78':
-    resolution: {integrity: sha512-5KQsQYrQ/o7mfOVAxRtNnfD9M0W4OI6yQd0n/m2N7OOLxTdX4FwN4s/X4obykBC7ZEwH+bzMrFJiB4pq9lrQKQ==}
+  '@effect/vitest@4.0.0-beta.83':
+    resolution: {integrity: sha512-HKGnBkIAPEIDWwmwQtmGTVLN5txlB3M1lVS+BBsPt6M2CeLJ53cyc/2SBUldZM/HQ/aM7s/siiBOXsB9arRdKg==}
     peerDependencies:
-      effect: ^4.0.0-beta.78
+      effect: ^4.0.0-beta.83
       vitest: ^3.0.0 || ^4.0.0
 
   '@emnapi/core@1.10.0':
@@ -848,50 +848,50 @@ packages:
     resolution: {integrity: sha512-EbGRQg4FhrmwLodl+t3JNAnXHWVr9Vp+Zl1QBZVPY4ByfkzIT8cX3K6QWODHtkIZqqJVEWvhHSx3v5PDHsaQag==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260606.1':
-    resolution: {integrity: sha512-B8/kwWjWURT3Q1abPbxvaj7bUZycghnCDUpp71n2TiQHLLFsVB/JKMEs4Eurj1Pg2sPf4Wt2wihOfspzV++1bw==}
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260615.1':
+    resolution: {integrity: sha512-EHrtoVGEEhIhsnGe+b8w0FoM9JfIw5SkoPwO8ifaU0PrYm2UbyPbj2I2hOTxtk458t0irvGz2+8cshylBRbKng==}
     engines: {node: '>=16.20.0'}
     cpu: [arm64]
     os: [darwin]
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260606.1':
-    resolution: {integrity: sha512-i1iyGRQI/BHs0Fq4nA0+PewT76Y+HJBenZ8yVhkzVokbGjUezJtBtS2U0zIsGDC0lev/A4apMy8coWfBLdR3GA==}
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260615.1':
+    resolution: {integrity: sha512-BcDA56hkk6mrUpysaOVvrdACoX5d2SF1JTwHMoNjT1KysBicExS2wlH0eN0L01iDeqtB73XHl7A4zrKFmKzrBg==}
     engines: {node: '>=16.20.0'}
     cpu: [x64]
     os: [darwin]
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260606.1':
-    resolution: {integrity: sha512-Fz42yz/se1xXSIIYlXnVn3kQ7GQbSusGLfL+piyuZyPipHUksfSSIqFZNBeMOMA+tXTZNFJaWuYuWzgV8Vc9YA==}
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260615.1':
+    resolution: {integrity: sha512-TDAlBpyYCF7Z+ELTH+1tabDE6W3shl+H+Z+nmzaQio1I8pFvbwt2iLlE0Rc9CpRdIeaqr0ppMEgXHoeV3fZFWA==}
     engines: {node: '>=16.20.0'}
     cpu: [arm64]
     os: [linux]
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260606.1':
-    resolution: {integrity: sha512-KeYD2DHkFgRmd4HZNaSYFirnxxA7msqoIBkAz6sPxpR/ClXZfBhfXhAyPZTHuQc81LI3FSr9jhVTtslQpJkwrw==}
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260615.1':
+    resolution: {integrity: sha512-YRXRS/7ZqrDKXBJhFQcZiOdnHRuRbWoL/QkggpoGfhIuSAh4HvTU0WEUnPM+jRnH2kUMfsSgd8EAnPvmuP7/VA==}
     engines: {node: '>=16.20.0'}
     cpu: [arm]
     os: [linux]
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260606.1':
-    resolution: {integrity: sha512-PtKQwWzzOhH7Kl6Y0ZIprV99Rh5aUSFHTeMdEfpTim4sw0YP2vrFV3oU9tvwUFpWd6ODhRtAABhOFqQHBB/NqQ==}
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260615.1':
+    resolution: {integrity: sha512-/QDmRWt6abB7fw3yMchjlyDXej/7Dr8mYG4wvGGf6c1hc5Il5UpDQWNHejatdeKvAu+sszz8JhTuL8et47fTTg==}
     engines: {node: '>=16.20.0'}
     cpu: [x64]
     os: [linux]
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260606.1':
-    resolution: {integrity: sha512-heI+rfQHIFHIJzNgfBzjLQfJ8BgIfZShUaSx1NjnNKEiyeFp1MdOPvgAgWLk2XmBpaQ81jUcewuET2rVKI86Ww==}
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260615.1':
+    resolution: {integrity: sha512-WTJOLoe2rxT0W1i8ndWk2MKrakxRFNki537JZxvKAmSTbyOZznHlW3O3dbryUtTBYA716DDqS3ci24kuIfvBdg==}
     engines: {node: '>=16.20.0'}
     cpu: [arm64]
     os: [win32]
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260606.1':
-    resolution: {integrity: sha512-Kowa5tat165szQZnACPi/kbF9O+TdzohYKGby59djK42621KBn1c8oeFoO4eI+4CP+eFBN97SMzTIVOdXXQFWw==}
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260615.1':
+    resolution: {integrity: sha512-4cSCpXG7um18nwmLdU/SjoTv3OcO38/ufTiy1oWVccgGHLJqppiOP9/o+ElKIWhvrp78IaGy8+h3YqEjQ4/pcQ==}
     engines: {node: '>=16.20.0'}
     cpu: [x64]
     os: [win32]
 
-  '@typescript/native-preview@7.0.0-dev.20260606.1':
-    resolution: {integrity: sha512-9ag9Y2sj0yYwsWMKaBelVaHSOpX79eVo2quoWx9lCaUogq6HmqbaFa45AGQt54LNlwcYs5aBwODPyhHQglzZlA==}
+  '@typescript/native-preview@7.0.0-dev.20260615.1':
+    resolution: {integrity: sha512-JJ8X1l7H1GrnseK1k30qfQqB8Pz6jw3IALZVIj5oXQeRbUCe0Wx3ljkJEmOpunogdhEfA8IlOggskbUjVsXKBQ==}
     engines: {node: '>=16.20.0'}
     hasBin: true
 
@@ -1108,8 +1108,8 @@ packages:
     resolution: {integrity: sha512-EjePK1srD3P08o2j4f0ExnylqRs5B9tJjcp9t1krH2qRi8CCdsYfwe9JgSLurFBWwq4uOlipzfk5fHNvwFKr8Q==}
     engines: {node: ^14.15.0 || ^16.10.0 || >=18.0.0}
 
-  effect@4.0.0-beta.78:
-    resolution: {integrity: sha512-j79Rl9QpHwMz/ZJWLNpZoiVj9N7zHqiLKN5EcYd/A8J1oqejILWQLfc4HPlvqHqKC8SK55LJ+X4gy4ONJ+JpfQ==}
+  effect@4.0.0-beta.83:
+    resolution: {integrity: sha512-0wsak8RtgGAr9UWSbVDgJHZcUqMSvicHcvaZv1MbMM7MCGgW4Rn/137J1MHQbwYPcwYGxT/IqehFd+UbYuj78w==}
 
   electron-to-chromium@1.5.368:
     resolution: {integrity: sha512-7RckJJK4uESJF9PxvfMWd3TGqIiieUTG4HxnKaKuIpGbcr+r2ZEB3g2gAhCP3Fqm42vJSzLfgab9eva/C4/XVw==}
@@ -2337,19 +2337,19 @@ snapshots:
 
   '@effect/language-service@0.86.2': {}
 
-  '@effect/platform-node-shared@4.0.0-beta.78(effect@4.0.0-beta.78)':
+  '@effect/platform-node-shared@4.0.0-beta.83(effect@4.0.0-beta.83)':
     dependencies:
       '@types/ws': 8.18.1
-      effect: 4.0.0-beta.78
+      effect: 4.0.0-beta.83
       ws: 8.21.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
 
-  '@effect/platform-node@4.0.0-beta.78(effect@4.0.0-beta.78)(ioredis@5.11.1)':
+  '@effect/platform-node@4.0.0-beta.83(effect@4.0.0-beta.83)(ioredis@5.11.1)':
     dependencies:
-      '@effect/platform-node-shared': 4.0.0-beta.78(effect@4.0.0-beta.78)
-      effect: 4.0.0-beta.78
+      '@effect/platform-node-shared': 4.0.0-beta.83(effect@4.0.0-beta.83)
+      effect: 4.0.0-beta.83
       ioredis: 5.11.1
       mime: 4.1.0
       undici: 8.3.0
@@ -2357,40 +2357,40 @@ snapshots:
       - bufferutil
       - utf-8-validate
 
-  '@effect/tsgo-darwin-arm64@0.14.0':
+  '@effect/tsgo-darwin-arm64@0.14.4':
     optional: true
 
-  '@effect/tsgo-darwin-x64@0.14.0':
+  '@effect/tsgo-darwin-x64@0.14.4':
     optional: true
 
-  '@effect/tsgo-linux-arm64@0.14.0':
+  '@effect/tsgo-linux-arm64@0.14.4':
     optional: true
 
-  '@effect/tsgo-linux-arm@0.14.0':
+  '@effect/tsgo-linux-arm@0.14.4':
     optional: true
 
-  '@effect/tsgo-linux-x64@0.14.0':
+  '@effect/tsgo-linux-x64@0.14.4':
     optional: true
 
-  '@effect/tsgo-win32-arm64@0.14.0':
+  '@effect/tsgo-win32-arm64@0.14.4':
     optional: true
 
-  '@effect/tsgo-win32-x64@0.14.0':
+  '@effect/tsgo-win32-x64@0.14.4':
     optional: true
 
-  '@effect/tsgo@0.14.0':
+  '@effect/tsgo@0.14.4':
     optionalDependencies:
-      '@effect/tsgo-darwin-arm64': 0.14.0
-      '@effect/tsgo-darwin-x64': 0.14.0
-      '@effect/tsgo-linux-arm': 0.14.0
-      '@effect/tsgo-linux-arm64': 0.14.0
-      '@effect/tsgo-linux-x64': 0.14.0
-      '@effect/tsgo-win32-arm64': 0.14.0
-      '@effect/tsgo-win32-x64': 0.14.0
+      '@effect/tsgo-darwin-arm64': 0.14.4
+      '@effect/tsgo-darwin-x64': 0.14.4
+      '@effect/tsgo-linux-arm': 0.14.4
+      '@effect/tsgo-linux-arm64': 0.14.4
+      '@effect/tsgo-linux-x64': 0.14.4
+      '@effect/tsgo-win32-arm64': 0.14.4
+      '@effect/tsgo-win32-x64': 0.14.4
 
-  '@effect/vitest@4.0.0-beta.78(effect@4.0.0-beta.78)(vitest@4.1.8(@types/node@25.9.2)(vite@8.0.16(@types/node@25.9.2)(jiti@2.7.0)(yaml@2.9.0)))':
+  '@effect/vitest@4.0.0-beta.83(effect@4.0.0-beta.83)(vitest@4.1.8(@types/node@25.9.2)(vite@8.0.16(@types/node@25.9.2)(jiti@2.7.0)(yaml@2.9.0)))':
     dependencies:
-      effect: 4.0.0-beta.78
+      effect: 4.0.0-beta.83
       vitest: 4.1.8(@types/node@25.9.2)(vite@8.0.16(@types/node@25.9.2)(jiti@2.7.0)(yaml@2.9.0))
 
   '@emnapi/core@1.10.0':
@@ -2879,36 +2879,36 @@ snapshots:
       '@typescript-eslint/types': 8.60.1
       eslint-visitor-keys: 5.0.1
 
-  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260606.1':
+  '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260615.1':
     optional: true
 
-  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260606.1':
+  '@typescript/native-preview-darwin-x64@7.0.0-dev.20260615.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260606.1':
+  '@typescript/native-preview-linux-arm64@7.0.0-dev.20260615.1':
     optional: true
 
-  '@typescript/native-preview-linux-arm@7.0.0-dev.20260606.1':
+  '@typescript/native-preview-linux-arm@7.0.0-dev.20260615.1':
     optional: true
 
-  '@typescript/native-preview-linux-x64@7.0.0-dev.20260606.1':
+  '@typescript/native-preview-linux-x64@7.0.0-dev.20260615.1':
     optional: true
 
-  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260606.1':
+  '@typescript/native-preview-win32-arm64@7.0.0-dev.20260615.1':
     optional: true
 
-  '@typescript/native-preview-win32-x64@7.0.0-dev.20260606.1':
+  '@typescript/native-preview-win32-x64@7.0.0-dev.20260615.1':
     optional: true
 
-  '@typescript/native-preview@7.0.0-dev.20260606.1':
+  '@typescript/native-preview@7.0.0-dev.20260615.1':
     optionalDependencies:
-      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260606.1
-      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260606.1
-      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260606.1
-      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260606.1
-      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260606.1
-      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260606.1
-      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260606.1
+      '@typescript/native-preview-darwin-arm64': 7.0.0-dev.20260615.1
+      '@typescript/native-preview-darwin-x64': 7.0.0-dev.20260615.1
+      '@typescript/native-preview-linux-arm': 7.0.0-dev.20260615.1
+      '@typescript/native-preview-linux-arm64': 7.0.0-dev.20260615.1
+      '@typescript/native-preview-linux-x64': 7.0.0-dev.20260615.1
+      '@typescript/native-preview-win32-arm64': 7.0.0-dev.20260615.1
+      '@typescript/native-preview-win32-x64': 7.0.0-dev.20260615.1
 
   '@vitest/eslint-plugin@1.6.19(@typescript-eslint/eslint-plugin@8.60.1(@typescript-eslint/parser@8.60.1(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3))(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3))(eslint@10.4.1(jiti@2.7.0))(typescript@6.0.3)(vitest@4.1.8(@types/node@25.9.2)(vite@8.0.16(@types/node@25.9.2)(jiti@2.7.0)(yaml@2.9.0)))':
     dependencies:
@@ -3102,7 +3102,7 @@ snapshots:
 
   diff-sequences@29.6.3: {}
 
-  effect@4.0.0-beta.78:
+  effect@4.0.0-beta.83:
     dependencies:
       '@standard-schema/spec': 1.1.0
       fast-check: 4.8.0

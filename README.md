@@ -19,12 +19,12 @@
 
 ## 当前基线
 
-- `effect@4.0.0-beta.78`
-- `@effect/platform-node@4.0.0-beta.78`
-- `@effect/vitest@4.0.0-beta.78`
-- `@effect/tsgo@0.14.0`
+- `effect@4.0.0-beta.83`
+- `@effect/platform-node@4.0.0-beta.83`
+- `@effect/vitest@4.0.0-beta.83`
+- `@effect/tsgo@0.14.4`
 - `@effect/language-service@0.86.2`
-- `@typescript/native-preview@7.0.0-dev.20260606.1`
+- `@typescript/native-preview@7.0.0-dev.20260615.1`
 
 目标项目应从安装依赖 import Effect API，不能从 `repos/effect/` import。
 
