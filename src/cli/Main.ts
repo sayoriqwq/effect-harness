@@ -164,11 +164,17 @@ function makeCli(config: CliConfig) {
   )
 
   const updatePin = Command.make('update-pin', {
+    dryRun: dryRunFlag,
     harness,
-  }, Effect.fnUntraced(function* ({ harness }) {
-    yield* updateSourcePin(harness)
+    snapshot: snapshotFlag,
+  }, Effect.fnUntraced(function* ({ dryRun, harness, snapshot }) {
+    yield* updateSourcePin({
+      dryRun,
+      harness,
+      snapshot,
+    })
   })).pipe(
-    Command.withDescription('Update the pinned official Effect source subtree'),
+    Command.withDescription('Update the pinned official Effect source, manifest, workspace, and baseline docs'),
   )
 
   const craftSkillsCheck = Command.make('check', {

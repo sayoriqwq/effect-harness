@@ -35,7 +35,7 @@ const remoteHead = Effect.fnUntraced(function* (repository: string, branch: stri
   return output.split(/\s+/u)[0] || undefined
 })
 
-const officialSnapshot = Effect.fnUntraced(function* (
+export const resolveOfficialSnapshot = Effect.fnUntraced(function* (
   manifest: EffectSubtreeManifest,
   snapshotPath: string | undefined,
 ) {
@@ -95,7 +95,7 @@ function summarize(result: {
   lines.push('- https://registry.npmjs.org via npm view dist-tags')
   lines.push(`- ${result.manifest.repository} refs/heads/${result.manifest.branch}`)
   lines.push('')
-  lines.push('Use pnpm effect:update only when you are ready for a subtree merge commit.')
+  lines.push('Use pnpm effect:update from a clean worktree to sync source, manifest, workspace, and baseline docs.')
 
   return lines.join('\n')
 }
@@ -103,7 +103,7 @@ function summarize(result: {
 export const showStatus = Effect.fnUntraced(function* (options: StatusOptions) {
   const path = yield* Path.Path
   const manifest = yield* readJson(path.join(options.harness, 'repos/effect.subtree.json'), decodeManifest)
-  const official = yield* officialSnapshot(manifest, options.snapshot)
+  const official = yield* resolveOfficialSnapshot(manifest, options.snapshot)
   const result = {
     manifest: {
       repository: manifest.repository,

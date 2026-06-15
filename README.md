@@ -30,8 +30,8 @@
 
 ## 仓库内容
 
-- `repos/effect/`：上游 Effect v4 beta 源码，只读参考。
-- `repos/effect.subtree.json`：源码 pin manifest，记录仓库、分支、prefix、split 和基线。
+- `repos/effect/`：上游 Effect v4 beta 源码 managed copy，只读参考。
+- `repos/effect.subtree.json`：源码 pin manifest，记录仓库、分支、prefix、split 和 package baseline。
 - `repos/craft-skills.manifest.json`：Craft skill source locator 和 managed copy 校验 manifest。
 - `bin/effect-harness.ts`：用户和目标仓库使用的 TS CLI 入口。
 - `src/cli/`：Effect native CLI command 组装，使用 `effect/unstable/cli`。
@@ -88,6 +88,7 @@ pnpm verify
 ```bash
 pnpm install
 pnpm effect:status
+pnpm effect:update
 pnpm effect:verify
 pnpm craft-skills:check
 pnpm verify
@@ -141,7 +142,7 @@ CI 发布同样支持通过事件/环境变量输入：
 
 ## Source Pin
 
-上游源码来自 `Effect-TS/effect-smol`，以 squashed subtree 形式保存在 `repos/effect/`。
+上游源码来自 `Effect-TS/effect-smol`，以 managed copy 形式保存在 `repos/effect/`。
 
 ```bash
 pnpm effect:verify
@@ -153,9 +154,15 @@ pnpm effect:verify
 pnpm effect:update
 ```
 
-更新后要同步 `repos/effect.subtree.json` 里的 split，并重新跑 `pnpm verify`。
-这个命令会走 `git subtree pull --squash`，因此会产生 subtree merge commit；只在准备
-评审 source pin 更新时运行。
+这个命令要求 clean worktree，并从官方 npm dist-tags 与 source branch 同步
+`repos/effect/`、`repos/effect.subtree.json`、`pnpm-workspace.yaml` 和 baseline docs/tests。
+更新后运行：
+
+```bash
+pnpm install
+pnpm verify
+pnpm effect:status
+```
 
 ## 官方反馈环
 

@@ -5,7 +5,7 @@
 
 ## Contract
 
-- `repos/effect/` 是只读 squashed subtree，来自 `Effect-TS/effect-smol`。
+- `repos/effect/` 是只读 managed copy，来自 `Effect-TS/effect-smol`。
 - `repos/effect/LLMS.md` 是上游 LLM coding guide。
 - `repos/effect.subtree.json` 记录 repository、branch、prefix、split、LLM document path 和 package baseline。
 - `pnpm effect:verify` 检查 source 是否存在、是否误用 gitlink/submodule、LLM doc 是否存在、
@@ -13,7 +13,8 @@
   如果 Git history 里有 subtree trailers，它会和 manifest split 对齐；如果没有 trailers，
   manifest split 就是当前 active source pin，验证时会打印 warning。
 - `pnpm effect:status` 对比当前 pin、官方 npm dist-tags 和上游 source branch。
-- `pnpm effect:update` 是显式更新入口。
+- `pnpm effect:update` 是显式更新入口，会同步 source copy、manifest、workspace baseline
+  和 baseline docs/tests。
 
 当前选中的 split：
 
@@ -40,10 +41,11 @@ Do not import from `repos/effect` in application or test code.
 pnpm effect:status
 ```
 
-只有准备好处理 `git subtree pull --squash` 产生的 merge commit 时，才运行
-`pnpm effect:update`。更新后：
+只有准备好评审 source pin 与 package baseline 更新时，才从 clean worktree 运行
+`pnpm effect:update`。这个命令会同步 `repos/effect/`、`repos/effect.subtree.json`、
+`pnpm-workspace.yaml` 和 baseline projection 文件。更新后：
 
-1. 把新 split 写入 `repos/effect.subtree.json`。
-2. 更新本文和 `docs/effect-patterns/index.md`。
-3. 运行 `pnpm effect:verify`。
+1. 运行 `pnpm install`。
+2. 运行 `pnpm verify`。
+3. 运行 `pnpm effect:status`，确认 official status current。
 4. 如果 init 或 runtime contract 变化，用独立目标仓库验证 target contract。

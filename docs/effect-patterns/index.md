@@ -13,7 +13,7 @@ dispatcher。
 
 ## Current Pin
 
-上游 Effect v4 beta source 以 squashed subtree 保存在 `repos/effect/`：
+上游 Effect v4 beta source 以 managed copy 保存在 `repos/effect/`：
 
 ```text
 09809f60f19ec98232f98b33e33e02ecb7e4fbd6
