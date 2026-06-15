@@ -251,6 +251,37 @@ it.effect('target verifier rejects local effect harness dispatcher scripts', () 
   }
 }))
 
+it.effect('target verifier rejects legacy local effect harness wrapper scripts', () => Effect.sync(() => {
+  const root = tempDir()
+  const target = join(root, 'target')
+
+  try {
+    makeTarget(target)
+
+    const packageJsonPath = join(target, 'package.json')
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
+    packageJson.scripts['effect:verify'] = 'node scripts/effect-harness-verify.mjs verify'
+    writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
+    mkdirSync(join(target, 'scripts'))
+    writeFileSync(join(target, 'scripts/effect-harness-verify.mjs'), '#!/usr/bin/env node\n')
+
+    const result = runCli([
+      'verify',
+      '--target',
+      target,
+      '--harness',
+      repoRoot,
+    ])
+
+    assert.notEqual(result.status, 0)
+    assert.match(result.stderr, /local effect-harness dispatcher/u)
+    assert.match(result.stderr, /scripts\/effect-harness-verify\.mjs/u)
+  }
+  finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}))
+
 it.effect('target verifier rejects targets missing installed runtime files', () => Effect.sync(() => {
   const root = tempDir()
   const target = join(root, 'target')

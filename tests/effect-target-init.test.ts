@@ -103,6 +103,40 @@ it.effect('effect-harness init installs consumer runtime and target contract', (
   }
 }))
 
+it.effect('effect-harness init removes legacy local harness wrapper scripts', () => Effect.sync(() => {
+  const root = tempDir()
+  const target = makeTarget(root)
+
+  try {
+    const packageJsonPath = join(target, 'package.json')
+    const packageJson = readJson(packageJsonPath)
+    packageJson.scripts['effect:harness:verify'] = 'node scripts/effect-harness-verify.mjs verify'
+    packageJson.scripts['effect:source:update'] = 'node scripts/effect-harness-verify.mjs update-source'
+    packageJson.scripts['effect:source:verify'] = 'node scripts/effect-harness-verify.mjs source'
+    packageJson.scripts.verify = 'pnpm effect:harness:verify && pnpm build && pnpm typecheck && pnpm test && pnpm lint'
+    writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
+    mkdirSync(join(target, 'scripts'))
+    writeFileSync(join(target, 'scripts/effect-harness-verify.mjs'), '#!/usr/bin/env node\n')
+
+    const result = runCli(['init', '--target', target, '--harness', repoRoot])
+    assert.equal(result.status, 0, result.stderr)
+
+    const updatedPackageJson = readJson(packageJsonPath)
+    assert.equal(updatedPackageJson.scripts['effect:harness:verify'], undefined)
+    assert.equal(updatedPackageJson.scripts['effect:source:update'], undefined)
+    assert.equal(updatedPackageJson.scripts['effect:source:verify'], undefined)
+    assert.equal(/effect:harness:verify/u.test(updatedPackageJson.scripts.verify!), false)
+    assert.match(updatedPackageJson.scripts.verify!, /pnpm effect:verify/u)
+    assert.equal(existsSync(join(target, 'scripts/effect-harness-verify.mjs')), false)
+
+    const verify = runCli(['verify', '--target', target, '--harness', repoRoot])
+    assert.equal(verify.status, 0, verify.stderr)
+  }
+  finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}))
+
 it.effect('effect-harness init dry-run does not write target files', () => Effect.sync(() => {
   const root = tempDir()
   const target = makeTarget(root)

@@ -12,6 +12,13 @@ import { assertEffectVitestTests } from './TestContract.ts'
 const agentsStart = '<!-- effect-harness:start -->'
 const agentsEnd = '<!-- effect-harness:end -->'
 const agentsBlockPattern = /<!-- effect-harness:start -->[\s\S]*?<!-- effect-harness:end -->/u
+const localHarnessDispatcherPattern = /\bscripts\/effect-harness(?:-verify)?\.(?:mjs|ts)\b/u
+const localHarnessDispatcherFiles = [
+  'scripts/effect-harness.mjs',
+  'scripts/effect-harness.ts',
+  'scripts/effect-harness-verify.mjs',
+  'scripts/effect-harness-verify.ts',
+] as const
 
 export interface TargetVerifyOptions {
   readonly target: string
@@ -143,16 +150,16 @@ const assertNoLocalHarnessDispatcher = Effect.fnUntraced(function* (
   const fs = yield* FileSystem.FileSystem
   const scriptEntries = Object.entries(packageJson.scripts ?? {})
   const dispatcherScript = scriptEntries.find(([, command]) =>
-    /\bscripts\/effect-harness\.(?:mjs|ts)\b/u.test(command),
+    localHarnessDispatcherPattern.test(command),
   )
 
   if (dispatcherScript) {
     errors.push(`package script ${dispatcherScript[0]} uses a local effect-harness dispatcher; use effect-harness init output instead.`)
   }
 
-  for (const extension of ['mjs', 'ts']) {
-    if (yield* fs.exists(`${root}/scripts/effect-harness.${extension}`)) {
-      errors.push(`Target repo must not include scripts/effect-harness.${extension}; distribution belongs to effect-harness init.`)
+  for (const file of localHarnessDispatcherFiles) {
+    if (yield* fs.exists(`${root}/${file}`)) {
+      errors.push(`Target repo must not include ${file}; distribution belongs to effect-harness init.`)
     }
   }
 })
