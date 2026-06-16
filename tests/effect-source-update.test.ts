@@ -1,5 +1,5 @@
 import { execFileSync, spawnSync } from 'node:child_process'
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readlinkSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -53,6 +53,8 @@ function makeUpstream(root: string) {
   const upstream = join(root, 'upstream')
   makeGitRepo(upstream)
   writeText(upstream, 'LLMS.md', '# New Effect Guide\n')
+  writeText(upstream, 'AGENTS.md', '# Agent Guide\n')
+  symlinkSync('AGENTS.md', join(upstream, 'CLAUDE.md'))
   writeText(upstream, 'packages/effect/src/Effect.ts', 'export const newEffect = true\n')
   commit(upstream, 'New upstream source')
   return {
@@ -151,6 +153,8 @@ it.effect('source update syncs official source and baseline projections from a s
     assert.equal(manifest.packageBaseline['@effect/tsgo'], newPackages['@effect/tsgo'])
 
     assert.equal(readFileSync(join(harness, 'repos/effect/LLMS.md'), 'utf8'), '# New Effect Guide\n')
+    assert.equal(lstatSync(join(harness, 'repos/effect/CLAUDE.md')).isSymbolicLink(), true)
+    assert.equal(readlinkSync(join(harness, 'repos/effect/CLAUDE.md')), 'AGENTS.md')
     assert.equal(existsSync(join(harness, 'repos/effect/removed.txt')), false)
     assert.equal(existsSync(join(harness, 'repos/effect/.git')), false)
 

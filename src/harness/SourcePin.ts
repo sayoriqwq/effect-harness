@@ -198,7 +198,7 @@ const syncOfficialSource = Effect.fnUntraced(function* (
       if (entry === '.git') {
         continue
       }
-      yield* fs.copy(path.join(checkout, entry), path.join(target, entry), { overwrite: true })
+      yield* commandString('cp', ['-a', path.join(checkout, entry), path.join(target, entry)])
     }
   }))
 })
@@ -313,7 +313,6 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
   const manifestPath = `${root}/repos/effect.subtree.json`
   const manifest = yield* readJson(manifestPath, decodeManifest)
   const errors: Array<string> = []
-  const warnings: Array<string> = []
   const sourcePath = `${root}/${manifest.prefix}`
 
   if (!(yield* fs.exists(sourcePath))) {
@@ -334,7 +333,7 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
     errors.push(`${manifest.prefix} is not recorded as a Git tree entry.`)
   }
   else if (!entry) {
-    warnings.push(`${manifest.prefix} is verified from the working tree because this repo has no HEAD commit yet.`)
+    errors.push(`${manifest.prefix} is not recorded in HEAD; source pins must be committed Git tree entries.`)
   }
 
   if (!(yield* fs.exists(`${root}/${manifest.llmDocument}`))) {
@@ -344,14 +343,14 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
   if (yield* hasGitHead(root)) {
     const split = yield* latestSubtreeSplit(root, manifest.prefix)
     if (!split) {
-      warnings.push(`No git subtree split found for ${manifest.prefix}; manifest split ${manifest.split} is the active source pin.`)
+      errors.push(`Missing git subtree split for ${manifest.prefix}; manifest-only source pins are not accepted.`)
     }
     else if (split !== manifest.split) {
       errors.push(`Subtree split mismatch for ${manifest.prefix}: manifest expects ${manifest.split}, git history has ${split}`)
     }
   }
   else {
-    warnings.push(`No Git history yet; manifest split ${manifest.split} is the active source pin.`)
+    errors.push('Missing Git HEAD; source pins must be verified from committed history.')
   }
 
   const gitmodules = `${root}/.gitmodules`
@@ -368,10 +367,6 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
       yield* Console.error(`- ${error}`)
     }
     return yield* new HarnessError({ message: 'Effect source subtree verification failed.' })
-  }
-
-  for (const warning of warnings) {
-    yield* Console.warn(`Effect source subtree warning: ${warning}`)
   }
 
   yield* Console.log(`Effect source subtree verified: ${manifest.prefix} @ git-subtree-split ${manifest.split}`)

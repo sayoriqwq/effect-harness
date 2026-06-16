@@ -10,8 +10,7 @@
 - `repos/effect.subtree.json` 记录 repository、branch、prefix、split、LLM document path 和 package baseline。
 - `pnpm effect:verify` 检查 source 是否存在、是否误用 gitlink/submodule、LLM doc 是否存在、
   package baseline 是否一致，以及应用代码是否 import 了 vendored source。
-  如果 Git history 里有 subtree trailers，它会和 manifest split 对齐；如果没有 trailers，
-  manifest split 就是当前 active source pin，验证时会打印 warning。
+  Git history 必须包含与 manifest split 对齐的 subtree trailer；manifest-only source pin 不通过验证。
 - `pnpm effect:status` 对比当前 pin、官方 npm dist-tags 和上游 source branch。
 - `pnpm effect:update` 是显式更新入口，会同步 source copy、manifest、workspace baseline
   和 baseline docs/tests。

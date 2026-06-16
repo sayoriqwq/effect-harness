@@ -71,7 +71,7 @@ it.effect('source subtree verifier reads the split from the current HEAD history
   }
 }))
 
-it.effect('source subtree verifier accepts a manifest pin when history has no subtree trailer', () => Effect.sync(() => {
+it.effect('source subtree verifier rejects a manifest pin when history has no subtree trailer', () => Effect.sync(() => {
   const root = tempDir()
   const split = 'c'.repeat(40)
 
@@ -102,9 +102,8 @@ it.effect('source subtree verifier accepts a manifest pin when history has no su
       },
     )
 
-    assert.equal(result.status, 0, result.stderr)
-    assert.match(result.stderr, /manifest split .* is the active source pin/u)
-    assert.match(result.stdout, new RegExp(split, 'u'))
+    assert.notEqual(result.status, 0, result.stdout)
+    assert.match(result.stderr, /Missing git subtree split for repos\/effect; manifest-only source pins are not accepted/u)
   }
   finally {
     rmSync(root, { recursive: true, force: true })
