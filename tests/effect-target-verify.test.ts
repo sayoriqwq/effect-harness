@@ -318,7 +318,7 @@ it.effect('target verifier rejects local effect harness dispatcher scripts', () 
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /local effect-harness dispatcher/u)
-    assert.match(result.stderr, /\.effect-harness\.json commands\.verify/u)
+    assert.match(result.stderr, /\.effect-harness\.json commands do not match a valid harness CLI entry/u)
     assert.match(result.stderr, /effect-harness init/u)
   }
   finally {
