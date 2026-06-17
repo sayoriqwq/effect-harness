@@ -10,6 +10,10 @@
   "packageManager": "pnpm@10.33.2",
   "description": "Shared Effect v4 beta harness for local target projects.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sayoriqwq/effect-harness"
+  },
   "main": "dist/bin/effect-harness.js",
   "bin": {
     "effect-harness": "dist/bin/effect-harness.js"
