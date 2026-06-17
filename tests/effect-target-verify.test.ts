@@ -298,10 +298,15 @@ it.effect('target verifier rejects local effect harness dispatcher scripts', () 
 
     const packageJsonPath = join(target, 'package.json')
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
-    packageJson.scripts['effect:verify'] = 'node scripts/effect-harness-local.mjs verify'
+    packageJson.scripts['effect:verify'] = 'node scripts/effect-harness-local.js verify'
     writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
     mkdirSync(join(target, 'scripts'))
-    writeFileSync(join(target, 'scripts/effect-harness-local.mjs'), '#!/usr/bin/env node\n')
+    writeFileSync(join(target, 'scripts/effect-harness-local.js'), '#!/usr/bin/env node\n')
+
+    const manifestPath = join(target, '.effect-harness.json')
+    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
+    manifest.commands.verify = packageJson.scripts['effect:verify']
+    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
 
     const result = runCli([
       'verify',
@@ -313,6 +318,7 @@ it.effect('target verifier rejects local effect harness dispatcher scripts', () 
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /local effect-harness dispatcher/u)
+    assert.match(result.stderr, /\.effect-harness\.json commands\.verify/u)
     assert.match(result.stderr, /effect-harness init/u)
   }
   finally {

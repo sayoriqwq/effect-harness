@@ -13,8 +13,8 @@ import { assertEffectVitestTests } from './TestContract.ts'
 const agentsStart = '<!-- effect-harness:start -->'
 const agentsEnd = '<!-- effect-harness:end -->'
 const agentsBlockPattern = /<!-- effect-harness:start -->[\s\S]*?<!-- effect-harness:end -->/u
-const localHarnessDispatcherCommandPattern = /\bscripts\/effect-harness(?:-[\w-]+)?\.(?:mjs|ts)\b/u
-const localHarnessDispatcherFilePattern = /^effect-harness(?:-[\w-]+)?\.(?:mjs|ts)$/u
+const localHarnessDispatcherCommandPattern = /\bscripts\/effect-harness(?:-[\w-]+)?\.(?:cjs|cts|js|mjs|mts|ts)\b/u
+const localHarnessDispatcherFilePattern = /^effect-harness(?:-[\w-]+)?\.(?:cjs|cts|js|mjs|mts|ts)$/u
 
 export interface TargetVerifyOptions {
   readonly target: string
@@ -186,6 +186,38 @@ function assertScript(errors: Array<string>, packageJson: PackageJson, name: str
   }
 }
 
+const expectedCliPath = Effect.fnUntraced(function* (harness: string) {
+  const fs = yield* FileSystem.FileSystem
+  const builtCliPath = `${harness}/dist/bin/effect-harness.js`
+  if (yield* fs.exists(builtCliPath)) {
+    return builtCliPath
+  }
+  return `${harness}/bin/effect-harness.ts`
+})
+
+function expectedHarnessCommands(cliPath: string, harness: string): TargetHarnessManifest['commands'] {
+  return {
+    status: `node "${cliPath}" status`,
+    verify: `node "${cliPath}" verify --target .`,
+    init: `node "${cliPath}" init --target . --harness "${harness}"`,
+  }
+}
+
+function assertHarnessScripts(
+  errors: Array<string>,
+  packageJson: PackageJson,
+  commands: TargetHarnessManifest['commands'],
+): void {
+  const status = packageJson.scripts?.['effect:status'] ?? ''
+  const verify = packageJson.scripts?.['effect:verify'] ?? ''
+  if (status !== commands.status) {
+    errors.push(`package script effect:status is ${status}; expected ${commands.status}. Run effect-harness init.`)
+  }
+  if (verify !== commands.verify) {
+    errors.push(`package script effect:verify is ${verify}; expected ${commands.verify}. Run effect-harness init.`)
+  }
+}
+
 function assertTypecheckScript(errors: Array<string>, packageJson: PackageJson): void {
   const typecheck = packageJson.scripts?.typecheck
   if (!typecheck) {
@@ -317,7 +349,7 @@ const assertHarnessManifest = Effect.fnUntraced(function* (
   root: string,
   harness: string,
   manifest: EffectSubtreeManifest,
-  packageJson: PackageJson,
+  expectedCommands: TargetHarnessManifest['commands'],
 ) {
   const manifestPath = `${root}/.effect-harness.json`
   yield* assertRequiredPath(errors, root, '.effect-harness.json', 'file')
@@ -329,9 +361,9 @@ const assertHarnessManifest = Effect.fnUntraced(function* (
 
   assertEqualNumberField(errors, 'schemaVersion', targetManifest.schemaVersion, 1)
   assertEqualField(errors, 'harnessRoot', targetManifest.harnessRoot, harness)
-  assertEqualField(errors, 'commands.status', targetManifest.commands.status, packageJson.scripts?.['effect:status'] ?? '')
-  assertEqualField(errors, 'commands.verify', targetManifest.commands.verify, packageJson.scripts?.['effect:verify'] ?? '')
-  assertEqualField(errors, 'commands.init', targetManifest.commands.init, `${targetManifest.commands.status.replace(/ status$/u, '')} init --target . --harness "${harness}"`)
+  assertEqualField(errors, 'commands.status', targetManifest.commands.status, expectedCommands.status)
+  assertEqualField(errors, 'commands.verify', targetManifest.commands.verify, expectedCommands.verify)
+  assertEqualField(errors, 'commands.init', targetManifest.commands.init, expectedCommands.init)
   assertEqualField(errors, 'routes.harness', targetManifest.routes.harness, `${harness}/HARNESS.md`)
   assertEqualField(errors, 'routes.agentContract', targetManifest.routes.agentContract, `${harness}/harness/index.md`)
   assertEqualField(errors, 'routes.targetContract', targetManifest.routes.targetContract, `${harness}/harness/target-agent-contract.md`)
@@ -447,10 +479,10 @@ const assertRuntimeContract = Effect.fnUntraced(function* (
   root: string,
   harness: string,
   manifest: EffectSubtreeManifest,
-  packageJson: PackageJson,
+  expectedCommands: TargetHarnessManifest['commands'],
 ) {
   const runtimeRoot = `${harness}/harness/runtime/codex`
-  yield* assertHarnessManifest(errors, root, harness, manifest, packageJson)
+  yield* assertHarnessManifest(errors, root, harness, manifest, expectedCommands)
   yield* assertRuntimeDirectory(errors, root, harness, runtimeRoot, 'skills')
   yield* assertRuntimeDirectory(errors, root, harness, runtimeRoot, 'agents')
   yield* assertRequiredPath(errors, root, '.codex/effect-feedback', 'directory')
@@ -492,10 +524,14 @@ export const verifyTarget = Effect.fnUntraced(function* (options: TargetVerifyOp
       assertScript(errors, packageJson, script)
     }
 
+    const cliPath = yield* expectedCliPath(options.harness)
+    const commands = expectedHarnessCommands(cliPath, options.harness)
+    assertHarnessScripts(errors, packageJson, commands)
+
     yield* assertNoLocalHarnessDispatcher(errors, options.target, packageJson)
     yield* assertTsgoConfig(errors, options.target)
     yield* assertEffectVitestTests(errors, options.target, ['src', 'tests'], { requireEffectApi: true })
-    yield* assertRuntimeContract(errors, options.target, options.harness, manifest, packageJson)
+    yield* assertRuntimeContract(errors, options.target, options.harness, manifest, commands)
   }
 
   if (errors.length > 0) {
