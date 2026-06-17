@@ -127,8 +127,8 @@ const updatePackageJson = Effect.fnUntraced(function* (
   setDependency(packageJson, 'devDependencies', '@typescript/native-preview', baseline['@typescript/native-preview'])
 
   const cliPath = yield* resolveCliPath(harness)
-  ensureScript(packageJson, 'effect:status', `node "${cliPath}" status --harness "${harness}"`)
-  ensureScript(packageJson, 'effect:verify', `node "${cliPath}" verify --target . --harness "${harness}"`)
+  ensureScript(packageJson, 'effect:status', `node "${cliPath}" status`)
+  ensureScript(packageJson, 'effect:verify', `node "${cliPath}" verify --target .`)
 
   ensureTypecheckScript(packageJson)
   appendEffectVerify(packageJson)
@@ -242,8 +242,21 @@ const writeHarnessManifest = Effect.fnUntraced(function* (
   changes: Array<string>,
 ) {
   const path = yield* Path.Path
+  const cliPath = yield* resolveCliPath(harness)
   yield* writeManagedFile(path.join(target, '.effect-harness.json'), formatJson({
+    schemaVersion: 1,
     harnessRoot: harness,
+    commands: {
+      status: `node "${cliPath}" status`,
+      verify: `node "${cliPath}" verify --target .`,
+      init: `node "${cliPath}" init --target . --harness "${harness}"`,
+    },
+    routes: {
+      harness: path.join(harness, 'HARNESS.md'),
+      agentContract: path.join(harness, 'harness/index.md'),
+      targetContract: path.join(harness, 'harness/target-agent-contract.md'),
+      officialGuide: path.join(harness, manifest.llmDocument),
+    },
     source: {
       repository: manifest.repository,
       branch: manifest.branch,

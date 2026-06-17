@@ -113,14 +113,17 @@ boundaries remain strict `soft` constraints.
 
 7. For actual setup or update, run the owning harness command without
    `--dry-run`.
-8. If package or lockfile surfaces changed, run from the target:
+8. Read the target `.effect-harness.json` manifest. Use it to confirm the
+   managed `commands`, `routes`, source pin, and package baseline; do not
+   reconstruct internal harness paths by hand after init.
+9. If package or lockfile surfaces changed, run from the target:
 
    ```bash
    pnpm install
    pnpm exec effect-tsgo patch
    ```
 
-9. Verify from the target:
+10. Verify from the target using target scripts:
 
    ```bash
    pnpm effect:status
@@ -128,7 +131,7 @@ boundaries remain strict `soft` constraints.
    pnpm verify
    ```
 
-10. Report changed files, target classification, whether `effect:status` is
+11. Report changed files, target classification, whether `effect:status` is
     current, verifier results, and any missing `effect-harness` CLI/sync
     mechanism.
 
@@ -142,6 +145,7 @@ Before treating output as valid `setup-effect-area`, check:
   `blocked-by-harness`;
 - Craft skill source and `effect-harness` CLI/runtime ownership are separated;
 - setup or update dry-run happened before target writes;
+- `.effect-harness.json` was inspected after setup/update;
 - no official Effect source subtree update happened for target setup;
 - target receives managed runtime output, not harness-internal skill source;
 - hard constraints are backed by CLI, package script, git, or verifier output;

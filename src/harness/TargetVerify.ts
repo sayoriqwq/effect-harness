@@ -22,7 +22,19 @@ export interface TargetVerifyOptions {
 }
 
 interface TargetHarnessManifest {
+  readonly schemaVersion: number
   readonly harnessRoot: string
+  readonly commands: {
+    readonly status: string
+    readonly verify: string
+    readonly init: string
+  }
+  readonly routes: {
+    readonly harness: string
+    readonly agentContract: string
+    readonly targetContract: string
+    readonly officialGuide: string
+  }
   readonly source: {
     readonly repository: string
     readonly branch: string
@@ -58,6 +70,13 @@ function decodeStringRecord(record: Record<string, unknown>, key: string, source
   return Effect.succeed(result)
 }
 
+function decodeNumberField(record: Record<string, unknown>, key: string, source: string): Effect.Effect<number, HarnessError> {
+  const value = record[key]
+  return typeof value === 'number'
+    ? Effect.succeed(value)
+    : Effect.fail(new HarnessError({ message: `${source} must contain number field: ${key}` }))
+}
+
 function decodeTargetHarnessManifest(value: unknown, source: string): Effect.Effect<TargetHarnessManifest, HarnessError> {
   return Effect.gen(function* () {
     if (!isRecord(value)) {
@@ -68,9 +87,29 @@ function decodeTargetHarnessManifest(value: unknown, source: string): Effect.Eff
     if (!isRecord(sourceValue)) {
       return yield* new HarnessError({ message: `${source} must contain object field: source` })
     }
+    const commandsValue = value.commands
+    if (!isRecord(commandsValue)) {
+      return yield* new HarnessError({ message: `${source} must contain object field: commands` })
+    }
+    const routesValue = value.routes
+    if (!isRecord(routesValue)) {
+      return yield* new HarnessError({ message: `${source} must contain object field: routes` })
+    }
 
     return {
+      schemaVersion: yield* decodeNumberField(value, 'schemaVersion', source),
       harnessRoot: yield* decodeStringField(value, 'harnessRoot', source),
+      commands: {
+        status: yield* decodeStringField(commandsValue, 'status', `${source}.commands`),
+        verify: yield* decodeStringField(commandsValue, 'verify', `${source}.commands`),
+        init: yield* decodeStringField(commandsValue, 'init', `${source}.commands`),
+      },
+      routes: {
+        harness: yield* decodeStringField(routesValue, 'harness', `${source}.routes`),
+        agentContract: yield* decodeStringField(routesValue, 'agentContract', `${source}.routes`),
+        targetContract: yield* decodeStringField(routesValue, 'targetContract', `${source}.routes`),
+        officialGuide: yield* decodeStringField(routesValue, 'officialGuide', `${source}.routes`),
+      },
       source: {
         repository: yield* decodeStringField(sourceValue, 'repository', `${source}.source`),
         branch: yield* decodeStringField(sourceValue, 'branch', `${source}.source`),
@@ -267,11 +306,18 @@ function assertEqualField(errors: Array<string>, field: string, actual: string, 
   }
 }
 
+function assertEqualNumberField(errors: Array<string>, field: string, actual: number, expected: number): void {
+  if (actual !== expected) {
+    errors.push(`.effect-harness.json ${field} is ${actual}; expected ${expected}. Run effect-harness init.`)
+  }
+}
+
 const assertHarnessManifest = Effect.fnUntraced(function* (
   errors: Array<string>,
   root: string,
   harness: string,
   manifest: EffectSubtreeManifest,
+  packageJson: PackageJson,
 ) {
   const manifestPath = `${root}/.effect-harness.json`
   yield* assertRequiredPath(errors, root, '.effect-harness.json', 'file')
@@ -281,7 +327,15 @@ const assertHarnessManifest = Effect.fnUntraced(function* (
 
   const targetManifest = yield* readJson(manifestPath, decodeTargetHarnessManifest)
 
+  assertEqualNumberField(errors, 'schemaVersion', targetManifest.schemaVersion, 1)
   assertEqualField(errors, 'harnessRoot', targetManifest.harnessRoot, harness)
+  assertEqualField(errors, 'commands.status', targetManifest.commands.status, packageJson.scripts?.['effect:status'] ?? '')
+  assertEqualField(errors, 'commands.verify', targetManifest.commands.verify, packageJson.scripts?.['effect:verify'] ?? '')
+  assertEqualField(errors, 'commands.init', targetManifest.commands.init, `${targetManifest.commands.status.replace(/ status$/u, '')} init --target . --harness "${harness}"`)
+  assertEqualField(errors, 'routes.harness', targetManifest.routes.harness, `${harness}/HARNESS.md`)
+  assertEqualField(errors, 'routes.agentContract', targetManifest.routes.agentContract, `${harness}/harness/index.md`)
+  assertEqualField(errors, 'routes.targetContract', targetManifest.routes.targetContract, `${harness}/harness/target-agent-contract.md`)
+  assertEqualField(errors, 'routes.officialGuide', targetManifest.routes.officialGuide, `${harness}/${manifest.llmDocument}`)
   assertEqualField(errors, 'source.repository', targetManifest.source.repository, manifest.repository)
   assertEqualField(errors, 'source.branch', targetManifest.source.branch, manifest.branch)
   assertEqualField(errors, 'source.split', targetManifest.source.split, manifest.split)
@@ -393,9 +447,10 @@ const assertRuntimeContract = Effect.fnUntraced(function* (
   root: string,
   harness: string,
   manifest: EffectSubtreeManifest,
+  packageJson: PackageJson,
 ) {
   const runtimeRoot = `${harness}/harness/runtime/codex`
-  yield* assertHarnessManifest(errors, root, harness, manifest)
+  yield* assertHarnessManifest(errors, root, harness, manifest, packageJson)
   yield* assertRuntimeDirectory(errors, root, harness, runtimeRoot, 'skills')
   yield* assertRuntimeDirectory(errors, root, harness, runtimeRoot, 'agents')
   yield* assertRequiredPath(errors, root, '.codex/effect-feedback', 'directory')
@@ -440,7 +495,7 @@ export const verifyTarget = Effect.fnUntraced(function* (options: TargetVerifyOp
     yield* assertNoLocalHarnessDispatcher(errors, options.target, packageJson)
     yield* assertTsgoConfig(errors, options.target)
     yield* assertEffectVitestTests(errors, options.target, ['src', 'tests'], { requireEffectApi: true })
-    yield* assertRuntimeContract(errors, options.target, options.harness, manifest)
+    yield* assertRuntimeContract(errors, options.target, options.harness, manifest, packageJson)
   }
 
   if (errors.length > 0) {

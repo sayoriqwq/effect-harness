@@ -38,6 +38,24 @@ function readJson(path: string) {
   }
 }
 
+function readHarnessManifest(path: string) {
+  return JSON.parse(readFileSync(path, 'utf8')) as {
+    readonly schemaVersion: number
+    readonly harnessRoot: string
+    readonly commands: {
+      readonly status: string
+      readonly verify: string
+      readonly init: string
+    }
+    readonly routes: {
+      readonly harness: string
+      readonly agentContract: string
+      readonly targetContract: string
+      readonly officialGuide: string
+    }
+  }
+}
+
 function makeTarget(root: string) {
   const target = join(root, 'target')
   mkdirSync(target)
@@ -81,6 +99,8 @@ it.effect('effect-harness init installs consumer runtime and target contract', (
     assert.equal(packageJson.scripts['typecheck:tsc'], 'tsc --noEmit')
     assert.match(packageJson.scripts['effect:status']!, /effect-harness\.(?:ts|js)" status/u)
     assert.match(packageJson.scripts['effect:verify']!, /effect-harness\.(?:ts|js)" verify/u)
+    assert.notMatch(packageJson.scripts['effect:status']!, /--harness/u)
+    assert.notMatch(packageJson.scripts['effect:verify']!, /--harness/u)
     assert.match(packageJson.scripts.verify!, /pnpm effect:verify/u)
 
     const tsconfig = readJson(join(target, 'tsconfig.json'))
@@ -93,10 +113,26 @@ it.effect('effect-harness init installs consumer runtime and target contract', (
     assert.equal(existsSync(join(target, '.codex/agents/effect-worker.md')), true)
     assert.equal(existsSync(join(target, '.codex/effect-feedback')), true)
     assert.equal(existsSync(join(target, '.effect-harness.json')), true)
+    const harnessManifest = readHarnessManifest(join(target, '.effect-harness.json'))
+    assert.equal(harnessManifest.schemaVersion, 1)
+    assert.equal(harnessManifest.harnessRoot, repoRoot)
+    assert.equal(harnessManifest.commands.status, packageJson.scripts['effect:status'])
+    assert.equal(harnessManifest.commands.verify, packageJson.scripts['effect:verify'])
+    assert.equal(harnessManifest.commands.init, `${packageJson.scripts['effect:status']!.replace(/ status$/u, '')} init --target . --harness "${repoRoot}"`)
+    assert.equal(harnessManifest.routes.harness, join(repoRoot, 'HARNESS.md'))
+    assert.equal(harnessManifest.routes.agentContract, join(repoRoot, 'harness/index.md'))
+    assert.equal(harnessManifest.routes.targetContract, join(repoRoot, 'harness/target-agent-contract.md'))
+    assert.equal(harnessManifest.routes.officialGuide, join(repoRoot, 'repos/effect/LLMS.md'))
     assert.match(readFileSync(join(target, 'AGENTS.md'), 'utf8'), /effect-harness:start/u)
 
     const verify = runCli(['verify', '--target', target, '--harness', repoRoot])
     assert.equal(verify.status, 0, verify.stderr)
+
+    const targetVerify = spawnSync('pnpm', ['effect:verify'], {
+      cwd: target,
+      encoding: 'utf8',
+    })
+    assert.equal(targetVerify.status, 0, targetVerify.stderr)
   }
   finally {
     rmSync(root, { recursive: true, force: true })

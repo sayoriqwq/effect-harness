@@ -45,11 +45,14 @@ effect-harness init
    ```json
    {
      "scripts": {
-       "effect:status": "node \"<harness-root>/dist/bin/effect-harness.js\" status --harness \"<harness-root>\"",
-       "effect:verify": "node \"<harness-root>/dist/bin/effect-harness.js\" verify --target . --harness \"<harness-root>\""
+       "effect:status": "node \"<harness-root>/dist/bin/effect-harness.js\" status",
+       "effect:verify": "node \"<harness-root>/dist/bin/effect-harness.js\" verify --target ."
      }
    }
    ```
+
+   实际 path 由 CLI 根据 build output 写入。target scripts 不需要重复 `--harness`；
+   CLI 从自身入口解析 harness root。
 
    如果 target repo 已经有 `verify`，把 `pnpm effect:verify` 接到现有验证链尾部；不要覆盖业务验证。
    如果没有 `verify`，新增：
@@ -62,7 +65,17 @@ effect-harness init
    }
    ```
 
-6. 确保 primary typecheck 是 patched `tsgo --noEmit`：
+6. 写入 `.effect-harness.json`。它是 target 上给 agent 和 verifier 读的 harness manifest，
+   必须记录：
+
+   - `schemaVersion`
+   - `harnessRoot`
+   - `commands.status` / `commands.verify` / `commands.init`
+   - `routes.harness` / `routes.agentContract` / `routes.targetContract` / `routes.officialGuide`
+   - `source`
+   - `packageBaseline`
+
+7. 确保 primary typecheck 是 patched `tsgo --noEmit`：
 
    ```json
    {
@@ -76,7 +89,7 @@ effect-harness init
    如果 target repo 已有 `typecheck`，先判断它是否必须保留。需要保留时改名为 comparator，
    例如 `typecheck:tsc`，并让 `typecheck` 指向 `tsgo --noEmit`。
 
-7. 确保测试使用 Effect-aware Vitest：
+8. 确保测试使用 Effect-aware Vitest：
 
    ```ts
    import { assert, describe, it } from '@effect/vitest'
@@ -93,7 +106,7 @@ effect-harness init
    不从 `node:test` 或 plain `vitest` import。Effect-native tests 使用 `it.effect`、`it.live`
    或 `layer(...)`；纯同步格式化测试可以保留普通 `it(...)`，但仍从 `@effect/vitest` import。
 
-8. 确保 `tsconfig.json` 配置 `@effect/language-service`：
+9. 确保 `tsconfig.json` 配置 `@effect/language-service`：
 
    ```json
    {
@@ -114,10 +127,10 @@ effect-harness init
 
    保留 target repo 已有 compiler options，只合并 plugin。
 
-9. 把 `harness/runtime/codex/skills/` 和 `harness/runtime/codex/agents/` 投递到 target repo 的 `.codex/`。
+10. 把 `harness/runtime/codex/skills/` 和 `harness/runtime/codex/agents/` 投递到 target repo 的 `.codex/`。
    不要投递本仓库 `.codex/skills/`。
 
-10. 给 target repo 的 `AGENTS.md` 增加简短路由。如果没有 `AGENTS.md`，创建一个最小文件：
+11. 给 target repo 的 `AGENTS.md` 增加简短路由。如果没有 `AGENTS.md`，创建一个最小文件：
 
    ```md
    # Effect Harness
@@ -134,14 +147,14 @@ effect-harness init
    Use `pnpm effect:status`, `pnpm effect:verify`, and `pnpm verify` before completion.
    ```
 
-11. 安装并 patch：
+12. 安装并 patch：
 
     ```bash
     pnpm install
     pnpm exec effect-tsgo patch
     ```
 
-12. 验证：
+13. 验证：
 
     ```bash
     pnpm effect:status

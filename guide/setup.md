@@ -26,6 +26,8 @@ pnpm verify
 - `AGENTS.md` 里的 harness route
 
 这些是 target runtime。目标仓库不需要复制本仓库的 `.codex/skills/`。
+`.effect-harness.json` 记录 harness root、可执行 commands、route、source pin 和 package baseline，
+agent 后续应先读它，再运行 target scripts。
 
 ## 从哪里补信息
 

@@ -172,6 +172,7 @@ it.effect('target verifier rejects stale effect harness manifest content', () =>
     const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
     manifest.source.split = 'stale-source-pin'
     manifest.packageBaseline.effect = '4.0.0-beta.0'
+    manifest.commands.verify = 'effect-harness verify --target .'
     writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
 
     const result = runCli([
@@ -185,6 +186,7 @@ it.effect('target verifier rejects stale effect harness manifest content', () =>
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /\.effect-harness\.json source\.split is stale-source-pin/u)
     assert.match(result.stderr, /\.effect-harness\.json packageBaseline\.effect is 4\.0\.0-beta\.0/u)
+    assert.match(result.stderr, /\.effect-harness\.json commands\.verify is effect-harness verify --target \.; expected/u)
   }
   finally {
     rmSync(root, { recursive: true, force: true })
