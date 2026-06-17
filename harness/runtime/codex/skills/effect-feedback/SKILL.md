@@ -1,11 +1,11 @@
 ---
 name: effect-feedback
-description: Capture target-repo Effect practice feedback for the linked effect-harness. Use when this project hits a recurring Effect pitfall, @effect/tsgo gap, guardrail gap, verifier mismatch, or local workaround that the pinned official guide does not already cover.
+description: Capture reusable Effect practice feedback for the linked effect-harness. Use when this project hits a recurring Effect pitfall, @effect/tsgo gap, guardrail gap, verifier mismatch, or local workaround that the pinned official source does not already cover.
 ---
 
 # Effect Feedback
 
-Use this skill when this target repo finds a reusable Effect practice issue.
+Use this skill when this repo finds a reusable Effect practice issue.
 
 ## Workflow
 
@@ -16,15 +16,16 @@ Use this skill when this target repo finds a reusable Effect practice issue.
    - `__EFFECT_HARNESS_ROOT__/repos/effect/migration/v3-to-v4.md`
    - `__EFFECT_HARNESS_ROOT__/repos/effect/`
    - patched `tsgo --noEmit`
-3. If official guidance already covers it, route to the official source and do not create feedback.
+3. If official source already covers it, route to the official source and do not create feedback.
 4. If the gap is reusable and business-neutral, write a local feedback entry in this repo under
    `.codex/effect-feedback/`.
 5. Ask the maintainer whether to upstream the entry to
-   `__EFFECT_HARNESS_ROOT__/docs/harness-feedback/index.md`.
+   `__EFFECT_HARNESS_ROOT__/harness/feedback/index.md`.
 
 ## Local Entry
 
 This is the target-local feedback format from effect-harness, not an official Effect format.
+Promoted entries must land as a route, runtime contract, guardrail, verifier, or harness skill update.
 
 ```markdown
 ## <issue>

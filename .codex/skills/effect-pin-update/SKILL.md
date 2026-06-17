@@ -30,13 +30,15 @@ description: Update the Effect harness source pin and package baseline. 适用�
 5. 同步 harness metadata：
    - 更新 `repos/effect.subtree.json` split 和 `packageBaseline`
    - 更新 `pnpm-workspace.yaml` catalog、`overrides.@effect/platform-node-shared`、`trustPolicyExclude`
-   - 更新 `README.md`、`AGENTS.md`、`docs/effect-patterns/index.md` 的 baseline 和 split
-   - 官方 guide surface 变化时，更新 `docs/effect-patterns/effect-v4-source-reference.md` 和
-     `docs/effect-official-harness-inventory.md`
+   - 更新 `README.md`、`AGENTS.md`、`harness/index.md` 的 baseline 和 split
+   - 官方 guide surface 变化时，更新 `harness/source.md` 和
+     `harness/official-inventory.md`
    - 更新断言 pinned version 的 tests；刻意模拟旧 baseline 的 drift cases 保留
-6. 刷新 dependencies：
+6. 形成 source pin commit：
    - run `pnpm install`
    - pnpm 报 `ERR_PNPM_VERIFY_DEPS_BEFORE_RUN` 时再 run `pnpm install`
+   - review the source pin, baseline, docs, tests, and lockfile diff
+   - commit with matching `git-subtree-dir` / `git-subtree-split` trailers
 7. Verify：
    - run `pnpm verify`
    - run `pnpm effect:status`，要求所有 row 都是 `current`
@@ -44,7 +46,7 @@ description: Update the Effect harness source pin and package baseline. 适用�
 ## Guardrails
 
 - 不用 stale local docs 选择版本；先确认 live official tags。
-- 不假设 `pnpm effect:update` 一定可用；这个 repo 可能缺 subtree trailers。
+- 不接受 manifest-only source pin；git history 必须有 matching subtree trailer。
 - 不自动 stage 或 commit，除非用户要求。
 - `repos/effect/`、`repos/effect.subtree.json`、`pnpm-workspace.yaml`、`pnpm-lock.yaml` 和
   baseline docs 要一起保持可审核。

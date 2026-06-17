@@ -91,6 +91,16 @@ function ensureTypecheckScript(packageJson: PackageJson): void {
   ensureScript(packageJson, 'typecheck', 'tsgo --noEmit')
 }
 
+const resolveCliPath = Effect.fnUntraced(function* (harness: string) {
+  const path = yield* Path.Path
+  const fs = yield* FileSystem.FileSystem
+  const builtCliPath = path.join(harness, 'dist/bin/effect-harness.js')
+  if (yield* fs.exists(builtCliPath)) {
+    return builtCliPath
+  }
+  return path.join(harness, 'bin/effect-harness.ts')
+})
+
 const updatePackageJson = Effect.fnUntraced(function* (
   target: string,
   harness: string,
@@ -116,9 +126,9 @@ const updatePackageJson = Effect.fnUntraced(function* (
   setDependency(packageJson, 'devDependencies', '@effect/language-service', baseline['@effect/language-service'])
   setDependency(packageJson, 'devDependencies', '@typescript/native-preview', baseline['@typescript/native-preview'])
 
-  const binPath = path.join(harness, 'bin/effect-harness.ts')
-  ensureScript(packageJson, 'effect:status', `node "${binPath}" status --harness "${harness}"`)
-  ensureScript(packageJson, 'effect:verify', `node "${binPath}" verify --target . --harness "${harness}"`)
+  const cliPath = yield* resolveCliPath(harness)
+  ensureScript(packageJson, 'effect:status', `node "${cliPath}" status --harness "${harness}"`)
+  ensureScript(packageJson, 'effect:verify', `node "${cliPath}" verify --target . --harness "${harness}"`)
 
   ensureTypecheckScript(packageJson)
   appendEffectVerify(packageJson)
@@ -247,7 +257,7 @@ export const initializeTarget = Effect.fnUntraced(function* (options: InitOption
   const fs = yield* FileSystem.FileSystem
   const path = yield* Path.Path
   const manifestPath = path.join(options.harness, 'repos/effect.subtree.json')
-  const runtimeRoot = path.join(options.harness, 'runtime/codex')
+  const runtimeRoot = path.join(options.harness, 'harness/runtime/codex')
 
   if (!(yield* fs.exists(manifestPath))) {
     return yield* new HarnessError({ message: `Missing harness manifest: ${manifestPath}` })

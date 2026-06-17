@@ -84,7 +84,7 @@ boundaries remain strict `soft` constraints.
 - Do not define Craft skill semantics in `effect-harness`; update Craft first,
   then sync managed copies through an explicit mechanism.
 - Do not copy the harness repo's internal skills into a target repo. Target
-  repos receive only `runtime/codex` output from `effect-harness init`.
+  repos receive only `harness/runtime/codex` output from `effect-harness init`.
 - Do not add target-local effect-harness dispatcher scripts.
 - Do not hand-write Effect baseline versions; read them from
   `<harness-root>/repos/effect.subtree.json` or let the harness CLI write them.
@@ -98,8 +98,8 @@ boundaries remain strict `soft` constraints.
    root is missing or ambiguous.
 2. Preflight both repos with `git -C "$ROOT" status --short`; preserve dirty
    user work.
-3. Read harness authority: `README.md`, `docs/target-agent-guide.md`, and
-   `repos/effect.subtree.json`.
+3. Read harness authority: `HARNESS.md`, `harness/target-agent-contract.md`,
+   and `repos/effect.subtree.json`.
 4. Read target shape: `AGENTS.md`, `package.json`, `pnpm-workspace.yaml`,
    `tsconfig.json`, and local dispatcher scripts.
 5. Classify the target as `fresh-setup`, `target-update`, or
@@ -108,7 +108,7 @@ boundaries remain strict `soft` constraints.
 6. Run setup or update dry-run before writing:
 
    ```bash
-   node "$HARNESS_ROOT/bin/effect-harness.ts" init --target "$TARGET_ROOT" --harness "$HARNESS_ROOT" --dry-run
+   effect-harness init --target "$TARGET_ROOT" --harness "$HARNESS_ROOT" --dry-run
    ```
 
 7. For actual setup or update, run the owning harness command without

@@ -319,7 +319,7 @@ const assertAgentsRoute = Effect.fnUntraced(function* (
     .trim()
   const expected = `${agentsStart}\n${fragment}\n${agentsEnd}`
   if (match[0] !== expected) {
-    errors.push('AGENTS.md managed effect-harness route block does not match runtime/codex/AGENTS.fragment.md. Run effect-harness init.')
+    errors.push('AGENTS.md managed effect-harness route block does not match harness/runtime/codex/AGENTS.fragment.md. Run effect-harness init.')
   }
 })
 
@@ -394,7 +394,7 @@ const assertRuntimeContract = Effect.fnUntraced(function* (
   harness: string,
   manifest: EffectSubtreeManifest,
 ) {
-  const runtimeRoot = `${harness}/runtime/codex`
+  const runtimeRoot = `${harness}/harness/runtime/codex`
   yield* assertHarnessManifest(errors, root, harness, manifest)
   yield* assertRuntimeDirectory(errors, root, harness, runtimeRoot, 'skills')
   yield* assertRuntimeDirectory(errors, root, harness, runtimeRoot, 'agents')

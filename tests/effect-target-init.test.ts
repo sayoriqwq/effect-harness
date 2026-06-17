@@ -79,8 +79,8 @@ it.effect('effect-harness init installs consumer runtime and target contract', (
     assert.equal(packageJson.devDependencies['@typescript/native-preview'], '7.0.0-dev.20260615.1')
     assert.equal(packageJson.scripts.typecheck, 'tsgo --noEmit')
     assert.equal(packageJson.scripts['typecheck:tsc'], 'tsc --noEmit')
-    assert.match(packageJson.scripts['effect:status']!, /effect-harness\.ts" status/u)
-    assert.match(packageJson.scripts['effect:verify']!, /effect-harness\.ts" verify/u)
+    assert.match(packageJson.scripts['effect:status']!, /effect-harness\.(?:ts|js)" status/u)
+    assert.match(packageJson.scripts['effect:verify']!, /effect-harness\.(?:ts|js)" verify/u)
     assert.match(packageJson.scripts.verify!, /pnpm effect:verify/u)
 
     const tsconfig = readJson(join(target, 'tsconfig.json'))
@@ -101,6 +101,21 @@ it.effect('effect-harness init installs consumer runtime and target contract', (
   finally {
     rmSync(root, { recursive: true, force: true })
   }
+}))
+
+it.effect('built cli resolves the harness root from the dist entrypoint', () => Effect.sync(() => {
+  const build = spawnSync('pnpm', ['build'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  })
+  assert.equal(build.status, 0, build.stderr)
+
+  const result = spawnSync(process.execPath, [join(repoRoot, 'dist/bin/effect-harness.js'), 'source-verify'], {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  })
+  assert.equal(result.status, 0, result.stderr)
+  assert.match(result.stdout, /Effect source subtree verified/u)
 }))
 
 it.effect('effect-harness init preserves target catalog dependencies and updates catalog versions', () => Effect.sync(() => {

@@ -15,13 +15,14 @@
     "effect-harness": "dist/bin/effect-harness.js"
   },
   "files": [
-    ".codex",
+    "HARNESS.md",
     "README.md",
     "dist",
     "docs",
+    "guide",
+    "harness",
     "repos",
-    "repos/effect.subtree.json",
-    "runtime"
+    "repos/effect.subtree.json"
   ],
   "engines": {
     "node": ">=22.22.1"

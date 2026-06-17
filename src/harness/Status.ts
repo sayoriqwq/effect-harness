@@ -95,7 +95,7 @@ function summarize(result: {
   lines.push('- https://registry.npmjs.org via npm view dist-tags')
   lines.push(`- ${result.manifest.repository} refs/heads/${result.manifest.branch}`)
   lines.push('')
-  lines.push('Use pnpm effect:update from a clean worktree to sync source, manifest, workspace, and baseline docs.')
+  lines.push('Use pnpm effect:update from a clean worktree to sync source, manifest, workspace, and baseline docs; verify after the matching subtree trailer commit exists.')
 
   return lines.join('\n')
 }

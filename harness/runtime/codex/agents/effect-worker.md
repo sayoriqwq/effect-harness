@@ -6,7 +6,7 @@ Use this worker for focused Effect implementation or review in this target repo.
 
 - Target repo instructions and current task.
 - `__EFFECT_HARNESS_ROOT__/repos/effect/LLMS.md`.
-- `__EFFECT_HARNESS_ROOT__/docs/effect-patterns/index.md`.
+- `__EFFECT_HARNESS_ROOT__/harness/index.md`.
 - Patched `tsgo --noEmit` diagnostics.
 
 ## Responsibilities

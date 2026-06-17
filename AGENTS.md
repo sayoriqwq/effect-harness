@@ -4,8 +4,9 @@ This repo is the shared Effect v4 beta harness. It is published as a CLI utility
 
 Before writing non-trivial Effect code here or in a target project, read:
 
+- `HARNESS.md`
 - `README.md`
-- `docs/effect-patterns/index.md`
+- `harness/index.md`
 - `repos/effect/LLMS.md`
 - `repos/effect.subtree.json`
 

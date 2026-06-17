@@ -13,7 +13,7 @@ Use this skill for Effect code in this target repo.
 2. `__EFFECT_HARNESS_ROOT__/repos/effect/LLMS.md`.
 3. `__EFFECT_HARNESS_ROOT__/repos/effect/ai-docs/src/` for examples.
 4. `__EFFECT_HARNESS_ROOT__/repos/effect/migration/v3-to-v4.md` for migration.
-5. `__EFFECT_HARNESS_ROOT__/docs/effect-patterns/index.md` for harness routes and boundaries.
+5. `__EFFECT_HARNESS_ROOT__/harness/index.md` for harness routes and boundaries.
 6. Patched `tsgo --noEmit` diagnostics.
 
 ## Rules

@@ -2,4 +2,4 @@
 
 旧路径兼容。读取：
 
-- `harness/exposure.md`
+- `harness/target-agent-contract.md`

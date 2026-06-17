@@ -91,7 +91,7 @@ it.effect('source subtree verifier rejects a manifest pin when history has no su
       llmDocument: 'repos/effect/LLMS.md',
       packageBaseline: {},
     }, null, 2)}\n`)
-    commit(root, 'Import vendored source without subtree trailer')
+    commit(root, 'Import pinned source without subtree trailer')
 
     const result = spawnSync(
       process.execPath,

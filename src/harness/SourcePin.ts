@@ -20,9 +20,9 @@ export interface UpdateSourcePinOptions {
 const baselineProjectionFiles = [
   'AGENTS.md',
   'README.md',
-  'docs/effect-patterns/index.md',
-  'docs/effect-patterns/effect-v4-source-reference.md',
-  'docs/effect-official-harness-inventory.md',
+  'harness/index.md',
+  'harness/source.md',
+  'harness/official-inventory.md',
   'tests/effect-target-init.test.ts',
   'tests/effect-target-verify.test.ts',
 ] as const
@@ -316,7 +316,7 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
   const sourcePath = `${root}/${manifest.prefix}`
 
   if (!(yield* fs.exists(sourcePath))) {
-    errors.push(`Missing vendored source directory: ${manifest.prefix}`)
+    errors.push(`Missing pinned source directory: ${manifest.prefix}`)
   }
   else {
     const sourceStat = yield* fs.stat(sourcePath)
@@ -409,5 +409,5 @@ export const updateSourcePin = Effect.fnUntraced(function* (options: UpdateSourc
     yield* Console.log(`${options.dryRun ? 'Would ' : ''}${change}`)
   }
   yield* Console.log(`${options.dryRun ? 'Dry run complete' : 'Effect source pin updated'}: ${manifest.split} -> ${sourceHead}`)
-  yield* Console.log('Run pnpm install, pnpm verify, and pnpm effect:status before committing the update.')
+  yield* Console.log('Run pnpm install, review the source pin diff, commit with matching subtree trailers, then run pnpm verify and pnpm effect:status.')
 })

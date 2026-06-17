@@ -5,7 +5,7 @@ This repo uses `__EFFECT_HARNESS_ROOT__` as its Effect harness root.
 Before writing non-trivial Effect code, read:
 
 - `__EFFECT_HARNESS_ROOT__/repos/effect/LLMS.md`
-- `__EFFECT_HARNESS_ROOT__/docs/effect-patterns/index.md`
+- `__EFFECT_HARNESS_ROOT__/harness/index.md`
 - `__EFFECT_HARNESS_ROOT__/repos/effect.subtree.json`
 
 Use:

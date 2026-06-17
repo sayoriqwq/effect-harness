@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import { readFileSync } from 'node:fs'
-import { dirname } from 'node:path'
+import { existsSync, readFileSync } from 'node:fs'
+import { dirname, join } from 'node:path'
 import process from 'node:process'
 import { fileURLToPath } from 'node:url'
 import * as NodeRuntime from '@effect/platform-node/NodeRuntime'
@@ -9,8 +9,8 @@ import * as Effect from 'effect/Effect'
 import { runCli } from '../src/cli/Main.ts'
 import { errorMessage } from '../src/harness/Errors.ts'
 
-const harnessRoot = dirname(dirname(fileURLToPath(import.meta.url)))
-const packageVersion = readPackageVersion(new URL('../package.json', import.meta.url))
+const harnessRoot = resolveHarnessRoot(fileURLToPath(import.meta.url))
+const packageVersion = readPackageVersion(join(harnessRoot, 'package.json'))
 
 runCli({
   harnessRoot,
@@ -24,9 +24,23 @@ runCli({
   NodeRuntime.runMain,
 )
 
-function readPackageVersion(packageJsonUrl: URL) {
+function resolveHarnessRoot(entrypoint: string) {
+  const candidate = dirname(dirname(entrypoint))
+  if (existsSync(join(candidate, 'repos/effect.subtree.json'))) {
+    return candidate
+  }
+
+  const packageRoot = dirname(candidate)
+  if (existsSync(join(packageRoot, 'repos/effect.subtree.json'))) {
+    return packageRoot
+  }
+
+  return candidate
+}
+
+function readPackageVersion(packageJsonPath: string) {
   try {
-    const packageJson = JSON.parse(readFileSync(packageJsonUrl, 'utf8'))
+    const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
     return packageJson.version ?? '0.0.0'
   }
   catch {
