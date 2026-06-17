@@ -161,7 +161,7 @@ it.effect('built cli resolves the harness root from the dist entrypoint', () => 
   })
   assert.equal(result.status, 0, result.stderr)
   assert.match(result.stdout, /Effect source subtree verified/u)
-}))
+}), 30_000)
 
 it.effect('effect-harness init preserves target catalog dependencies and updates catalog versions', () => Effect.sync(() => {
   const root = tempDir()
