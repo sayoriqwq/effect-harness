@@ -14,6 +14,10 @@
 它不暴露 target business examples、product semantics、project shape、local distribution machinery
 或 upstream maintainer-only workflow。
 
+`publish` 只服务本仓库 npm package / CLI 分发，不是 target repo ritual。npm tarball 包含
+`repos/effect/` 是有意暴露：CLI、verifier、target route 和 agent 都需要 pinned official
+source/reference 与 `repos/effect.subtree.json` 保持同包可读。
+
 ## Allowed Exposure
 
 | Surface | 是否投递给 target | Contract owner |

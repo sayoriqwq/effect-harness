@@ -1,5 +1,6 @@
 import type { PublishEventConfig } from '../src/harness/Publish.ts'
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 
 import { fileURLToPath } from 'node:url'
@@ -7,16 +8,20 @@ import * as NodeServices from '@effect/platform-node/NodeServices'
 import { assert, it } from '@effect/vitest'
 
 import * as Effect from 'effect/Effect'
+import { HarnessError } from '../src/harness/Errors.ts'
 import {
+  parsePackOutput,
   readWorkflowPublishConfig,
+  resolvePackFilename,
   resolvePublishConfig,
+  withTemporaryPackageVersion,
 } from '../src/harness/Publish.ts'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const defaultHarnessRoot = repoRoot
 
 function makeTempDir() {
-  return mkdtempSync(join(dirname(repoRoot), 'effect-harness-publish-'))
+  return mkdtempSync(join(tmpdir(), 'effect-harness-publish-'))
 }
 
 it.layer(NodeServices.layer)('publish config resolves CLI args over env and env over workflow event', (it) => {
@@ -90,58 +95,23 @@ it.layer(NodeServices.layer)('publish config uses publish workflow inputs from f
   }))
 })
 
-it.layer(NodeServices.layer)('publish config uses release metadata when workflow event is a release', (it) => {
-  it.effect('publish config uses release metadata when workflow event is a release', () => Effect.gen(function* () {
+it.layer(NodeServices.layer)('publish workflow ignores blank env values', (it) => {
+  it.effect('publish workflow ignores blank env values and uses workflow inputs', () => Effect.gen(function* () {
     const root = makeTempDir()
     const eventPath = join(root, 'event.json')
     const event = {
-      release: {
-        prerelease: true,
-        tag_name: 'v4.0.0-beta.5',
+      inputs: {
+        version: '4.0.0-beta.5',
+        npm_tag: 'next',
+        dry_run: 'false',
+        provenance: 'true',
       },
     }
 
     try {
       writeFileSync(eventPath, `${JSON.stringify(event, null, 2)}\n`)
       const eventConfig = yield* readWorkflowPublishConfig({
-        GITHUB_EVENT_NAME: 'release',
-        GITHUB_EVENT_PATH: eventPath,
-      })
-      const config = yield* resolvePublishConfig(
-        {
-          harness: defaultHarnessRoot,
-        },
-        {
-          GITHUB_EVENT_NAME: 'release',
-          GITHUB_EVENT_PATH: eventPath,
-        },
-        eventConfig,
-      )
-
-      assert.equal(config.version, '4.0.0-beta.5')
-      assert.equal(config.npmTag, 'next')
-    }
-    finally {
-      rmSync(root, { recursive: true, force: true })
-    }
-  }))
-})
-
-it.layer(NodeServices.layer)('release events ignore blank workflow env values', (it) => {
-  it.effect('release event ignores blank workflow env inputs and uses workflow release metadata', () => Effect.gen(function* () {
-    const root = makeTempDir()
-    const eventPath = join(root, 'event.json')
-    const event = {
-      release: {
-        prerelease: true,
-        tag_name: 'v4.0.0-beta.5',
-      },
-    }
-
-    try {
-      writeFileSync(eventPath, `${JSON.stringify(event, null, 2)}\n`)
-      const eventConfig = yield* readWorkflowPublishConfig({
-        GITHUB_EVENT_NAME: 'release',
+        GITHUB_EVENT_NAME: 'workflow_dispatch',
         GITHUB_EVENT_PATH: eventPath,
       })
       const config = yield* resolvePublishConfig(
@@ -153,7 +123,7 @@ it.layer(NodeServices.layer)('release events ignore blank workflow env values', 
           NPM_TAG: '   ',
           DRY_RUN: '',
           NPM_PROVENANCE: '',
-          GITHUB_EVENT_NAME: 'release',
+          GITHUB_EVENT_NAME: 'workflow_dispatch',
           GITHUB_EVENT_PATH: eventPath,
         },
         eventConfig,
@@ -162,6 +132,32 @@ it.layer(NodeServices.layer)('release events ignore blank workflow env values', 
       assert.equal(config.version, '4.0.0-beta.5')
       assert.equal(config.npmTag, 'next')
       assert.equal(config.dryRun, false)
+    }
+    finally {
+      rmSync(root, { recursive: true, force: true })
+    }
+  }))
+})
+
+it.layer(NodeServices.layer)('publish ignores GitHub release event payloads', (it) => {
+  it.effect('publish ignores GitHub release event payloads', () => Effect.gen(function* () {
+    const root = makeTempDir()
+    const eventPath = join(root, 'event.json')
+    const event = {
+      release: {
+        prerelease: true,
+        tag_name: 'v4.0.0-beta.5',
+      },
+    }
+
+    try {
+      writeFileSync(eventPath, `${JSON.stringify(event, null, 2)}\n`)
+      const eventConfig = yield* readWorkflowPublishConfig({
+        GITHUB_EVENT_NAME: 'release',
+        GITHUB_EVENT_PATH: eventPath,
+      })
+
+      assert.deepStrictEqual(eventConfig, {})
     }
     finally {
       rmSync(root, { recursive: true, force: true })
@@ -200,4 +196,53 @@ it.effect('publish package json path resolution is effect-safe', () => Effect.sy
   finally {
     rmSync(temp, { recursive: true, force: true })
   }
+}))
+
+it.layer(NodeServices.layer)('publish temporary package version restores on failure', (it) => {
+  it.effect('publish temporary package version restores on failure', () => Effect.gen(function* () {
+    const temp = makeTempDir()
+    const packagePath = join(temp, 'package.json')
+    const original = `${JSON.stringify({ name: 'temp', version: '0.1.0' }, null, 2)}\n`
+    writeFileSync(packagePath, original)
+
+    try {
+      const failure = yield* Effect.flip(withTemporaryPackageVersion(
+        {
+          packageJsonText: original,
+          version: '0.2.0',
+        },
+        packagePath,
+        Effect.fail(new HarnessError({ message: 'publish failed after version write' })),
+      ))
+
+      assert.match(failure.message, /publish failed/u)
+      assert.equal(readFileSync(packagePath, 'utf8'), original)
+    }
+    finally {
+      rmSync(temp, { recursive: true, force: true })
+    }
+  }))
+})
+
+it.effect('publish pack filename keeps absolute paths and resolves relative paths', () => Effect.sync(() => {
+  assert.equal(
+    resolvePackFilename('/tmp/effect-harness-pack', 'effect-harness-0.0.1.tgz'),
+    '/tmp/effect-harness-pack/effect-harness-0.0.1.tgz',
+  )
+  assert.equal(
+    resolvePackFilename('/tmp/effect-harness-pack', '/tmp/effect-harness-pack/effect-harness-0.0.1.tgz'),
+    '/tmp/effect-harness-pack/effect-harness-0.0.1.tgz',
+  )
+}))
+
+it.effect('publish pack output parser skips non-json prefixes', () => Effect.gen(function* () {
+  const parsed = yield* parsePackOutput([
+    'Scope: all 1 workspace project',
+    '[{"filename":"/tmp/effect-harness-publish-check/effect-harness-0.0.1.tgz"}]',
+    '',
+  ].join('\n'))
+
+  assert.deepStrictEqual(parsed, [{
+    filename: '/tmp/effect-harness-publish-check/effect-harness-0.0.1.tgz',
+  }])
 }))

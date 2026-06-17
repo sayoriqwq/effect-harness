@@ -1,5 +1,5 @@
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { isAbsolute, join } from 'node:path'
 import process from 'node:process'
 
 import * as Console from 'effect/Console'
@@ -91,7 +91,7 @@ const parsePackageJson = Effect.fnUntraced(function* (text: string, source: stri
   return parsed as PackageJsonLike
 })
 
-const parsePackOutput = Effect.fnUntraced(function* (output: string) {
+export const parsePackOutput = Effect.fnUntraced(function* (output: string) {
   const trimmed = output.trim()
   if (!trimmed) {
     return yield* new HarnessError({ message: 'pnpm pack did not return JSON output.' })
@@ -99,11 +99,7 @@ const parsePackOutput = Effect.fnUntraced(function* (output: string) {
 
   const candidates = jsonPayloadCandidates(trimmed)
   for (const index of candidates) {
-    const parsed = yield* Effect.try({
-      try: () => JSON.parse(trimmed.slice(index)),
-      catch: () => undefined,
-    })
-
+    const parsed = parseJsonCandidate(trimmed.slice(index))
     if (parsed !== undefined) {
       return parsed
     }
@@ -111,6 +107,15 @@ const parsePackOutput = Effect.fnUntraced(function* (output: string) {
 
   return yield* new HarnessError({ message: `Could not parse pnpm pack JSON output:\n${output}` })
 })
+
+function parseJsonCandidate(input: string): unknown | undefined {
+  try {
+    return JSON.parse(input) as unknown
+  }
+  catch {
+    return undefined
+  }
+}
 
 export const readWorkflowPublishConfig = Effect.fnUntraced(function* (environment: NodeJS.ProcessEnv) {
   const eventName = environment.GITHUB_EVENT_NAME
@@ -136,16 +141,6 @@ export const readWorkflowPublishConfig = Effect.fnUntraced(function* (environmen
       npmTag: parseStringField(event, ['inputs', 'npm_tag']),
       dryRun: yield* parseBooleanField(event, ['inputs', 'dry_run']),
       provenance: yield* parseBooleanField(event, ['inputs', 'provenance']),
-    }
-  }
-
-  if (eventName === 'release') {
-    const release = parseObjectField(event, ['release'])
-    if (release) {
-      return {
-        version: parseStringValue(release.tag_name),
-        npmTag: release.prerelease ? 'next' : 'latest',
-      }
     }
   }
 
@@ -204,29 +199,20 @@ export const publishPackage = Effect.fnUntraced(function* (options: PublishOptio
     })
   }
 
-  const fs = yield* FileSystem.FileSystem
   const packageJsonPath = `${config.harness}/package.json`
-  let shouldRestorePackageJson = false
 
   yield* Console.log(`Publishing ${config.packageName}@${config.version} with npm tag "${config.npmTag}".`)
   if (config.dryRun) {
     yield* Console.log('Dry run enabled; package will not be published.')
   }
 
-  try {
-    yield* runStreaming('pnpm', ['verify'], { cwd: config.harness })
-    yield* fs.writeFileString(packageJsonPath, withVersion(config.packageJsonText, config.version))
-    shouldRestorePackageJson = true
+  yield* runStreaming('pnpm', ['verify'], { cwd: config.harness })
+  yield* withTemporaryPackageVersion(config, packageJsonPath, Effect.gen(function* () {
     yield* runStreaming('pnpm', ['build'], { cwd: config.harness })
     yield* ensureDirectory(config.packDestination)
     const tarball = yield* packNpm(config)
     yield* publishTarball(tarball, config)
-  }
-  finally {
-    if (shouldRestorePackageJson) {
-      yield* fs.writeFileString(packageJsonPath, config.packageJsonText)
-    }
-  }
+  }))
 })
 
 function parseBooleanEnv(value: string | undefined): Effect.Effect<boolean | undefined, HarnessError> {
@@ -271,22 +257,6 @@ function parsePath(data: Record<string, unknown>, path: readonly string[]) {
   return current
 }
 
-function parseObjectField(value: Record<string, unknown>, path: readonly string[]) {
-  const current = parsePath(value, path)
-  if (current === undefined || current === null || typeof current !== 'object' || Array.isArray(current)) {
-    return undefined
-  }
-
-  const candidate = current as {
-    prerelease?: boolean
-    tag_name?: unknown
-  }
-  return {
-    prerelease: typeof candidate.prerelease === 'boolean' ? candidate.prerelease : false,
-    tag_name: candidate.tag_name,
-  }
-}
-
 function packNpm(config: PublishConfig) {
   return Effect.gen(function* () {
     const output = yield* commandString('pnpm', [
@@ -310,11 +280,14 @@ function packNpm(config: PublishConfig) {
       })
     }
 
-    const tarball = `${(candidate as { filename: string }).filename}`
-    const path = join(config.packDestination, tarball)
+    const tarball = resolvePackFilename(config.packDestination, `${(candidate as { filename: string }).filename}`)
     yield* Console.log(`Packed ${tarball}`)
-    return path
+    return tarball
   })
+}
+
+export function resolvePackFilename(packDestination: string, filename: string) {
+  return isAbsolute(filename) ? filename : join(packDestination, filename)
 }
 
 function publishTarball(tarball: string, config: PublishConfig) {
@@ -326,7 +299,12 @@ function publishTarball(tarball: string, config: PublishConfig) {
     args.push('--dry-run')
   }
 
-  return runStreaming('npm', args)
+  return runStreaming('npm', args, {
+    env: {
+      ...process.env,
+      npm_config_cache: process.env.npm_config_cache ?? join(config.packDestination, '.npm-cache'),
+    },
+  })
 }
 
 function jsonPayloadCandidates(input: string) {
@@ -358,6 +336,21 @@ function withVersion(packageJsonText: string, version: string) {
   const packageJson = JSON.parse(packageJsonText) as Record<string, unknown>
   const nextPackageJson = { ...packageJson, version }
   return `${JSON.stringify(nextPackageJson, null, 2)}\n`
+}
+
+export function withTemporaryPackageVersion<A, E, R>(
+  config: Pick<PublishConfig, 'packageJsonText' | 'version'>,
+  packageJsonPath: string,
+  use: Effect.Effect<A, E, R>,
+) {
+  return Effect.gen(function* () {
+    const fs = yield* FileSystem.FileSystem
+    return yield* Effect.acquireUseRelease(
+      fs.writeFileString(packageJsonPath, withVersion(config.packageJsonText, config.version)),
+      () => use,
+      () => fs.writeFileString(packageJsonPath, config.packageJsonText),
+    )
+  })
 }
 
 function errorMessage(error: unknown) {

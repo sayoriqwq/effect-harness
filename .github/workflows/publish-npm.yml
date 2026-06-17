@@ -27,9 +27,6 @@ on:
         required: true
         default: true
         type: boolean
-  release:
-    types:
-      - published
 
 permissions:
   contents: read
@@ -72,10 +69,4 @@ jobs:
           NPM_TAG: ${{ inputs.npm_tag }}
           DRY_RUN: ${{ toJson(inputs.dry_run) }}
           NPM_PROVENANCE: ${{ toJson(inputs.provenance) }}
-        run: pnpm publish:npm
-
-      - name: Publish package (release)
-        if: github.event_name == 'release'
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: pnpm publish:npm

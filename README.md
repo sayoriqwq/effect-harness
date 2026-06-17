@@ -86,8 +86,11 @@ pnpm effect:status
 
 ## Publish
 
-`pnpm publish:npm` 运行 `effect-harness publish`。发布流程会验证仓库，以可回滚方式应用
-package version，然后调用 npm publish。
+`pnpm publish:npm` 运行 `effect-harness publish`。这是本仓库自己的 npm 发包流程，用于
+分发 `effect-harness` CLI；它不定义、不投递 target repo 的 publish 或 release ritual。
+
+发布流程会验证仓库，以 Effect finalizer 保护的临时 package version 生成 tarball，然后调用
+npm publish。dry-run 也必须恢复 `package.json`，不能留下临时 version。
 
 常用参数：
 
@@ -96,4 +99,9 @@ package version，然后调用 npm publish。
 - `--dry-run`
 - `--provenance`
 
-GitHub workflow 是 `.github/workflows/publish-npm.yml`。
+GitHub workflow 是 `.github/workflows/publish-npm.yml`，只支持 manual `workflow_dispatch`。
+
+npm 包名是 `effect-harness`。tarball 会包含 `repos/effect/`；这是有意的 package exposure，
+用于随 CLI 分发 pinned official Effect source/reference、`repos/effect/LLMS.md` route 和
+`repos/effect.subtree.json` baseline，而不是无意打包上游工作树。target repo 仍然只通过
+`effect-harness init` 接收 target runtime，不接收本仓 publish 流程。
