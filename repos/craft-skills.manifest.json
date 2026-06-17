@@ -4,7 +4,7 @@
     "owner": "Craft",
     "repository": "https://github.com/sayoriqwq/craft.git",
     "repoPath": "../craft",
-    "ref": "a4c9c6ee950cc198f177f7b3ee08b23a65769668"
+    "ref": "9f8e27006b16db94c97cfc4f6fa576993cc92f3c"
   },
   "mechanism": {
     "syncCommand": "node bin/effect-harness.ts craft-skills sync --harness .",
@@ -22,7 +22,7 @@
       "skill": "setup-effect-area",
       "sourceFile": "skills/setup-effect-area/SKILL.md",
       "targetFile": ".codex/skills/setup-effect-area/SKILL.md",
-      "sha256": "971ad5dabc380c212702e12e381a81d57d06759f96a2d21a26b81f943cb942b4"
+      "sha256": "e527c0dc1fd6a51d93576b8c9f7501c22ccaaa18e3a0e50f575317bba79afd9b"
     },
     {
       "skill": "update-effect-harness",

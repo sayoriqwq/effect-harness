@@ -1,31 +1,53 @@
 ---
 name: effect-feedback
-description: Capture reusable Effect practice feedback for the linked effect-harness. Use when this project hits a recurring Effect pitfall, @effect/tsgo gap, guardrail gap, verifier mismatch, or local workaround that the pinned official source does not already cover.
+description: "Use in an Effect target repo when a recurring Effect practice failure, @effect/tsgo gap, guardrail gap, verifier mismatch, or workaround may be reusable for effect-harness. Not for product-specific examples, generic Effect API tutorials, or issues already covered by the pinned official source."
+when_to_use: "Effect feedback, recurring Effect pitfall, @effect/tsgo gap, guardrail gap, verifier mismatch, reusable harness gap"
+dispatch_intent: "Capture reusable target practice feedback for effect-harness"
 ---
 
 # Effect Feedback
 
-Use this skill when this repo finds a reusable Effect practice issue.
+Use this skill to capture target-local evidence that may improve `effect-harness`.
+
+## Capability
+
+Separate reusable harness gaps from target business issues by checking pinned official source first, then
+recording a local feedback item with enough evidence for a maintainer to promote or reject.
+
+Pressure scenario: an agent upstreams a product-specific workaround, copies official docs into the harness,
+or loses a real repeated target failure because it was never written as evidence.
+
+## Trigger
+
+Use when this target hits a recurring Effect pitfall, `@effect/tsgo` diagnostic gap, guardrail gap,
+verifier mismatch, or local workaround that might apply across Effect targets.
+
+Do not use when official source already explains the issue, when the issue is product-specific, or when the
+task is ordinary Effect implementation.
+
+## Soft Boundary
+
+- Feedback starts as target-local evidence under `.codex/effect-feedback/`.
+- Promotion to `effect-harness` requires maintainer judgment.
+- Business examples, product semantics, release rituals, and target project shape stay in the target repo.
+
+## Hard Boundary
+
+- Check pinned official source before writing feedback.
+- Do not bypass `repos/effect/LLMS.md`, `repos/effect/ai-docs/src/`, `repos/effect/migration/v3-to-v4.md`,
+  `repos/effect/`, or patched `tsgo --noEmit`.
+- Do not copy upstream maintainer-only workflow from `repos/effect/AGENTS.md`,
+  `repos/effect/.agents/skills/*`, or `repos/effect/.specs/*`.
 
 ## Workflow
 
 1. Record concrete evidence from this repo: error, diff, test, log, command output, or failed agent loop.
-2. Check official pinned sources:
-   - `__EFFECT_HARNESS_ROOT__/repos/effect/LLMS.md`
-   - `__EFFECT_HARNESS_ROOT__/repos/effect/ai-docs/src/`
-   - `__EFFECT_HARNESS_ROOT__/repos/effect/migration/v3-to-v4.md`
-   - `__EFFECT_HARNESS_ROOT__/repos/effect/`
-   - patched `tsgo --noEmit`
-3. If official source already covers it, route to the official source and do not create feedback.
-4. If the gap is reusable and business-neutral, write a local feedback entry in this repo under
-   `.codex/effect-feedback/`.
-5. Ask the maintainer whether to upstream the entry to
-   `__EFFECT_HARNESS_ROOT__/harness/feedback/index.md`.
+2. Check official pinned sources and diagnostics.
+3. If official source covers it, route to that source and do not create feedback.
+4. If the gap is reusable and business-neutral, write a local entry in `.codex/effect-feedback/`.
+5. Ask the maintainer whether to upstream it to `__EFFECT_HARNESS_ROOT__/harness/feedback/index.md`.
 
 ## Local Entry
-
-This is the target-local feedback format from effect-harness, not an official Effect format.
-Promoted entries must land as a route, runtime contract, guardrail, verifier, or harness skill update.
 
 ```markdown
 ## <issue>
@@ -38,9 +60,7 @@ Promoted entries must land as a route, runtime contract, guardrail, verifier, or
 - Status:
 ```
 
-## Do Not
+## Validation
 
-- Do not add product-specific examples to effect-harness.
-- Do not copy upstream maintainer-only workflow from `repos/effect/AGENTS.md`,
-  `repos/effect/.agents/skills/*`, or `repos/effect/.specs/*`.
-- Do not bypass official pinned guidance.
+The entry must state the official coverage check and a proposed landing as route, runtime contract,
+guardrail, verifier, or harness skill update.

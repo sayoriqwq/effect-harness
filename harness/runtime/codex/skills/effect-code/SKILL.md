@@ -1,43 +1,72 @@
 ---
 name: effect-code
-description: Write, review, and debug Effect v4 beta code in this target repository using the linked effect-harness official pin. Use when implementing Effect services, runtime entrypoints, tests, CLI/HTTP/process boundaries, @effect/tsgo diagnostics, or reviewing Effect code. Not for updating the harness source pin or changing effect-harness itself.
+description: "Use in an Effect target repo when writing, reviewing, or debugging Effect v4 beta code against the linked effect-harness official pin. Covers Effect services, runtime entrypoints, tests, CLI/HTTP/process boundaries, @effect/tsgo diagnostics, and focused Effect subagent delegation. Not for updating effect-harness, changing the source pin, or writing generic TypeScript unrelated to Effect."
+when_to_use: "Effect code, Effect review, Effect tests, Effect runtime, @effect/tsgo diagnostic, Effect subagent"
+dispatch_intent: "Write or review target Effect code against the pinned harness"
 ---
 
 # Effect Code
 
-Use this skill for Effect code in this target repo.
+Use this skill for target-local Effect code work against the linked `effect-harness`.
 
-## Source Order
+## Capability
 
-1. Target repo instructions and existing code.
-2. `__EFFECT_HARNESS_ROOT__/repos/effect/LLMS.md`.
-3. `__EFFECT_HARNESS_ROOT__/repos/effect/ai-docs/src/` for examples.
-4. `__EFFECT_HARNESS_ROOT__/repos/effect/migration/v3-to-v4.md` for migration.
-5. `__EFFECT_HARNESS_ROOT__/harness/index.md` for harness routes and boundaries.
-6. Patched `tsgo --noEmit` diagnostics.
+Drive Effect implementation and review through the pinned official source, target runtime contract, and
+patched diagnostics instead of memory, stale examples, or copied harness internals.
 
-## Rules
+Pressure scenario: an agent imports from `repos/effect`, uses old v3 patterns, silences `@effect/tsgo`
+with assertions, writes plain Vitest tests, or delegates Effect work without passing the target runtime
+agent contract.
+
+## Trigger
+
+Use when the task touches Effect services, layers, runtime entrypoints, tests, CLI/HTTP/process
+integration, `@effect/tsgo` diagnostics, or focused Effect review in this target repo.
+
+Do not use for updating `effect-harness`, refreshing `repos/effect`, generic TypeScript cleanup, or target
+business decisions that do not require Effect guidance.
+
+## Soft Boundary
+
+- Target repo instructions and current code shape come first.
+- Official pinned source beats local memory.
+- Delegate focused Effect implementation or review with `.codex/agents/effect-worker.md` when a subagent is useful.
+- Keep target business logic in the target repo; only reusable harness gaps go to feedback.
+
+## Hard Boundary
 
 - Do not import from `__EFFECT_HARNESS_ROOT__/repos/effect`.
-- Prefer official pinned guidance over local memory.
+- Do not copy effect-harness maintainer skills into the target.
 - Use installed packages: `effect`, `@effect/platform-node`, `@effect/vitest`.
-- Use `Context.Service` for services on this baseline.
 - Use patched `tsgo --noEmit` as the primary Effect diagnostic loop.
-- Treat `@effect/tsgo` suggestions as type-boundary work, not assertion cleanup.
-- Do not silence suggestions with `as` inside `Effect.orElseSucceed` fallbacks,
-  `Effect.succeed(...)`, or ad-hoc `{ ok: true/false as const }` result wrappers.
-- Prefer `Schema.Finite`, explicit fallback return types, named result unions/helpers,
-  `satisfies`, `Effect.satisfiesSuccessType`, or `Function.satisfies`.
-- Pass `Effect.fn` transforms as extra arguments to `Effect.fn(...)`; do not `.pipe(...)`
-  transforms onto an `Effect.fn` declaration.
 - Use `assert` from `@effect/vitest`; do not use `expect`.
 
-## Verification
+## Workflow
 
-Run these before reporting completion:
+1. Read target instructions and existing code.
+2. Read official/harness sources in this order:
+   - `__EFFECT_HARNESS_ROOT__/repos/effect/LLMS.md`
+   - `__EFFECT_HARNESS_ROOT__/repos/effect/ai-docs/src/`
+   - `__EFFECT_HARNESS_ROOT__/repos/effect/migration/v3-to-v4.md`
+   - `__EFFECT_HARNESS_ROOT__/harness/index.md`
+   - `.effect-harness.json`
+3. Use `Context.Service` for services on this baseline.
+4. Treat `@effect/tsgo` suggestions as type-boundary work, not assertion cleanup.
+5. Prefer `Schema.Finite`, explicit fallback return types, named result unions/helpers, `satisfies`,
+   `Effect.satisfiesSuccessType`, or `Function.satisfies`.
+6. Pass `Effect.fn` transforms as extra arguments to `Effect.fn(...)`; do not `.pipe(...)` transforms onto
+   an `Effect.fn` declaration.
+7. If delegating to an Effect subagent, give it `.codex/agents/effect-worker.md`, the target task, and the
+   relevant files/tests; require it to report changed files and verification.
+
+## Validation
+
+Before reporting completion, run:
 
 ```bash
 pnpm effect:status
 pnpm effect:verify
 pnpm verify
 ```
+
+Report any reusable harness gap through `$effect-feedback`.

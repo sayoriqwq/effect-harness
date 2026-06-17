@@ -7,6 +7,13 @@ Before writing non-trivial Effect code, read:
 - `__EFFECT_HARNESS_ROOT__/repos/effect/LLMS.md`
 - `__EFFECT_HARNESS_ROOT__/harness/index.md`
 - `__EFFECT_HARNESS_ROOT__/repos/effect.subtree.json`
+- `.effect-harness.json`
+
+Runtime skills and agents installed by the harness:
+
+- Use `.codex/skills/effect-code/SKILL.md` for Effect implementation and review.
+- Use `.codex/skills/effect-feedback/SKILL.md` for reusable target feedback.
+- Use `.codex/agents/effect-worker.md` when delegating focused Effect subagent work.
 
 Use:
 

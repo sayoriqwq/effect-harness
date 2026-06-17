@@ -128,7 +128,9 @@ effect-harness init
    保留 target repo 已有 compiler options，只合并 plugin。
 
 10. 把 `harness/runtime/codex/skills/` 和 `harness/runtime/codex/agents/` 投递到 target repo 的 `.codex/`。
-   不要投递本仓库 `.codex/skills/`。
+    不要投递本仓库 `.codex/skills/`。
+    后续派出 focused Effect subagent 时，使用 target repo 的 `.codex/agents/effect-worker.md`，
+    并让它读取 `.codex/skills/effect-code/SKILL.md`。
 
 11. 给 target repo 的 `AGENTS.md` 增加简短路由。如果没有 `AGENTS.md`，创建一个最小文件：
 
