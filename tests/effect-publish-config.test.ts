@@ -226,23 +226,23 @@ it.layer(NodeServices.layer)('publish temporary package version restores on fail
 
 it.effect('publish pack filename keeps absolute paths and resolves relative paths', () => Effect.sync(() => {
   assert.equal(
-    resolvePackFilename('/tmp/effect-harness-pack', 'effect-harness-0.0.1.tgz'),
-    '/tmp/effect-harness-pack/effect-harness-0.0.1.tgz',
+    resolvePackFilename('/tmp/effect-harness-pack', 'sayoriqwq-effect-harness-0.0.1.tgz'),
+    '/tmp/effect-harness-pack/sayoriqwq-effect-harness-0.0.1.tgz',
   )
   assert.equal(
-    resolvePackFilename('/tmp/effect-harness-pack', '/tmp/effect-harness-pack/effect-harness-0.0.1.tgz'),
-    '/tmp/effect-harness-pack/effect-harness-0.0.1.tgz',
+    resolvePackFilename('/tmp/effect-harness-pack', '/tmp/effect-harness-pack/sayoriqwq-effect-harness-0.0.1.tgz'),
+    '/tmp/effect-harness-pack/sayoriqwq-effect-harness-0.0.1.tgz',
   )
 }))
 
 it.effect('publish pack output parser skips non-json prefixes', () => Effect.gen(function* () {
   const parsed = yield* parsePackOutput([
     'Scope: all 1 workspace project',
-    '[{"filename":"/tmp/effect-harness-publish-check/effect-harness-0.0.1.tgz"}]',
+    '[{"filename":"/tmp/effect-harness-publish-check/sayoriqwq-effect-harness-0.0.1.tgz"}]',
     '',
   ].join('\n'))
 
   assert.deepStrictEqual(parsed, [{
-    filename: '/tmp/effect-harness-publish-check/effect-harness-0.0.1.tgz',
+    filename: '/tmp/effect-harness-publish-check/sayoriqwq-effect-harness-0.0.1.tgz',
   }])
 }))

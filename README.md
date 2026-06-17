@@ -101,7 +101,8 @@ npm publish。dry-run 也必须恢复 `package.json`，不能留下临时 versio
 
 GitHub workflow 是 `.github/workflows/publish-npm.yml`，只支持 manual `workflow_dispatch`。
 
-npm 包名是 `effect-harness`。tarball 会包含 `repos/effect/`；这是有意的 package exposure，
-用于随 CLI 分发 pinned official Effect source/reference、`repos/effect/LLMS.md` route 和
-`repos/effect.subtree.json` baseline，而不是无意打包上游工作树。target repo 仍然只通过
-`effect-harness init` 接收 target runtime，不接收本仓 publish 流程。
+npm 包名是 `@sayoriqwq/effect-harness`，bin name 保持 `effect-harness`。tarball 会包含
+`repos/effect/`；这是有意的 package exposure，用于随 CLI 分发 pinned official Effect
+source/reference、`repos/effect/LLMS.md` route 和 `repos/effect.subtree.json` baseline，而不是
+无意打包上游工作树。target repo 仍然只通过 `effect-harness init` 接收 target runtime，
+不接收本仓 publish 流程。
