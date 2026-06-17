@@ -193,9 +193,9 @@ export const publishPackage = Effect.fnUntraced(function* (options: PublishOptio
   const eventConfig = yield* readWorkflowPublishConfig(process.env)
   const config = yield* resolvePublishConfig(options, process.env, eventConfig)
 
-  if (!config.dryRun && !process.env.NODE_AUTH_TOKEN && !process.env.NPM_TOKEN) {
+  if (!config.dryRun && !hasPublishAuthentication(process.env)) {
     return yield* new HarnessError({
-      message: 'NODE_AUTH_TOKEN is required for non-dry-run publish. Configure it from the NPM_TOKEN secret.',
+      message: 'Publish authentication is required for non-dry-run publish. Configure the NPM_TOKEN secret or npm trusted publishing for this GitHub Actions workflow.',
     })
   }
 
@@ -302,9 +302,30 @@ function publishTarball(tarball: string, config: PublishConfig) {
   return runStreaming('npm', args, {
     env: {
       ...process.env,
+      ...authTokenEnv(process.env),
       npm_config_cache: process.env.npm_config_cache ?? join(config.packDestination, '.npm-cache'),
     },
   })
+}
+
+export function hasPublishAuthentication(environment: NodeJS.ProcessEnv) {
+  return hasTokenAuthentication(environment) || hasTrustedPublishingEnvironment(environment)
+}
+
+function hasTokenAuthentication(environment: NodeJS.ProcessEnv) {
+  return parseOptionalString(environment.NODE_AUTH_TOKEN) !== undefined
+    || parseOptionalString(environment.NPM_TOKEN) !== undefined
+}
+
+function hasTrustedPublishingEnvironment(environment: NodeJS.ProcessEnv) {
+  return environment.GITHUB_ACTIONS === 'true'
+    && parseOptionalString(environment.ACTIONS_ID_TOKEN_REQUEST_URL) !== undefined
+    && parseOptionalString(environment.ACTIONS_ID_TOKEN_REQUEST_TOKEN) !== undefined
+}
+
+function authTokenEnv(environment: NodeJS.ProcessEnv) {
+  const token = parseOptionalString(environment.NODE_AUTH_TOKEN) ?? parseOptionalString(environment.NPM_TOKEN)
+  return token === undefined ? {} : { NODE_AUTH_TOKEN: token }
 }
 
 function jsonPayloadCandidates(input: string) {

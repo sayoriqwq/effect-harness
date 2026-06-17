@@ -100,6 +100,11 @@ npm publish。dry-run 也必须恢复 `package.json`，不能留下临时 versio
 - `--provenance`
 
 GitHub workflow 是 `.github/workflows/publish-npm.yml`，只支持 manual `workflow_dispatch`。
+真实发布需要配置其中一种 npm authentication：
+
+- GitHub secret `NPM_TOKEN`
+- npm Trusted Publisher：owner `sayoriqwq`，repo `effect-harness`，workflow filename
+  `publish-npm.yml`，allowed action `npm publish`
 
 npm 包名是 `@sayoriqwq/effect-harness`，bin name 保持 `effect-harness`。tarball 会包含
 `repos/effect/`；这是有意的 package exposure，用于随 CLI 分发 pinned official Effect

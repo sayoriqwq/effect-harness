@@ -66,6 +66,9 @@ jobs:
           corepack enable
           corepack prepare "pnpm@${PNPM_VERSION}" --activate
 
+      - name: Enable npm trusted publishing support
+        run: npm install --global npm@latest
+
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 

@@ -10,6 +10,7 @@ import { assert, it } from '@effect/vitest'
 import * as Effect from 'effect/Effect'
 import { HarnessError } from '../src/harness/Errors.ts'
 import {
+  hasPublishAuthentication,
   parsePackOutput,
   readWorkflowPublishConfig,
   resolvePackFilename,
@@ -245,4 +246,21 @@ it.effect('publish pack output parser skips non-json prefixes', () => Effect.gen
   assert.deepStrictEqual(parsed, [{
     filename: '/tmp/effect-harness-publish-check/sayoriqwq-effect-harness-0.0.1.tgz',
   }])
+}))
+
+it.effect('publish accepts token or trusted publisher authentication', () => Effect.sync(() => {
+  assert.equal(hasPublishAuthentication({
+    NODE_AUTH_TOKEN: 'token',
+  }), true)
+  assert.equal(hasPublishAuthentication({
+    NPM_TOKEN: 'token',
+  }), true)
+  assert.equal(hasPublishAuthentication({
+    ACTIONS_ID_TOKEN_REQUEST_TOKEN: 'token',
+    ACTIONS_ID_TOKEN_REQUEST_URL: 'https://token.actions.githubusercontent.com',
+    GITHUB_ACTIONS: 'true',
+  }), true)
+  assert.equal(hasPublishAuthentication({
+    GITHUB_ACTIONS: 'true',
+  }), false)
 }))
