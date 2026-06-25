@@ -32,8 +32,8 @@
   },
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
-    "craft-skills:check": "node bin/effect-harness.ts craft-skills check --harness .",
-    "craft-skills:sync": "node bin/effect-harness.ts craft-skills sync --harness .",
+    "codex-skill-projections:check": "node bin/effect-harness.ts codex-skill-projections check --harness .",
+    "codex-skill-projections:sync": "node bin/effect-harness.ts codex-skill-projections sync --harness .",
     "prepack": "pnpm build",
     "dev": "pnpm build && node dist/bin/effect-harness.js --help",
     "effect:patch": "effect-tsgo patch",

@@ -8,9 +8,9 @@ import { writeManagedFile } from '../platform/ManagedFiles.ts'
 import { commandOutput, commandString } from '../platform/Process.ts'
 import { HarnessError } from './Errors.ts'
 
-const manifestRelativePath = 'repos/craft-skills.manifest.json'
+const manifestRelativePath = 'repos/codex-skill-projections.manifest.json'
 
-interface CraftSkillsManifest {
+interface CodexSkillProjectionsManifest {
   readonly name: string
   source: {
     readonly owner: string
@@ -23,22 +23,22 @@ interface CraftSkillsManifest {
     readonly verifyCommand: string
     readonly check: string
   }
-  projections: Array<CraftSkillProjection>
+  projections: Array<CodexSkillProjection>
 }
 
-interface CraftSkillProjection {
+interface CodexSkillProjection {
   readonly skill: string
   readonly sourceFile: string
   readonly targetFile: string
   sha256: string
 }
 
-export interface CraftSkillsOptions {
+export interface CodexSkillProjectionsOptions {
   readonly harness: string
-  readonly craft?: string | undefined
+  readonly source?: string | undefined
 }
 
-export interface SyncCraftSkillsOptions extends CraftSkillsOptions {
+export interface SyncCodexSkillProjectionsOptions extends CodexSkillProjectionsOptions {
   readonly dryRun: boolean
   readonly sourceRef?: string | undefined
 }
@@ -54,7 +54,7 @@ function stringField(record: Record<string, unknown>, key: string, source: strin
     : Effect.fail(new HarnessError({ message: `${source} must contain string field: ${key}` }))
 }
 
-function decodeProjection(value: unknown, source: string): Effect.Effect<CraftSkillProjection, HarnessError> {
+function decodeProjection(value: unknown, source: string): Effect.Effect<CodexSkillProjection, HarnessError> {
   return Effect.gen(function* () {
     if (!isRecord(value)) {
       return yield* new HarnessError({ message: `${source} must be a JSON object` })
@@ -69,7 +69,7 @@ function decodeProjection(value: unknown, source: string): Effect.Effect<CraftSk
   })
 }
 
-function decodeCraftSkillsManifest(value: unknown, source: string): Effect.Effect<CraftSkillsManifest, HarnessError> {
+function decodeCodexSkillProjectionsManifest(value: unknown, source: string): Effect.Effect<CodexSkillProjectionsManifest, HarnessError> {
   return Effect.gen(function* () {
     if (!isRecord(value)) {
       return yield* new HarnessError({ message: `${source} must be a JSON object` })
@@ -90,7 +90,7 @@ function decodeCraftSkillsManifest(value: unknown, source: string): Effect.Effec
       return yield* new HarnessError({ message: `${source} must contain array field: projections` })
     }
 
-    const projections: Array<CraftSkillProjection> = []
+    const projections: Array<CodexSkillProjection> = []
     for (const [index, projection] of projectionsValue.entries()) {
       projections.push(yield* decodeProjection(projection, `${source}.projections[${index}]`))
     }
@@ -119,47 +119,47 @@ function sha256(text: string): string {
 
 const readManifest = Effect.fnUntraced(function* (harness: string) {
   const path = yield* Path.Path
-  return yield* readJson(path.join(harness, manifestRelativePath), decodeCraftSkillsManifest)
+  return yield* readJson(path.join(harness, manifestRelativePath), decodeCodexSkillProjectionsManifest)
 })
 
-const resolveCraftRepo = Effect.fnUntraced(function* (
+const resolveSourceRepo = Effect.fnUntraced(function* (
   harness: string,
-  manifest: CraftSkillsManifest,
+  manifest: CodexSkillProjectionsManifest,
   override: string | undefined,
 ) {
   const path = yield* Path.Path
   return path.resolve(harness, override ?? manifest.source.repoPath)
 })
 
-const readCraftBlob = Effect.fnUntraced(function* (
-  craftRepo: string,
+const readSourceBlob = Effect.fnUntraced(function* (
+  sourceRepo: string,
   sourceRef: string,
   sourceFile: string,
 ) {
-  return yield* commandOutput('git', ['show', `${sourceRef}:${sourceFile}`], { cwd: craftRepo })
+  return yield* commandOutput('git', ['show', `${sourceRef}:${sourceFile}`], { cwd: sourceRepo })
 })
 
-const currentCraftHead = Effect.fnUntraced(function* (craftRepo: string) {
-  return yield* commandString('git', ['rev-parse', 'HEAD'], { cwd: craftRepo })
+const currentSourceHead = Effect.fnUntraced(function* (sourceRepo: string) {
+  return yield* commandString('git', ['rev-parse', 'HEAD'], { cwd: sourceRepo })
 })
 
-function assertSafeProjection(errors: Array<string>, projection: CraftSkillProjection): void {
+function assertSafeProjection(errors: Array<string>, projection: CodexSkillProjection): void {
   if (projection.sourceFile.startsWith('/') || projection.targetFile.startsWith('/')) {
     errors.push(`${projection.skill} projection paths must be relative.`)
   }
   if (!projection.sourceFile.endsWith('/SKILL.md') || !projection.targetFile.endsWith('/SKILL.md')) {
-    errors.push(`${projection.skill} projection must map a Craft SKILL.md to a managed SKILL.md.`)
+    errors.push(`${projection.skill} projection must map a Codex SKILL.md to a managed SKILL.md.`)
   }
   if (!projection.targetFile.startsWith('.codex/skills/')) {
     errors.push(`${projection.skill} target projection must stay under .codex/skills/.`)
   }
 }
 
-export const syncCraftSkills = Effect.fnUntraced(function* (options: SyncCraftSkillsOptions) {
+export const syncCodexSkillProjections = Effect.fnUntraced(function* (options: SyncCodexSkillProjectionsOptions) {
   const path = yield* Path.Path
   const manifest = yield* readManifest(options.harness)
-  const craftRepo = yield* resolveCraftRepo(options.harness, manifest, options.craft)
-  const sourceRef = options.sourceRef ?? (yield* currentCraftHead(craftRepo))
+  const sourceRepo = yield* resolveSourceRepo(options.harness, manifest, options.source)
+  const sourceRef = options.sourceRef ?? (yield* currentSourceHead(sourceRepo))
   const changes: Array<string> = []
   const safetyErrors: Array<string> = []
 
@@ -167,11 +167,11 @@ export const syncCraftSkills = Effect.fnUntraced(function* (options: SyncCraftSk
     assertSafeProjection(safetyErrors, projection)
   }
   if (safetyErrors.length > 0) {
-    return yield* new HarnessError({ message: `Invalid Craft skills manifest:\n- ${safetyErrors.join('\n- ')}` })
+    return yield* new HarnessError({ message: `Invalid Codex skill projections manifest:\n- ${safetyErrors.join('\n- ')}` })
   }
 
   for (const projection of manifest.projections) {
-    const content = yield* readCraftBlob(craftRepo, sourceRef, projection.sourceFile)
+    const content = yield* readSourceBlob(sourceRepo, sourceRef, projection.sourceFile)
     projection.sha256 = sha256(content)
     yield* writeManagedFile(
       path.join(options.harness, projection.targetFile),
@@ -190,21 +190,21 @@ export const syncCraftSkills = Effect.fnUntraced(function* (options: SyncCraftSk
   )
 
   if (changes.length === 0) {
-    yield* Console.log(`Craft skill projections already synced from ${manifest.source.repoPath} @ ${sourceRef}.`)
+    yield* Console.log(`Codex skill projections already synced from ${manifest.source.repoPath} @ ${sourceRef}.`)
     return
   }
 
   for (const change of changes) {
     yield* Console.log(`${options.dryRun ? 'Would ' : ''}${change}`)
   }
-  yield* Console.log(`${options.dryRun ? 'Dry run complete' : 'Craft skill projections synced'}: ${manifest.projections.length} files from ${manifest.source.repoPath} @ ${sourceRef}`)
+  yield* Console.log(`${options.dryRun ? 'Dry run complete' : 'Codex skill projections synced'}: ${manifest.projections.length} files from ${manifest.source.repoPath} @ ${sourceRef}`)
 })
 
-export const verifyCraftSkills = Effect.fnUntraced(function* (options: CraftSkillsOptions) {
+export const verifyCodexSkillProjections = Effect.fnUntraced(function* (options: CodexSkillProjectionsOptions) {
   const fs = yield* FileSystem.FileSystem
   const path = yield* Path.Path
   const manifest = yield* readManifest(options.harness)
-  const craftRepo = yield* resolveCraftRepo(options.harness, manifest, options.craft)
+  const sourceRepo = yield* resolveSourceRepo(options.harness, manifest, options.source)
   const errors: Array<string> = []
 
   for (const projection of manifest.projections) {
@@ -213,7 +213,7 @@ export const verifyCraftSkills = Effect.fnUntraced(function* (options: CraftSkil
 
   if (errors.length === 0) {
     for (const projection of manifest.projections) {
-      const expected = yield* readCraftBlob(craftRepo, manifest.source.ref, projection.sourceFile)
+      const expected = yield* readSourceBlob(sourceRepo, manifest.source.ref, projection.sourceFile)
       const expectedHash = sha256(expected)
       const targetPath = path.join(options.harness, projection.targetFile)
 
@@ -221,24 +221,24 @@ export const verifyCraftSkills = Effect.fnUntraced(function* (options: CraftSkil
         errors.push(`${projection.skill} manifest sha256 is ${projection.sha256 || 'missing'}; expected ${expectedHash}. Run ${manifest.mechanism.syncCommand}.`)
       }
       if (!(yield* fs.exists(targetPath))) {
-        errors.push(`Missing Craft skill projection: ${projection.targetFile}. Run ${manifest.mechanism.syncCommand}.`)
+        errors.push(`Missing Codex skill projection: ${projection.targetFile}. Run ${manifest.mechanism.syncCommand}.`)
         continue
       }
 
       const actual = yield* fs.readFileString(targetPath)
       if (actual !== expected) {
-        errors.push(`${projection.targetFile} does not match Craft source ${projection.sourceFile} at ${manifest.source.ref}. Run ${manifest.mechanism.syncCommand}.`)
+        errors.push(`${projection.targetFile} does not match Codex skill source ${projection.sourceFile} at ${manifest.source.ref}. Run ${manifest.mechanism.syncCommand}.`)
       }
     }
   }
 
   if (errors.length > 0) {
-    yield* Console.error('Craft skill projection verification failed:')
+    yield* Console.error('Codex skill projection verification failed:')
     for (const error of errors) {
       yield* Console.error(`- ${error}`)
     }
-    return yield* new HarnessError({ message: 'Craft skill projection verification failed.' })
+    return yield* new HarnessError({ message: 'Codex skill projection verification failed.' })
   }
 
-  yield* Console.log(`Craft skill projections verified: ${manifest.projections.length} files from ${manifest.source.repoPath} @ ${manifest.source.ref}`)
+  yield* Console.log(`Codex skill projections verified: ${manifest.projections.length} files from ${manifest.source.repoPath} @ ${manifest.source.ref}`)
 })

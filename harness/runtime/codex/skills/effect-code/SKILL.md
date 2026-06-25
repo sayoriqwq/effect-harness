@@ -1,8 +1,6 @@
 ---
 name: effect-code
 description: "Use in an Effect target repo when writing, reviewing, or debugging Effect v4 beta code against the linked effect-harness official pin. Covers Effect services, runtime entrypoints, tests, CLI/HTTP/process boundaries, @effect/tsgo diagnostics, and focused Effect subagent delegation. Not for updating effect-harness, changing the source pin, or writing generic TypeScript unrelated to Effect."
-when_to_use: "Effect code, Effect review, Effect tests, Effect runtime, @effect/tsgo diagnostic, Effect subagent"
-dispatch_intent: "Write or review target Effect code against the pinned harness"
 ---
 
 # Effect Code

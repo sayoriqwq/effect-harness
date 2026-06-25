@@ -1,6 +1,6 @@
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
-import { verifyCraftSkills } from './CraftSkills.ts'
+import { verifyCodexSkillProjections } from './CodexSkillProjections.ts'
 import { HarnessError } from './Errors.ts'
 import { verifyGuardrails } from './Guardrails.ts'
 import { verifySourcePin } from './SourcePin.ts'
@@ -27,11 +27,12 @@ const verifyRuntimeSkillShape = Effect.fnUntraced(function* (errors: Array<strin
     const text = yield* fs.readFileString(`${harness}/${file}`)
     for (const section of requiredSkillSections) {
       if (!text.includes(section)) {
-        errors.push(`${file} is missing Craft skill section: ${section}`)
+        errors.push(`${file} is missing Codex skill section: ${section}`)
       }
     }
-    if (!text.includes('when_to_use:') || !text.includes('dispatch_intent:')) {
-      errors.push(`${file} must include Craft skill routing frontmatter.`)
+    const unsupportedFields = frontmatterFields(text).filter(field => field !== 'name' && field !== 'description')
+    if (unsupportedFields.length > 0) {
+      errors.push(`${file} must use only Codex-supported skill frontmatter: name and description.`)
     }
   }
 
@@ -46,10 +47,28 @@ const verifyRuntimeSkillShape = Effect.fnUntraced(function* (errors: Array<strin
   }
 })
 
+function frontmatterFields(text: string): ReadonlyArray<string> {
+  const lines = text.split(/\r?\n/u)
+  if (lines[0] !== '---') {
+    return []
+  }
+  const end = lines.indexOf('---', 1)
+  if (end === -1) {
+    return []
+  }
+  return lines.slice(1, end).flatMap((line) => {
+    const separator = line.indexOf(':')
+    if (separator === -1) {
+      return []
+    }
+    return [line.slice(0, separator).trim()]
+  })
+}
+
 export const verifyHarness = Effect.fnUntraced(function* (harness: string) {
   const errors: Array<string> = []
   yield* verifySourcePin(harness)
-  yield* verifyCraftSkills({ harness })
+  yield* verifyCodexSkillProjections({ harness })
   yield* verifyGuardrails({
     root: harness,
     includes: ['bin', 'src', 'scripts', 'tests'],

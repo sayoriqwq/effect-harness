@@ -1,15 +1,15 @@
 {
-  "name": "craft-skills",
+  "name": "codex-skill-projections",
   "source": {
-    "owner": "Craft",
-    "repository": "https://github.com/sayoriqwq/craft.git",
+    "owner": "Partita",
+    "repository": "https://github.com/sayoriqwq/partita.git",
     "repoPath": "../partita",
     "ref": "9f8e27006b16db94c97cfc4f6fa576993cc92f3c"
   },
   "mechanism": {
-    "syncCommand": "node bin/effect-harness.ts craft-skills sync --harness .",
-    "verifyCommand": "node bin/effect-harness.ts craft-skills check --harness .",
-    "check": "Compare each target projection byte-for-byte with the pinned Craft git blob and its sha256."
+    "syncCommand": "node bin/effect-harness.ts codex-skill-projections sync --harness .",
+    "verifyCommand": "node bin/effect-harness.ts codex-skill-projections check --harness .",
+    "check": "Compare each target projection byte-for-byte with the pinned Codex skill source git blob and its sha256."
   },
   "projections": [
     {

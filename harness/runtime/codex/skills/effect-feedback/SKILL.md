@@ -1,8 +1,6 @@
 ---
 name: effect-feedback
 description: "Use in an Effect target repo when a recurring Effect practice failure, @effect/tsgo gap, guardrail gap, verifier mismatch, or workaround may be reusable for effect-harness. Not for product-specific examples, generic Effect API tutorials, or issues already covered by the pinned official source."
-when_to_use: "Effect feedback, recurring Effect pitfall, @effect/tsgo gap, guardrail gap, verifier mismatch, reusable harness gap"
-dispatch_intent: "Capture reusable target practice feedback for effect-harness"
 ---
 
 # Effect Feedback

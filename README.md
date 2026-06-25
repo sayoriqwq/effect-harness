@@ -57,20 +57,20 @@ plugin、`AGENTS.md` route block，以及来自 `harness/runtime/codex/` 的 Cod
 pnpm install
 pnpm effect:status
 pnpm effect:verify
-pnpm craft-skills:check
+pnpm codex-skill-projections:check
 pnpm verify
 ```
 
 `pnpm effect:status` 报告 official npm/source drift；上游发布新 beta 不会让日常 verify
 自动失败。
 
-`pnpm effect:verify` 检查 committed Effect source pin、harness guardrails 和 managed Craft
+`pnpm effect:verify` 检查 committed Effect source pin、harness guardrails 和 managed Codex
 skill projections。
 
 `pnpm verify` 运行 self-verify、typecheck、tests、lint 和 knip。
 
-Craft 拥有 managed skills 的 source semantics。本仓库只保存 checked projections under
-`.codex/skills/`；目标仓库只接收 `harness/runtime/codex/`。
+Partita 拥有 managed skills 的 source semantics。本仓库只保存 checked Codex runtime
+projections under `.codex/skills/`；目标仓库只接收 `harness/runtime/codex/`。
 
 ## Source Pin
 
