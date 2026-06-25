@@ -3,7 +3,7 @@
   "source": {
     "owner": "Craft",
     "repository": "https://github.com/sayoriqwq/craft.git",
-    "repoPath": "../craft",
+    "repoPath": "../partita",
     "ref": "9f8e27006b16db94c97cfc4f6fa576993cc92f3c"
   },
   "mechanism": {
