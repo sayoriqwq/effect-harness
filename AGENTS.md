@@ -12,12 +12,12 @@ Before writing non-trivial Effect code here or in a target project, read:
 
 Baseline:
 
-- `effect@4.0.0-beta.83`
-- `@effect/platform-node@4.0.0-beta.83`
-- `@effect/vitest@4.0.0-beta.83`
-- `@effect/tsgo@0.14.4`
+- `effect@4.0.0-beta.90`
+- `@effect/platform-node@4.0.0-beta.90`
+- `@effect/vitest@4.0.0-beta.90`
+- `@effect/tsgo@0.14.6`
 - `@effect/language-service@0.86.2`
-- `@typescript/native-preview@7.0.0-dev.20260615.1`
+- `@typescript/native-preview@7.0.0-dev.20260624.1`
 
 Current v4 beta patterns:
 

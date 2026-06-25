@@ -3,14 +3,14 @@
   "repository": "https://github.com/Effect-TS/effect-smol.git",
   "branch": "main",
   "prefix": "repos/effect",
-  "split": "95545bdc334f4cd27a14f3308e68114e5bed92f2",
+  "split": "3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6",
   "llmDocument": "repos/effect/LLMS.md",
   "packageBaseline": {
-    "effect": "4.0.0-beta.83",
-    "@effect/platform-node": "4.0.0-beta.83",
-    "@effect/vitest": "4.0.0-beta.83",
-    "@effect/tsgo": "0.14.4",
+    "effect": "4.0.0-beta.90",
+    "@effect/platform-node": "4.0.0-beta.90",
+    "@effect/vitest": "4.0.0-beta.90",
+    "@effect/tsgo": "0.14.6",
     "@effect/language-service": "0.86.2",
-    "@typescript/native-preview": "7.0.0-dev.20260615.1"
+    "@typescript/native-preview": "7.0.0-dev.20260624.1"
   }
 }

@@ -6,7 +6,7 @@ Effect development 的依据。
 Pinned source：
 
 ```text
-repos/effect @ 95545bdc334f4cd27a14f3308e68114e5bed92f2
+repos/effect @ 3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6
 ```
 
 ## Role

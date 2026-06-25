@@ -52,7 +52,7 @@ it.effect('target verifier rejects caret ranges for pinned Effect baseline depen
 
     const packageJsonPath = join(target, 'package.json')
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
-    packageJson.dependencies.effect = '^4.0.0-beta.83'
+    packageJson.dependencies.effect = '^4.0.0-beta.90'
     writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
 
     const result = runCli([
@@ -64,7 +64,7 @@ it.effect('target verifier rejects caret ranges for pinned Effect baseline depen
     ])
 
     assert.notEqual(result.status, 0)
-    assert.match(result.stderr, /effect is \^4\.0\.0-beta\.83; expected 4\.0\.0-beta\.83 or catalog:/u)
+    assert.match(result.stderr, /effect is \^4\.0\.0-beta\.90; expected 4\.0\.0-beta\.90 or catalog:/u)
   }
   finally {
     rmSync(root, { recursive: true, force: true })
@@ -100,7 +100,7 @@ it.effect('target verifier rejects stale pnpm catalog entries for catalog depend
     ])
 
     assert.notEqual(result.status, 0)
-    assert.match(result.stderr, /pnpm-workspace\.yaml catalog effect is 4\.0\.0-beta\.0; expected 4\.0\.0-beta\.83/u)
+    assert.match(result.stderr, /pnpm-workspace\.yaml catalog effect is 4\.0\.0-beta\.0; expected 4\.0\.0-beta\.90/u)
   }
   finally {
     rmSync(root, { recursive: true, force: true })
