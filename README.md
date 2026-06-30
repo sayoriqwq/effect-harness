@@ -1,29 +1,48 @@
 # Effect Harness
 
-`effect-harness` is a small Effect v4 beta provider profile and source route package.
+`effect-harness` 是 Effect v4 beta 的 Prelude provider profile（提供者档案）与源入口路线包。
 
-The generic external-repository pin workflow belongs to Partita. This repository only carries the
-Effect-specific instance:
+当前设计分成两层：
 
-- `harness/offcial-guide.md`: the only in-repo guide authority copied from the official guide brief.
-- `repos/effect/`: pinned official Effect source, read-only for agents.
-- `repos/effect.subtree.json`: source-entry manifest and package baseline.
-- `.partita/source-entries.json`: Partita-owned generic source-entry contract.
-- `harness/effect-routes.md`: agent route table for reading the pinned Effect source.
-- `harness/provider/effect-harness.provider.json`: minimal Prelude provider profile.
-- `src/`: minimal provider/source verifier implementation.
+1. 本仓建设层：指导我们继续维护 `effect-harness` 本身。
+2. 目标 harness 层：由 Prelude 在接入项目中生成和维护，用来持续约束目标项目。
 
-There is no target runtime projection in this baseline. The old `.codex/skills`, target runtime
-templates, feedback intake, `AGENTS.md` managed block, and `.effect-harness.json` standalone manifest
-surfaces are intentionally gone.
+通用外部仓库 pin 流程由 Partita 负责；本仓只承载 Effect 这一份源入口实例、Effect 基线、
+读取路线和 Prelude provider profile。
 
-## Baseline
+## 本仓建设层
 
-The package baseline is defined only by [repos/effect.subtree.json](./repos/effect.subtree.json).
-Application and test code must import Effect APIs from installed packages, never from
-`repos/effect/`.
+这一层只服务 `effect-harness` 自身的维护：
 
-## Commands
+- `harness/offcial-guide.md`：仓内 guide 唯一真源。
+- `.partita/source-entries.json`：Partita 管理的通用源入口契约实例。
+- `repos/effect/`：已 pin 的官方 Effect 源码，只供 agent 读取参考。
+- `repos/effect.subtree.json`：Effect 源入口 manifest 与 package 基线。
+- `harness/effect-routes.md`：agent 读取 `repos/effect/` 的路线表。
+- `harness/provider/effect-harness.provider.json`：提供给 Prelude 的 provider profile。
+- `src/`：本仓最小验证器，只验证 provider 仓自身边界。
+
+## 目标 Harness 层
+
+这一层不是本仓直接散落脚本来维护，而是 Prelude 根据 provider profile 在目标项目中维护：
+
+- provider record：记录接入的 `effect-harness` profile、artifact 与 source identity。
+- package 基线：维护 `effect`、`@effect/platform-node`、`@effect/tsgo`、
+  `@effect/language-service` 等版本约束。
+- `tsconfig.json` 指针：维护 `@effect/language-service` 插件和 `floatingEffect: error`。
+- 诊断路径：目标项目以 `tsgo --noEmit` 作为主要 Effect 诊断路径。
+
+目标项目不接收 `repos/effect/`、`.partita/source-entries.json`、`repos/effect.subtree.json`、
+旧 `.codex/skills`、目标 runtime 模板、反馈入口、`.effect-harness.json` 或 effect-harness
+管理的 `AGENTS.md` 管理块。
+
+## 职责边界
+
+- Partita：通用外部源入口 pin/status/update/verify。
+- effect-harness：Effect 源入口实例、路线表、baseline、provider profile、本仓验证。
+- Prelude：目标项目生命周期、provider record、目标项目落地生成、drift/verify/maintain。
+
+## 验证命令
 
 ```bash
 pnpm install
@@ -31,20 +50,8 @@ pnpm effect:verify
 pnpm verify
 ```
 
-`pnpm effect:verify` checks the committed source-entry pin, Partita source contract, provider
-profile, and provider repository import boundaries.
+`pnpm effect:verify` 只验证本 provider 仓自身：源入口 pin、Partita 源入口契约、provider
+profile 和 import 边界。
 
-## Source Pin
-
-Read [harness/source.md](./harness/source.md) before changing `repos/effect/` or
-`repos/effect.subtree.json`. Read [harness/effect-routes.md](./harness/effect-routes.md) when an
-agent needs to use the pinned Effect source as reference material.
-
-```bash
-pnpm source:status
-pnpm source:update
-pnpm source:verify
-```
-
-Those commands delegate generic pin status/update/verify to Partita. If the source pin changes,
-commit with matching `git-subtree-dir` and `git-subtree-split` trailers and run `pnpm verify`.
+更新 Effect 源入口前先读 [harness/source.md](./harness/source.md)。agent 需要读取 pinned
+Effect 源码时先读 [harness/effect-routes.md](./harness/effect-routes.md)。

@@ -1,9 +1,12 @@
-# Agent Bootstrap
+# Agent 启动规则
 
-This repo is the shared Effect v4 beta provider profile and source route package. It is published as
-a CLI utility package.
+本仓是 Effect v4 beta 的 Prelude provider profile 与源入口路线包，并以 CLI utility package
+发布。这里有两层语境：
 
-Before writing non-trivial Effect code here or in a target project, read:
+- 本仓建设层：维护 `effect-harness` 自身的源入口、路线、基线和 provider profile。
+- 目标 harness 层：由 Prelude 在接入项目中生成和维护，持续约束目标项目。
+
+在本仓或目标项目写非平凡 Effect 代码前，先读：
 
 - `HARNESS.md`
 - `README.md`
@@ -15,7 +18,7 @@ Before writing non-trivial Effect code here or in a target project, read:
 - `repos/effect/LLMS.md`
 - `repos/effect.subtree.json`
 
-Baseline:
+基线：
 
 - `effect@4.0.0-beta.90`
 - `@effect/platform-node@4.0.0-beta.90`
@@ -24,38 +27,38 @@ Baseline:
 - `@effect/language-service@0.86.2`
 - `@typescript/native-preview@7.0.0-dev.20260624.1`
 
-Current v4 beta patterns:
+当前 v4 beta 模式：
 
-- CLI modules: `effect/unstable/cli/Command` and `effect/unstable/cli/Flag`
-- Node runtime: `@effect/platform-node/NodeRuntime`
-- Node services: `@effect/platform-node/NodeServices`
-- Service definitions: `Context.Service`
-- Entrypoints: `NodeRuntime.runMain`
+- CLI 模块：`effect/unstable/cli/Command` 和 `effect/unstable/cli/Flag`
+- Node runtime：`@effect/platform-node/NodeRuntime`
+- Node services：`@effect/platform-node/NodeServices`
+- Service 定义：`Context.Service`
+- 入口：`NodeRuntime.runMain`
 
-Hard boundaries:
+硬边界：
 
-- Never import from `repos/effect` in application or test code.
-- Do not depend on `@effect/cli`; use `effect/unstable/cli`.
-- Do not introduce `Context.Tag` service definitions for this baseline.
-- Do not add target-local dispatcher scripts.
-- Do not restore repo-local `.codex/skills`, target runtime templates, feedback intake,
-  `.effect-harness.json`, or effect-harness managed `AGENTS.md` blocks. Those are old surfaces.
-- Partita owns the generic source-entry pin workflow; this repo owns only the Effect source-entry
-  instance and baseline verifier.
+- 应用代码和测试代码禁止从 `repos/effect` import。
+- 不依赖 `@effect/cli`；使用 `effect/unstable/cli`。
+- 当前基线不新增 `Context.Tag` service definition。
+- 不新增目标项目本地 dispatcher scripts。
+- 不恢复仓内 `.codex/skills`、目标 runtime 模板、反馈入口、
+  `.effect-harness.json` 或 effect-harness 管理的 `AGENTS.md` blocks；这些都是旧表面。
+- Partita 负责通用源入口 pin 流程；本仓只负责 Effect 源入口实例、路线、基线和 provider
+  profile。
+- Prelude 负责目标项目生命周期；本仓不直接实现目标项目 maintain 系统。
 
-Validation:
+验证：
 
 ```bash
 pnpm effect:verify
 pnpm verify
 ```
 
-Official source precedence:
+官方真源优先级：
 
-- Use `pnpm source:status`, `pnpm source:update`, and `pnpm source:verify` for generic source-entry
-  pin workflow through Partita.
-- Use the `@effect/tsgo` patched `tsgo --noEmit` as the primary Effect diagnostic path.
-  `effect-tsgo` is the setup/patch manager, not the `--noEmit` typecheck binary.
-- If local harness docs disagree with `harness/offcial-guide.md`, `repos/effect/LLMS.md`,
-  `repos/effect/`, or `@effect/tsgo` diagnostics, follow the official source and update the
-  minimal provider routes.
+- 通用源入口 pin 流程走 Partita：`pnpm source:status`、`pnpm source:update`、
+  `pnpm source:verify`。
+- Effect 诊断主路径是 patched `tsgo --noEmit`。`effect-tsgo` 是 setup/patch manager，不是
+  `--noEmit` typecheck binary。
+- 如果本仓 harness 文档与 `harness/offcial-guide.md`、`repos/effect/LLMS.md`、
+  `repos/effect/` 或 `@effect/tsgo` diagnostics 冲突，服从官方真源并更新最小 provider route。

@@ -1,23 +1,34 @@
-# Effect Harness Route
+# Effect Harness 路线
 
-本仓当前只有一个职责：维护 pinned official Effect source-entry 的 provider profile、agent route
-表和最小可验证 baseline。
+本仓不是通用 pin 框架，也不是目标项目的第二套 maintain 系统。当前职责是维护 Effect
+源入口实例、读取路线、Effect 基线和 Prelude provider profile。
+
+## 两层结构
+
+| 层级 | 目的 | 本仓负责什么 | 不负责什么 |
+| --- | --- | --- | --- |
+| 本仓建设层 | 指导 `effect-harness` 自身继续推进 | 官方 guide、Effect 源入口实例、路线表、provider profile、最小验证器 | 通用 pin 实现、目标项目落地生成 |
+| 目标 harness 层 | 让接入项目持续受到约束 | 通过 provider profile 声明目标项目应接收的基线与配置指针 | 直接写目标 runtime、`.codex`、`.effect-harness.json`、目标 `AGENTS.md` 管理块 |
 
 ## 真源
 
-- `harness/offcial-guide.md` 是仓内 guide 唯一真源。
-- `repos/effect.subtree.json` 是 source-entry 与 package-baseline manifest。
-- `.partita/source-entries.json` 是 Partita 管理的 generic source-entry contract。
-- `repos/effect/LLMS.md` 是 pinned 上游 Effect LLM guide。
-- `harness/effect-routes.md` 是 agent 读取 `repos/effect/` 的路线表。
-- `harness/provider/effect-harness.provider.json` 是最小 Prelude provider profile。
+- `harness/offcial-guide.md`：仓内 guide 唯一真源。
+- `.partita/source-entries.json`：Partita 管理的源入口契约实例。
+- `repos/effect.subtree.json`：Effect 源入口与 package 基线 manifest。
+- `repos/effect/LLMS.md`：pinned 上游 Effect LLM guide。
+- `harness/effect-routes.md`：agent 读取 `repos/effect/` 的路线表。
+- `harness/provider/effect-harness.provider.json`：Prelude provider profile。
 
-Partita 负责通用 source-entry pin workflow。本仓只拥有 Effect 这个具体实例。
+## 职责分配
+
+- Partita 负责通用源入口 pin 流程。
+- effect-harness 负责 Effect 这个具体源入口实例和 provider profile。
+- Prelude 负责目标项目的 provider record、drift、verify 和 maintain。
 
 ## 已移除表面
 
-新 baseline 不包含 repo-local Codex skills、target runtime templates、feedback intake、target
-`AGENTS.md` managed block，也不保留 `.effect-harness.json` standalone state。旧文件可以从 git
+新基线不包含仓内 Codex skills、目标 runtime 模板、反馈入口、目标
+`AGENTS.md` 管理块，也不保留 `.effect-harness.json` 独立状态。旧文件可以从 git
 history 查，但不是当前真源。
 
 ## 验证
@@ -28,5 +39,5 @@ pnpm verify
 ```
 
 `pnpm effect:verify` 只验证 provider 仓自身。`pnpm source:status`、`pnpm source:update`、
-`pnpm source:verify` 借用 Partita source-entry CLI。Target repository 由 Prelude provider
-maintain/verify；effect-harness 不向 target 投影 runtime assets。
+`pnpm source:verify` 借用 Partita source-entry CLI。目标项目由 Prelude provider
+maintain/verify；effect-harness 不直接向目标项目投影 runtime 资产。

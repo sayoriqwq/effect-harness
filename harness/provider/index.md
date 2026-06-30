@@ -1,35 +1,40 @@
 # Prelude Provider Profile
 
-This directory exposes the minimal provider profile consumed by Prelude.
+本目录暴露给 Prelude 使用的最小 provider profile。它只描述 effect-harness 能给目标项目带来的
+约束面，不直接实现目标项目 maintain。
 
-Current authorities:
+当前真源：
 
 - `harness/provider/effect-harness.provider.json`
 - `repos/effect.subtree.json`
 - `repos/effect/LLMS.md`
 - `harness/offcial-guide.md`
 
-## Boundary
+## 两层对应
 
-Partita owns generic source-entry pin semantics and `.partita/source-entries.json`. effect-harness owns
-only the Effect source-entry instance route, provider profile, and Effect package baseline.
+第一层是本仓建设层：effect-harness 维护 Effect 源入口实例、路线、provider profile 和 Effect
+package 基线。
 
-Prelude owns target lifecycle. effect-harness may verify a Prelude provider record, but it does not
-project Codex runtime assets, feedback intake, target `AGENTS.md` blocks, or `.effect-harness.json`
-state.
+第二层是目标 harness 层：Prelude 读取 provider profile，在目标项目中维护 provider record、
+package 基线、`tsconfig.json` language-service plugin 和诊断脚本。
 
-## Target Surfaces
+Partita 负责通用源入口 pin 语义和 `.partita/source-entries.json`；effect-harness 不复制这套
+能力。Prelude 负责目标项目生命周期；effect-harness 不投影 Codex runtime 资产、反馈入口、目标
+`AGENTS.md` blocks 或 `.effect-harness.json` state。
 
-The remaining provider target surfaces are structured pointers only:
+## 目标项目接收面
+
+当前 provider target surfaces 只保留结构化指针：
 
 - `package.json` dependencies and scripts
 - `tsconfig.json` language-service plugin
 
-Provider records retaining old `.codex` runtime files, effect-harness `AGENTS.md` managed blocks, or
-`.effect-harness.json` state are legacy and should be regenerated from the new profile.
+目标项目可以接收 provider record 中的 source identity，但不接收 `repos/effect/` 本体。仍保留旧
+`.codex` runtime files、effect-harness `AGENTS.md` 管理块或 `.effect-harness.json` state 的
+provider records 都是旧状态，应按新 profile 重新生成。
 
-## Editor Policy
+## 编辑器策略
 
-The profile records source-entry editor policy as data. Auto-import exclusion for `repos/**` is the
-default hard boundary. Watch/search exclusion requires explicit editor configuration. File hiding is a
-preference, not a default. VSCode and Zed shapes stay separate.
+profile 把 source-entry editor policy 记录为数据。`repos/**` 的 auto-import exclusion 是默认硬边界。
+watch/search exclusion 需要显式编辑器配置。文件隐藏是偏好项，不是默认项。VSCode 和 Zed 的配置
+shape 分开记录。
