@@ -991,6 +991,7 @@ const assertRuntimeContract = Effect.fnUntraced(function* (
   yield* assertRuntimeDirectory(errors, root, harness, runtimeRoot, 'skills')
   yield* assertRuntimeDirectory(errors, root, harness, runtimeRoot, 'agents')
   yield* assertRequiredPath(errors, root, '.codex/effect-feedback', 'directory')
+  yield* assertRequiredPath(errors, root, '.codex/effect-feedback/.gitkeep', 'file')
   yield* assertAgentsRoute(errors, root, harness)
 })
 

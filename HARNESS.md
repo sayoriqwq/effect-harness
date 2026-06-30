@@ -7,7 +7,7 @@
 | Layer | Audience | Role |
 | --- | --- | --- |
 | `guide/` | humans | 解释 setup、默认补充能力和 feedback flow。 |
-| `harness/` | agents | 定义 contracts、provider profile、runtime assets、source policy、feedback 和 verification。 |
+| `harness/` | agents | 定义 contracts、provider profile、source-entry policy、managed surfaces、feedback 和 verification。 |
 | `src/` | maintainers | 实现 CLI、verifier、guardrails 和 publish flow。 |
 | `repos/effect/` | humans and agents | Pinned official Effect source。 |
 | `.codex/skills/` | repo-local agents | 只维护本仓库；不投递给 targets。 |
@@ -29,7 +29,10 @@ Target repos 不复制 `HARNESS.md`。它们只接收：
 
 - `AGENTS.md` route fragment
 - prelude-managed provider state at `.prelude/providers/effect-harness/provider.json`
-- 从 `harness/runtime/codex/` 复制出的 provider-owned `.codex` runtime assets
-- `.codex/effect-feedback/`，用于 local feedback evidence
+- provider record `surfaces[]` 声明的 provider-owned runtime assets
+- `.codex/effect-feedback/` 和 `.codex/effect-feedback/.gitkeep`，用于 local feedback evidence
+
+Target repos 不接收 provider repo 内部的 `repos/effect` source pin 本体，除非 provider contract
+显式声明该 surface。
 
 authoritative harness route 留在本仓库。

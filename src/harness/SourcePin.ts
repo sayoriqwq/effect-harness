@@ -167,6 +167,24 @@ function nextPackageBaseline(
   return Effect.succeed(baseline)
 }
 
+function nextSourceEntryManifest(
+  manifest: EffectSubtreeManifest,
+  split: string,
+  packageBaseline: Readonly<Record<string, string>>,
+): EffectSubtreeManifest {
+  return {
+    ...manifest,
+    split,
+    sourceEntry: {
+      ...manifest.sourceEntry,
+      pin: {
+        split,
+      },
+    },
+    packageBaseline,
+  }
+}
+
 const assertCleanWorktree = Effect.fnUntraced(function* (root: string) {
   const status = yield* commandString('git', ['status', '--porcelain'], { cwd: root })
   if (status.length > 0) {
@@ -337,7 +355,7 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
   }
 
   if (!(yield* fs.exists(`${root}/${manifest.llmDocument}`))) {
-    errors.push(`Missing Effect LLM document: ${manifest.llmDocument}`)
+    errors.push(`Missing Effect source-entry LLM anchor: ${manifest.llmDocument}`)
   }
 
   if (yield* hasGitHead(root)) {
@@ -358,7 +376,9 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
     errors.push(`${manifest.prefix} must be a git subtree, not a git submodule.`)
   }
 
-  yield* assertNoVendoredImports(errors, root, manifest)
+  if (manifest.sourceEntry.importBlock.enabled) {
+    yield* assertNoVendoredImports(errors, root, manifest)
+  }
   yield* verifyPackageBaseline(errors, root, manifest)
 
   if (errors.length > 0) {
@@ -369,7 +389,7 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
     return yield* new HarnessError({ message: 'Effect source subtree verification failed.' })
   }
 
-  yield* Console.log(`Effect source subtree verified: ${manifest.prefix} @ git-subtree-split ${manifest.split}`)
+  yield* Console.log(`Effect source entry verified: ${manifest.prefix} @ git-subtree-split ${manifest.split}`)
 })
 
 export const updateSourcePin = Effect.fnUntraced(function* (options: UpdateSourcePinOptions) {
@@ -383,11 +403,7 @@ export const updateSourcePin = Effect.fnUntraced(function* (options: UpdateSourc
   }
 
   const packageBaseline = yield* nextPackageBaseline(manifest, official)
-  const nextManifest: EffectSubtreeManifest = {
-    ...manifest,
-    split: sourceHead,
-    packageBaseline,
-  }
+  const nextManifest = nextSourceEntryManifest(manifest, sourceHead, packageBaseline)
   const changes: Array<string> = []
 
   yield* assertCleanWorktree(options.harness)

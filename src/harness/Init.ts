@@ -292,6 +292,7 @@ export const initializeTarget = Effect.fnUntraced(function* (options: InitOption
   yield* copyRuntimeDirectory(path.join(runtimeRoot, 'skills'), path.join(options.target, '.codex/skills'), replacements, writeOptions, changes)
   yield* copyRuntimeDirectory(path.join(runtimeRoot, 'agents'), path.join(options.target, '.codex/agents'), replacements, writeOptions, changes)
   yield* ensureDirectory(path.join(options.target, '.codex/effect-feedback'), writeOptions, changes)
+  yield* writeManagedFile(path.join(options.target, '.codex/effect-feedback/.gitkeep'), '', writeOptions, changes)
   yield* updateAgents(options.target, options.harness, runtimeRoot, writeOptions, changes)
   yield* writeHarnessManifest(options.target, options.harness, manifest, writeOptions, changes)
 

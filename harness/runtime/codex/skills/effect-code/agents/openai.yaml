@@ -1,4 +1,4 @@
 interface:
   display_name: Effect Code
-  short_description: 编写和审查 Effect v4 beta 代码
-  default_prompt: 使用 $effect-code，并按 .codex/agents/effect-worker.md 作为 Effect 子任务配置。
+  short_description: Write and review Effect v4 beta code
+  default_prompt: Use $effect-code and .codex/agents/effect-worker.md for focused Effect work.

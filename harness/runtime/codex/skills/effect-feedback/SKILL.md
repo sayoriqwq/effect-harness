@@ -9,19 +9,15 @@ Use this skill to capture target-local evidence that may improve `effect-harness
 
 ## Capability
 
-Separate reusable harness gaps from target business issues by checking pinned official source first, then
-recording a local feedback item with enough evidence for a maintainer to promote or reject.
+Separate reusable harness gaps from target business issues by checking pinned official source first, then recording a local feedback item with enough evidence for a maintainer to promote or reject.
 
-Pressure scenario: an agent upstreams a product-specific workaround, copies official docs into the harness,
-or loses a real repeated target failure because it was never written as evidence.
+Pressure scenario: an agent upstreams a product-specific workaround, copies official docs into the harness, or loses a real repeated target failure because it was never written as evidence.
 
 ## Trigger
 
-Use when this target hits a recurring Effect pitfall, `@effect/tsgo` diagnostic gap, guardrail gap,
-verifier mismatch, or local workaround that might apply across Effect targets.
+Use when this target hits a recurring Effect pitfall, `@effect/tsgo` diagnostic gap, guardrail gap, verifier mismatch, or local workaround that might apply across Effect targets.
 
-Do not use when official source already explains the issue, when the issue is product-specific, or when the
-task is ordinary Effect implementation.
+Do not use when official source already explains the issue, when the issue is product-specific, or when the task is ordinary Effect implementation.
 
 ## Soft Boundary
 
@@ -32,10 +28,8 @@ task is ordinary Effect implementation.
 ## Hard Boundary
 
 - Check pinned official source before writing feedback.
-- Do not bypass `repos/effect/LLMS.md`, `repos/effect/ai-docs/src/`, `repos/effect/migration/v3-to-v4.md`,
-  `repos/effect/`, or patched `tsgo --noEmit`.
-- Do not copy upstream maintainer-only workflow from `repos/effect/AGENTS.md`,
-  `repos/effect/.agents/skills/*`, or `repos/effect/.specs/*`.
+- Do not bypass `repos/effect/LLMS.md`, `repos/effect/ai-docs/src/`, `repos/effect/migration/v3-to-v4.md`, `repos/effect/`, or patched `tsgo --noEmit`.
+- Do not copy upstream maintainer-only workflow from `repos/effect/AGENTS.md`, `repos/effect/.agents/skills/*`, or `repos/effect/.specs/*`.
 
 ## Workflow
 
@@ -60,5 +54,4 @@ task is ordinary Effect implementation.
 
 ## Validation
 
-The entry must state the official coverage check and a proposed landing as route, runtime contract,
-guardrail, verifier, or harness skill update.
+The entry must state the official coverage check and a proposed landing as route, runtime contract, guardrail, verifier, or harness skill update.

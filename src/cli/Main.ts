@@ -5,7 +5,6 @@ import * as Option from 'effect/Option'
 import * as Path from 'effect/Path'
 import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
-import { syncCodexSkillProjections, verifyCodexSkillProjections } from '../harness/CodexSkillProjections.ts'
 import { targetGuardrailIncludes, verifyGuardrails } from '../harness/Guardrails.ts'
 import { initializeTarget } from '../harness/Init.ts'
 import { publishPackage } from '../harness/Publish.ts'
@@ -86,20 +85,6 @@ const publishDryRunFlag = Flag.boolean('dry-run').pipe(
 
 const provenanceFlag = Flag.boolean('provenance').pipe(
   Flag.withDescription('Enable npm provenance metadata'),
-  Flag.optional,
-)
-
-const sourceFlag = Flag.path('source').pipe(
-  Flag.withDescription('Source repository root for managed Codex skill lookup'),
-  Flag.optional,
-  Flag.mapEffect(option => Option.match(option, {
-    onNone: () => Effect.sync((): string | undefined => undefined),
-    onSome: resolveFromCwd,
-  })),
-)
-
-const sourceRefFlag = Flag.string('source-ref').pipe(
-  Flag.withDescription('Source git ref to project; defaults to the source checkout HEAD'),
   Flag.optional,
 )
 
@@ -187,39 +172,6 @@ function makeCli(config: CliConfig) {
     Command.withDescription('Update the pinned official Effect source, manifest, workspace, and baseline docs'),
   )
 
-  const codexSkillProjectionsCheck = Command.make('check', {
-    harness,
-    source: sourceFlag,
-  }, Effect.fnUntraced(function* ({ harness, source }) {
-    yield* verifyCodexSkillProjections({
-      harness,
-      source,
-    })
-  })).pipe(
-    Command.withDescription('Check effect-harness managed Codex skill projections for drift'),
-  )
-
-  const codexSkillProjectionsSync = Command.make('sync', {
-    dryRun: dryRunFlag,
-    harness,
-    source: sourceFlag,
-    sourceRef: sourceRefFlag,
-  }, Effect.fnUntraced(function* ({ dryRun, harness, source, sourceRef }) {
-    yield* syncCodexSkillProjections({
-      dryRun,
-      harness,
-      source,
-      sourceRef: Option.getOrUndefined(sourceRef),
-    })
-  })).pipe(
-    Command.withDescription('Sync effect-harness managed Codex skill projections from the source repo'),
-  )
-
-  const codexSkillProjections = Command.make('codex-skill-projections').pipe(
-    Command.withDescription('Maintain managed Codex skill projections inside effect-harness'),
-    Command.withSubcommands([codexSkillProjectionsCheck, codexSkillProjectionsSync]),
-  )
-
   const publish = Command.make('publish', {
     harness,
     version: versionFlag,
@@ -244,7 +196,7 @@ function makeCli(config: CliConfig) {
 
   return Command.make('effect-harness').pipe(
     Command.withDescription('Effect v4 beta harness CLI'),
-    Command.withSubcommands([init, status, verify, selfVerify, sourceVerify, guardrails, updatePin, codexSkillProjections, publish]),
+    Command.withSubcommands([init, status, verify, selfVerify, sourceVerify, guardrails, updatePin, publish]),
   )
 }
 

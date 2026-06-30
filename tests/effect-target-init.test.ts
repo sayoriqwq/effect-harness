@@ -112,6 +112,7 @@ it.effect('effect-harness init installs consumer runtime and target contract', (
     assert.equal(existsSync(join(target, '.codex/skills/effect-feedback/SKILL.md')), true)
     assert.equal(existsSync(join(target, '.codex/agents/effect-worker.md')), true)
     assert.equal(existsSync(join(target, '.codex/effect-feedback')), true)
+    assert.equal(existsSync(join(target, '.codex/effect-feedback/.gitkeep')), true)
     const effectCodeSkill = readFileSync(join(target, '.codex/skills/effect-code/SKILL.md'), 'utf8')
     assert.match(effectCodeSkill, /## Capability/u)
     assert.match(effectCodeSkill, /## Trigger/u)
@@ -160,7 +161,7 @@ it.effect('built cli resolves the harness root from the dist entrypoint', () => 
     encoding: 'utf8',
   })
   assert.equal(result.status, 0, result.stderr)
-  assert.match(result.stdout, /Effect source subtree verified/u)
+  assert.match(result.stdout, /Effect source entry verified/u)
 }), 30_000)
 
 it.effect('effect-harness init preserves target catalog dependencies and updates catalog versions', () => Effect.sync(() => {

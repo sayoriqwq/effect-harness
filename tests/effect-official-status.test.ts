@@ -31,11 +31,44 @@ it.effect('official status reports package and source drift from a snapshot', ()
     mkdirSync(join(root, 'repos'))
     writeFileSync(join(root, 'repos/effect.subtree.json'), `${JSON.stringify({
       name: 'effect',
+      kind: 'source-entry',
+      mechanism: 'git-subtree',
       repository: 'https://example.invalid/effect-smol.git',
       branch: 'main',
       prefix: 'repos/effect',
       split: 'a'.repeat(40),
       llmDocument: 'repos/effect/LLMS.md',
+      sourceEntry: {
+        upstream: {
+          repository: 'https://example.invalid/effect-smol.git',
+          branch: 'main',
+        },
+        local: {
+          prefix: 'repos/effect',
+        },
+        pin: {
+          split: 'a'.repeat(40),
+        },
+        anchor: {
+          llmDocument: 'repos/effect/LLMS.md',
+        },
+        mode: {
+          readOnly: true,
+          referenceOnly: true,
+        },
+        commands: {
+          update: 'pnpm effect:update',
+          verify: 'pnpm effect:verify',
+        },
+        agent: {
+          route: 'repos/effect/LLMS.md',
+        },
+        importBlock: {
+          enabled: true,
+          prefix: 'repos/effect',
+          appliesTo: ['application', 'test'],
+        },
+      },
       packageBaseline: {
         'effect': '4.0.0-beta.83',
         '@effect/platform-node': '4.0.0-beta.83',
@@ -66,12 +99,28 @@ it.effect('official status reports package and source drift from a snapshot', ()
       readonly outdated: boolean
       readonly packages: ReadonlyArray<{ readonly name: string, readonly official: string | undefined }>
       readonly source: { readonly official: string | undefined }
+      readonly sourceEntry: {
+        readonly kind: string
+        readonly mechanism: string
+        readonly updateCommand: string
+        readonly verifyCommand: string
+        readonly importBlock: {
+          readonly prefix: string
+          readonly appliesTo: ReadonlyArray<string>
+        }
+      }
     }
     assert.equal(output.outdated, true)
     const effectRow = output.packages.find(row => row.name === 'effect')
     assert.ok(effectRow)
     assert.equal(effectRow.official, '4.0.0-beta.99')
     assert.equal(output.source.official, 'b'.repeat(40))
+    assert.equal(output.sourceEntry.kind, 'source-entry')
+    assert.equal(output.sourceEntry.mechanism, 'git-subtree')
+    assert.equal(output.sourceEntry.updateCommand, 'pnpm effect:update')
+    assert.equal(output.sourceEntry.verifyCommand, 'pnpm effect:verify')
+    assert.equal(output.sourceEntry.importBlock.prefix, 'repos/effect')
+    assert.deepEqual(output.sourceEntry.importBlock.appliesTo, ['application', 'test'])
   }
   finally {
     rmSync(root, { recursive: true, force: true })

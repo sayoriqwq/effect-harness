@@ -22,6 +22,19 @@ interface PackageRow {
   readonly status: 'current' | 'outdated'
 }
 
+interface SourceEntryMetadata {
+  readonly kind: EffectSubtreeManifest['kind']
+  readonly mechanism: EffectSubtreeManifest['mechanism']
+  readonly prefix: string
+  readonly llmDocument: string
+  readonly readOnly: true
+  readonly referenceOnly: true
+  readonly updateCommand: string
+  readonly verifyCommand: string
+  readonly agentRoute: string
+  readonly importBlock: EffectSubtreeManifest['sourceEntry']['importBlock']
+}
+
 const npmDistTag = Effect.fnUntraced(function* (name: string, tag: string) {
   const output = yield* commandString('npm', ['view', name, `dist-tags.${tag}`, '--json'])
   return yield* parseJson(output, `npm:${name}:${tag}`, (value, source) =>
@@ -78,10 +91,26 @@ function sourceRow(manifest: EffectSubtreeManifest, snapshot: OfficialSnapshot) 
   }
 }
 
+function sourceEntryMetadata(manifest: EffectSubtreeManifest): SourceEntryMetadata {
+  return {
+    kind: manifest.kind,
+    mechanism: manifest.mechanism,
+    prefix: manifest.prefix,
+    llmDocument: manifest.llmDocument,
+    readOnly: manifest.sourceEntry.mode.readOnly,
+    referenceOnly: manifest.sourceEntry.mode.referenceOnly,
+    updateCommand: manifest.sourceEntry.commands.update,
+    verifyCommand: manifest.sourceEntry.commands.verify,
+    agentRoute: manifest.sourceEntry.agent.route,
+    importBlock: manifest.sourceEntry.importBlock,
+  }
+}
+
 function summarize(result: {
   readonly manifest: Pick<EffectSubtreeManifest, 'repository' | 'branch' | 'split'>
   readonly packages: ReadonlyArray<PackageRow>
   readonly source: ReturnType<typeof sourceRow>
+  readonly sourceEntry: SourceEntryMetadata
 }): string {
   const lines = ['Effect official status:']
 
@@ -90,6 +119,8 @@ function summarize(result: {
   }
 
   lines.push(`- source ${result.source.name}: pinned ${result.source.pinned}; official ${result.source.official ?? '<unknown>'}; ${result.source.status}`)
+  lines.push(`- source-entry ${result.sourceEntry.kind}/${result.sourceEntry.mechanism}: ${result.sourceEntry.prefix}; anchor ${result.sourceEntry.llmDocument}; route ${result.sourceEntry.agentRoute}`)
+  lines.push(`- source-entry commands: update ${result.sourceEntry.updateCommand}; verify ${result.sourceEntry.verifyCommand}`)
   lines.push('')
   lines.push('Official sources:')
   lines.push('- https://registry.npmjs.org via npm view dist-tags')
@@ -112,6 +143,7 @@ export const showStatus = Effect.fnUntraced(function* (options: StatusOptions) {
     },
     packages: packageRows(manifest, official),
     source: sourceRow(manifest, official),
+    sourceEntry: sourceEntryMetadata(manifest),
   }
   const outdated = result.packages.some(row => row.status !== 'current') || result.source.status !== 'current'
 

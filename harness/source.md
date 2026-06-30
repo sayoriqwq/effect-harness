@@ -1,13 +1,19 @@
-# Effect v4 Source Reference
+# Effect v4 Source Entry
 
 本仓库把上游 Effect v4 beta source pin 在 `repos/effect/`，让 agent 可以直接查看真实源码、
 测试、示例和 LLM guide，不需要依赖 `node_modules` 或额外 clone。
+
+这是 provider repo 内部的 source entry。prelude target 只记录 `effect-harness` provider
+artifact/source identity；除非 provider contract 显式声明，target 不接收也不维护
+`repos/effect`、`repos/effect.subtree.json` 或 provider repo 的 `repos/effect/LLMS.md` 本体。
 
 ## Contract
 
 - `repos/effect/` 是只读 managed copy，来自 `Effect-TS/effect-smol`。
 - `repos/effect/LLMS.md` 是上游 LLM coding guide。
 - `repos/effect.subtree.json` 记录 repository、branch、prefix、split、LLM document path 和 package baseline。
+- `harness/provider/effect-harness.provider.json` exposes this as
+  `sourceEntries.effect-official-source` for prelude/provider identity.
 - `pnpm effect:verify` 检查 source 是否存在、是否误用 gitlink/submodule、LLM doc 是否存在、
   package baseline 是否一致，以及应用代码是否 import 了 pinned source。
   Git history 必须包含与 manifest split 对齐的 subtree trailer；manifest-only source pin 不通过验证。
@@ -31,6 +37,22 @@ source tree 只作为参考材料使用：
 - 用 patched `tsgo --noEmit` 验证目标代码
 
 Do not import from `repos/effect` in application or test code.
+
+## Prelude Boundary
+
+`effect-harness` owns this source entry. prelude owns target lifecycle. The bridge between them is the
+provider profile:
+
+- provider profile exposes source-entry identity and package baseline.
+- provider record may store artifact/source identity for drift and audit.
+- target managed surfaces are package/tsconfig/script pointers, `AGENTS.md` managed block, runtime assets,
+  and feedback intake.
+- target managed surfaces do not include the provider repo internal source pin body unless a future
+  contract explicitly adds it.
+
+Editor policy for this source entry is profile/options data. Auto-import exclude for `repos/**` is default;
+watch/search exclude is recommended but configured per editor; file hiding is explicit preference. VSCode
+and Zed setting shapes are recorded separately in the provider profile.
 
 ## Update Discipline
 

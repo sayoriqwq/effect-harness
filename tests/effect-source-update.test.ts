@@ -88,16 +88,50 @@ catalog:
 function makeHarness(root: string, repository: string) {
   const harness = join(root, 'harness')
   makeGitRepo(harness)
+  const llmDocument = 'repos/effect/LLMS.md'
 
   writeText(harness, 'repos/effect/LLMS.md', '# Pinned Effect Guide\n')
   writeText(harness, 'repos/effect/removed.txt', 'removed source only\n')
   writeText(harness, 'repos/effect.subtree.json', `${JSON.stringify({
     name: 'effect',
+    kind: 'source-entry',
+    mechanism: 'git-subtree',
     repository,
     branch: 'main',
     prefix: 'repos/effect',
     split: pinnedSplit,
-    llmDocument: 'repos/effect/LLMS.md',
+    llmDocument,
+    sourceEntry: {
+      upstream: {
+        repository,
+        branch: 'main',
+      },
+      local: {
+        prefix: 'repos/effect',
+      },
+      pin: {
+        split: pinnedSplit,
+      },
+      anchor: {
+        llmDocument,
+      },
+      mode: {
+        readOnly: true,
+        referenceOnly: true,
+      },
+      commands: {
+        update: 'pnpm effect:update',
+        verify: 'pnpm effect:verify',
+      },
+      agent: {
+        route: llmDocument,
+      },
+      importBlock: {
+        enabled: true,
+        prefix: 'repos/effect',
+        appliesTo: ['application', 'test'],
+      },
+    },
     packageBaseline: {
       'effect': '4.0.0-beta.83',
       '@effect/platform-node': '4.0.0-beta.83',
@@ -147,9 +181,15 @@ it.effect('source update syncs official source and baseline projections from a s
 
     const manifest = JSON.parse(readFileSync(join(harness, 'repos/effect.subtree.json'), 'utf8')) as {
       readonly split: string
+      readonly sourceEntry: {
+        readonly pin: {
+          readonly split: string
+        }
+      }
       readonly packageBaseline: Record<string, string>
     }
     assert.equal(manifest.split, upstream.sourceHead)
+    assert.equal(manifest.sourceEntry.pin.split, upstream.sourceHead)
     assert.equal(manifest.packageBaseline.effect, newPackages.effect)
     assert.equal(manifest.packageBaseline['@effect/tsgo'], newPackages['@effect/tsgo'])
 

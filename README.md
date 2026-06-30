@@ -6,9 +6,9 @@ standalone/dogfood wrapper。
 
 它维护目标项目共享的工程合约：
 
-- pinned official Effect source
+- provider-internal pinned official Effect source entry
 - package baseline
-- prelude first-party provider profile and assets
+- prelude first-party provider profile and managed surfaces
 - standalone `effect-harness init` 投递的 target runtime
 - guardrails 和 verifier
 - 可以提升为通用 harness contract 的 practice feedback
@@ -25,8 +25,8 @@ standalone/dogfood wrapper。
 
 - [HARNESS.md](./HARNESS.md)：仓库层级总 route。
 - [guide/](./guide/)：给人读的 setup 和 feedback guide。
-- [harness/](./harness/)：给 agent 读的 contract、runtime、source policy、feedback 和 target setup rules。
-- [harness/provider/](./harness/provider/)：prelude first-party maintain provider profile、资产清单和组合边界。
+- [harness/](./harness/)：给 agent 读的 contract、source-entry policy、managed surfaces、feedback 和 target setup rules。
+- [harness/provider/](./harness/provider/)：prelude first-party maintain provider profile、source identity、资产清单和组合边界。
 - [repos/effect/LLMS.md](./repos/effect/LLMS.md)：pinned official Effect coding guide。
 - [repos/effect.subtree.json](./repos/effect.subtree.json)：source pin 和 package baseline manifest。
 
@@ -46,9 +46,10 @@ source of truth。
 找到 `effect-harness` provider record。兼容期也可以显式传
 `--provider-record .prelude/providers/effect-harness/provider.json`。
 
-默认 profile 是 `codex-effect-v4`：Codex runtime、Effect v4 beta baseline、patched
-`tsgo --noEmit`、`@effect/language-service`、`floatingEffect=error`、Codex skills/agents、
-managed `AGENTS.md` block、provider `surfaces[]` 和 verify/status workflow 语义。
+默认 profile 是 `codex-effect-v4`：Codex runtime、Effect v4 beta baseline、provider-internal
+`effect-official-source` identity、patched `tsgo --noEmit`、`@effect/language-service`、
+`floatingEffect=error`、managed `AGENTS.md` block、provider `surfaces[]`、editor policy options
+和 verify/status workflow 语义。
 
 ## Target Setup
 
@@ -71,7 +72,7 @@ pnpm verify
 ```
 
 `effect-harness init` 会写入 target-local scripts、`.effect-harness.json`、`tsconfig.json`
-plugin、`AGENTS.md` route block，以及来自 `harness/runtime/codex/` 的 Codex runtime。
+plugin、`AGENTS.md` route block，以及 standalone compatibility runtime assets。
 这条路径不是 prelude formal provider state。
 
 人类 setup 说明读 [guide/setup.md](./guide/setup.md)。agent setup 和审查规则读
@@ -83,25 +84,26 @@ plugin、`AGENTS.md` route block，以及来自 `harness/runtime/codex/` 的 Cod
 pnpm install
 pnpm effect:status
 pnpm effect:verify
-pnpm codex-skill-projections:check
 pnpm verify
 ```
 
 `pnpm effect:status` 报告 official npm/source drift；上游发布新 beta 不会让日常 verify
 自动失败。
 
-`pnpm effect:verify` 检查 committed Effect source pin、harness guardrails 和 managed Codex
-skill projections。
+`pnpm effect:verify` 检查 committed Effect source pin、provider profile contract、harness
+guardrails 和测试 contract。
 
 `pnpm verify` 运行 self-verify、typecheck、tests、lint 和 knip。
 
-Partita 拥有 managed skills 的 source semantics。本仓库只保存 checked Codex runtime
-projections under `.codex/skills/`；prelude target 接收 `harness/runtime/codex/` 中由 provider
-`surfaces[]` 声明的 assets。
+Partita 拥有 external source-entry semantics。`effect-harness` self-verify 验证
+provider profile/source-entry contract；target runtime assets 是 provider-owned surfaces，
+不是外部投影生成物。prelude target 接收 provider record `surfaces[]` 声明的 runtime assets，
+不接收 provider repo 内部的 `repos/effect` source pin 本体。
 
 ## Source Pin
 
-official source pin 在 `repos/effect/`。完整更新规则见 [harness/source.md](./harness/source.md)。
+official source pin 是 provider repo 内部 source entry，materialized at `repos/effect/`。完整更新规则见
+[harness/source.md](./harness/source.md)。
 
 检查当前状态：
 
