@@ -21,7 +21,7 @@
         "value": "3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6"
       },
       "llmDocument": "repos/effect/LLMS.md",
-      "agentRoute": "harness/source.md",
+      "agentRoute": "harness/effect-routes.md",
       "materialization": {
         "mode": "git-subtree",
         "readOnlyForAgents": true

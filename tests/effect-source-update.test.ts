@@ -148,6 +148,7 @@ function makeHarness(root: string, repository: string) {
   writeText(harness, 'HARNESS.md', '- `effect@4.0.0-beta.83`\n')
   writeText(harness, 'harness/index.md', `${pinnedSplit}\n- \`effect@4.0.0-beta.83\`\n`)
   writeText(harness, 'harness/source.md', `${pinnedSplit}\n- \`@effect/tsgo@0.14.4\`\n`)
+  writeText(harness, 'harness/effect-routes.md', `${pinnedSplit}\n- \`@effect/platform-node@4.0.0-beta.83\`\n`)
   writeText(harness, 'harness/provider/index.md', `${pinnedSplit}\n`)
   writeText(harness, 'harness/provider/effect-harness.provider.json', `${JSON.stringify({
     sourceEntries: {
@@ -221,6 +222,7 @@ it.effect('source update syncs official source and baseline projections from a s
     assert.match(workspace, /'@effect\/tsgo': 0\.15\.0/u)
 
     assert.match(readFileSync(join(harness, 'harness/index.md'), 'utf8'), new RegExp(upstream.sourceHead, 'u'))
+    assert.match(readFileSync(join(harness, 'harness/effect-routes.md'), 'utf8'), new RegExp(upstream.sourceHead, 'u'))
     assert.match(readFileSync(join(harness, 'harness/provider/index.md'), 'utf8'), new RegExp(upstream.sourceHead, 'u'))
     assert.match(readFileSync(join(harness, 'harness/provider/effect-harness.provider.json'), 'utf8'), new RegExp(upstream.sourceHead, 'u'))
     assert.match(readFileSync(join(harness, 'tests/effect-target-verify.test.ts'), 'utf8'), /expected 4\\\.0\\\.0-beta\\\.99/u)

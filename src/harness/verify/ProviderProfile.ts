@@ -194,7 +194,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertStringValue(errors, stringField(errors, sourceEntry, 'kind', 'provider profile.sourceEntries.effect-official-source'), 'provider-internal-source-entry', 'provider profile.sourceEntries.effect-official-source.kind')
   assertStringValue(errors, stringField(errors, sourceEntry, 'prefix', 'provider profile.sourceEntries.effect-official-source'), 'repos/effect', 'provider profile.sourceEntries.effect-official-source.prefix')
   assertStringValue(errors, stringField(errors, sourceEntry, 'llmDocument', 'provider profile.sourceEntries.effect-official-source'), 'repos/effect/LLMS.md', 'provider profile.sourceEntries.effect-official-source.llmDocument')
-  assertStringValue(errors, stringField(errors, sourceEntry, 'agentRoute', 'provider profile.sourceEntries.effect-official-source'), 'harness/source.md', 'provider profile.sourceEntries.effect-official-source.agentRoute')
+  assertStringValue(errors, stringField(errors, sourceEntry, 'agentRoute', 'provider profile.sourceEntries.effect-official-source'), 'harness/effect-routes.md', 'provider profile.sourceEntries.effect-official-source.agentRoute')
 
   const anchor = recordField(errors, sourceEntry, 'anchor', 'provider profile.sourceEntries.effect-official-source')
   assertStringValue(errors, stringField(errors, anchor, 'manifest', 'provider profile.sourceEntries.effect-official-source.anchor'), 'repos/effect.subtree.json', 'provider profile.sourceEntries.effect-official-source.anchor.manifest')

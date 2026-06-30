@@ -1,24 +1,25 @@
 # Effect Harness Route
 
-This repository has one current job: keep a pinned official Effect source entry and the matching
-Effect v4 beta package baseline verifiable.
+本仓当前只有一个职责：维护 pinned official Effect source-entry，并让配套 Effect v4 beta package
+baseline 可验证。
 
-## Authority
+## 真源
 
-- `harness/offcial-guide.md` is the only in-repo guide authority.
-- `repos/effect.subtree.json` is the source-entry and package-baseline manifest.
-- `repos/effect/LLMS.md` is the pinned upstream Effect LLM guide for implementation details.
-- `harness/provider/effect-harness.provider.json` is the minimal Prelude provider profile.
+- `harness/offcial-guide.md` 是仓内 guide 唯一真源。
+- `repos/effect.subtree.json` 是 source-entry 与 package-baseline manifest。
+- `repos/effect/LLMS.md` 是 pinned 上游 Effect LLM guide。
+- `harness/effect-routes.md` 是 agent 读取 `repos/effect/` 的路线表。
+- `harness/provider/effect-harness.provider.json` 是最小 Prelude provider profile。
 
-Partita owns the generic source-entry pin workflow. This repository owns only the Effect instance.
+Partita 负责通用 source-entry pin workflow。本仓只拥有 Effect 这个具体实例。
 
-## Removed Surfaces
+## 已移除表面
 
-The new baseline intentionally has no repo-local Codex skills, no target runtime templates, no
-feedback intake, no target `AGENTS.md` managed block, and no `.effect-harness.json` standalone state.
-Old files can be inspected from git history if needed, but they are not current authority.
+新 baseline 不包含 repo-local Codex skills、target runtime templates、feedback intake、target
+`AGENTS.md` managed block，也不保留 `.effect-harness.json` standalone state。旧文件可以从 git
+history 查，但不是当前真源。
 
-## Verification
+## 验证
 
 ```bash
 pnpm effect:status
@@ -26,5 +27,5 @@ pnpm effect:verify
 pnpm verify
 ```
 
-Target repositories are verified as package/tsgo/guardrail consumers. Prelude may maintain target
-state through its provider record; effect-harness does not project runtime assets into targets.
+Target repository 只作为 package/tsgo/guardrail consumer 被验证。Prelude 可以通过 provider record
+维护 target state；effect-harness 不向 target 投影 runtime assets。

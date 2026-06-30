@@ -10,6 +10,7 @@ Before writing non-trivial Effect code here or in a target project, read:
 - `harness/index.md`
 - `harness/offcial-guide.md`
 - `harness/source.md`
+- `harness/effect-routes.md`
 - `repos/effect/LLMS.md`
 - `repos/effect.subtree.json`
 

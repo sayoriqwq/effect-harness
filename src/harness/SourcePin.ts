@@ -23,6 +23,7 @@ const baselineProjectionFiles = [
   'HARNESS.md',
   'harness/index.md',
   'harness/source.md',
+  'harness/effect-routes.md',
   'harness/provider/index.md',
   'harness/provider/effect-harness.provider.json',
   'tests/effect-target-verify.test.ts',

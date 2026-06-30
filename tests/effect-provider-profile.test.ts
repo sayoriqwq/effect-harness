@@ -33,6 +33,7 @@ it.effect('provider profile exposes Effect source pin as provider-internal sourc
   const anchor = record(sourceEntry.anchor)
   assert.equal(sourceEntry.kind, 'provider-internal-source-entry')
   assert.equal(sourceEntry.prefix, 'repos/effect')
+  assert.equal(sourceEntry.agentRoute, 'harness/effect-routes.md')
   assert.equal(anchor.manifest, 'repos/effect.subtree.json')
   assert.equal(anchor.field, 'split')
   assert.equal(anchor.value, sourceManifest.split)

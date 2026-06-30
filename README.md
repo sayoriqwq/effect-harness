@@ -8,6 +8,7 @@ Effect-specific instance:
 - `harness/offcial-guide.md`: the only in-repo guide authority copied from the official guide brief.
 - `repos/effect/`: pinned official Effect source, read-only for agents.
 - `repos/effect.subtree.json`: source-entry manifest and package baseline.
+- `harness/effect-routes.md`: agent route table for reading the pinned Effect source.
 - `harness/provider/effect-harness.provider.json`: minimal Prelude provider profile.
 - `src/`: CLI status/update/verify/publish implementation.
 
@@ -42,7 +43,8 @@ effect-harness `.codex` runtime assets, and old effect-harness `AGENTS.md` manag
 ## Source Pin
 
 Read [harness/source.md](./harness/source.md) before changing `repos/effect/` or
-`repos/effect.subtree.json`. The update command is explicit:
+`repos/effect.subtree.json`. Read [harness/effect-routes.md](./harness/effect-routes.md) when an
+agent needs to use the pinned Effect source as reference material. The update command is explicit:
 
 ```bash
 pnpm effect:update
