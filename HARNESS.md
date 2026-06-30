@@ -1,38 +1,30 @@
 # Effect Harness Route
 
-这是 `effect-harness` 的根 route。它只负责告诉读者去哪里；详细 contract 放在 `harness/`。
+This repository has one current job: keep a pinned official Effect source entry and the matching
+Effect v4 beta package baseline verifiable.
 
-## Layers
+## Authority
 
-| Layer | Audience | Role |
-| --- | --- | --- |
-| `guide/` | humans | 解释 setup、默认补充能力和 feedback flow。 |
-| `harness/` | agents | 定义 contracts、provider profile、source-entry policy、managed surfaces、feedback 和 verification。 |
-| `src/` | maintainers | 实现 CLI、verifier、guardrails 和 publish flow。 |
-| `repos/effect/` | humans and agents | Pinned official Effect source。 |
-| `.codex/skills/` | repo-local agents | 只维护本仓库；不投递给 targets。 |
+- `harness/offcial-guide.md` is the only in-repo guide authority.
+- `repos/effect.subtree.json` is the source-entry and package-baseline manifest.
+- `repos/effect/LLMS.md` is the pinned upstream Effect LLM guide for implementation details.
+- `harness/provider/effect-harness.provider.json` is the minimal Prelude provider profile.
 
-`guide/` 可以解释为什么。`harness/` 必须明确 agent 读什么、改什么、避免什么、验证什么。
+Partita owns the generic source-entry pin workflow. This repository owns only the Effect instance.
 
-## Entry Points
+## Removed Surfaces
 
-- Human setup guide: `guide/setup.md`
-- Agent contract index: `harness/index.md`
-- Prelude provider profile: `harness/provider/index.md`
-- Target setup contract: `harness/target-agent-contract.md`
-- Official Effect guide: `repos/effect/LLMS.md`
-- Source pin policy: `harness/source.md`
+The new baseline intentionally has no repo-local Codex skills, no target runtime templates, no
+feedback intake, no target `AGENTS.md` managed block, and no `.effect-harness.json` standalone state.
+Old files can be inspected from git history if needed, but they are not current authority.
 
-## Target Repos
+## Verification
 
-Target repos 不复制 `HARNESS.md`。它们只接收：
+```bash
+pnpm effect:status
+pnpm effect:verify
+pnpm verify
+```
 
-- `AGENTS.md` route fragment
-- prelude-managed provider state at `.prelude/providers/effect-harness/provider.json`
-- provider record `surfaces[]` 声明的 provider-owned runtime assets
-- `.codex/effect-feedback/` 和 `.codex/effect-feedback/.gitkeep`，用于 local feedback evidence
-
-Target repos 不接收 provider repo 内部的 `repos/effect` source pin 本体，除非 provider contract
-显式声明该 surface。
-
-authoritative harness route 留在本仓库。
+Target repositories are verified as package/tsgo/guardrail consumers. Prelude may maintain target
+state through its provider record; effect-harness does not project runtime assets into targets.

@@ -1,4 +1,0 @@
-interface:
-  display_name: Effect Feedback
-  short_description: Record reusable Effect target practice feedback
-  default_prompt: Use $effect-feedback to capture reusable target evidence for effect-harness.

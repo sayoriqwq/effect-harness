@@ -20,10 +20,11 @@ export interface UpdateSourcePinOptions {
 const baselineProjectionFiles = [
   'AGENTS.md',
   'README.md',
+  'HARNESS.md',
   'harness/index.md',
   'harness/source.md',
-  'harness/official-inventory.md',
-  'tests/effect-target-init.test.ts',
+  'harness/provider/index.md',
+  'harness/provider/effect-harness.provider.json',
   'tests/effect-target-verify.test.ts',
 ] as const
 

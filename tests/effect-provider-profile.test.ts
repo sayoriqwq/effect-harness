@@ -52,17 +52,21 @@ it.effect('provider profile declares target managed surfaces and editor policy o
   const managedSurfaces = record(codexProfile.managedSurfaces)
   const targetReceives = managedSurfaces.targetReceives as ReadonlyArray<string>
   assert.ok(targetReceives.some(surface => surface.includes('provider record')))
-  assert.ok(targetReceives.some(surface => surface.includes('AGENTS.md managed block')))
   assert.ok(targetReceives.some(surface => surface.includes('package.json')))
   assert.ok(targetReceives.some(surface => surface.includes('tsconfig.json')))
-  assert.ok(targetReceives.some(surface => surface.includes('runtime assets')))
+  assert.equal(targetReceives.some(surface => surface.includes('AGENTS.md managed block')), false)
+  assert.equal(targetReceives.some(surface => surface.includes('runtime assets')), false)
+  assert.equal(targetReceives.some(surface => surface.includes('feedback')), false)
 
-  const targetDoesNotReceive = managedSurfaces.targetDoesNotReceiveByDefault as ReadonlyArray<string>
+  const targetDoesNotReceive = managedSurfaces.targetDoesNotReceive as ReadonlyArray<string>
   assert.ok(targetDoesNotReceive.includes('provider repo internal source pin repos/effect'))
+  assert.ok(targetDoesNotReceive.includes('effect-harness runtime assets under .codex'))
+  assert.ok(targetDoesNotReceive.includes('.effect-harness.json standalone manifest'))
 
   const contributions = record(codexProfile.contributions)
   assert.equal('codexAssets' in contributions, false)
-  assert.ok(record(contributions.runtimeAssets).assets)
+  assert.equal('runtimeAssets' in contributions, false)
+  assert.equal('agentsBlock' in contributions, false)
 
   const editorPolicy = record(record(codexProfile.options).editorPolicy)
   const autoImportExclude = record(editorPolicy.autoImportExclude)

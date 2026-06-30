@@ -3,9 +3,8 @@
 本仓库把上游 Effect v4 beta source pin 在 `repos/effect/`，让 agent 可以直接查看真实源码、
 测试、示例和 LLM guide，不需要依赖 `node_modules` 或额外 clone。
 
-这是 provider repo 内部的 source entry。prelude target 只记录 `effect-harness` provider
-artifact/source identity；除非 provider contract 显式声明，target 不接收也不维护
-`repos/effect`、`repos/effect.subtree.json` 或 provider repo 的 `repos/effect/LLMS.md` 本体。
+这是 provider repo 内部的 source entry。target 不接收也不维护 `repos/effect`、
+`repos/effect.subtree.json` 或 provider repo 的 `repos/effect/LLMS.md` 本体。
 
 ## Contract
 
@@ -13,7 +12,7 @@ artifact/source identity；除非 provider contract 显式声明，target 不接
 - `repos/effect/LLMS.md` 是上游 LLM coding guide。
 - `repos/effect.subtree.json` 记录 repository、branch、prefix、split、LLM document path 和 package baseline。
 - `harness/provider/effect-harness.provider.json` exposes this as
-  `sourceEntries.effect-official-source` for prelude/provider identity.
+  `sourceEntries.effect-official-source` for Prelude provider identity.
 - `pnpm effect:verify` 检查 source 是否存在、是否误用 gitlink/submodule、LLM doc 是否存在、
   package baseline 是否一致，以及应用代码是否 import 了 pinned source。
   Git history 必须包含与 manifest split 对齐的 subtree trailer；manifest-only source pin 不通过验证。
@@ -45,10 +44,10 @@ provider profile:
 
 - provider profile exposes source-entry identity and package baseline.
 - provider record may store artifact/source identity for drift and audit.
-- target managed surfaces are package/tsconfig/script pointers, `AGENTS.md` managed block, runtime assets,
-  and feedback intake.
-- target managed surfaces do not include the provider repo internal source pin body unless a future
-  contract explicitly adds it.
+- target managed surfaces are package, script, and `tsconfig.json` pointers.
+- target managed surfaces do not include the provider repo internal source pin body.
+- target managed surfaces do not include effect-harness runtime assets, feedback intake, or an
+  effect-harness managed `AGENTS.md` block.
 
 Editor policy for this source entry is profile/options data. Auto-import exclude for `repos/**` is default;
 watch/search exclude is recommended but configured per editor; file hiding is explicit preference. VSCode
@@ -64,11 +63,10 @@ pnpm effect:status
 
 只有准备好评审 source pin 与 package baseline 更新时，才从 clean worktree 运行
 `pnpm effect:update`。这个命令会同步 `repos/effect/`、`repos/effect.subtree.json`、
-`pnpm-workspace.yaml` 和 baseline projection 文件。更新后：
+`pnpm-workspace.yaml` 和 minimal baseline projection files。更新后：
 
 1. 运行 `pnpm install`。
 2. 评审 source pin、package baseline 和 docs/tests diff。
 3. 提交带 `git-subtree-dir` / `git-subtree-split` trailer 的 source pin commit。
 4. 运行 `pnpm verify`。
 5. 运行 `pnpm effect:status`，确认 official status current。
-6. 如果 init 或 runtime contract 变化，用独立目标仓库验证 target contract。

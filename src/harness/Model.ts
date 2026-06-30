@@ -80,10 +80,6 @@ export interface TsConfig {
   readonly [key: string]: unknown
 }
 
-export interface ManagedWriteOptions {
-  readonly dryRun: boolean
-}
-
 export interface PackageTarget {
   readonly name: string
   readonly tag: string

@@ -1,4 +1,0 @@
-interface:
-  display_name: Effect Target Contract
-  short_description: 维护 Effect harness target contract
-  default_prompt: 使用 $effect-target-contract，维护 effect-harness 的 init 产物、target verifier 和目标仓库 runtime。

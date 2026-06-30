@@ -145,10 +145,26 @@ function makeHarness(root: string, repository: string) {
   writeText(harness, 'AGENTS.md', '- `effect@4.0.0-beta.83`\n- `@effect/tsgo@0.14.4`\n')
   writeText(harness, 'HARNESS.md', 'root route\n')
   writeText(harness, 'README.md', '- `effect@4.0.0-beta.83`\n- `@typescript/native-preview@7.0.0-dev.20260615.1`\n')
+  writeText(harness, 'HARNESS.md', '- `effect@4.0.0-beta.83`\n')
   writeText(harness, 'harness/index.md', `${pinnedSplit}\n- \`effect@4.0.0-beta.83\`\n`)
   writeText(harness, 'harness/source.md', `${pinnedSplit}\n- \`@effect/tsgo@0.14.4\`\n`)
-  writeText(harness, 'harness/official-inventory.md', `repos/effect @ ${pinnedSplit}\n`)
-  writeText(harness, 'tests/effect-target-init.test.ts', `assert.equal(packageJson.dependencies.effect, '4.0.0-beta.83')\n`)
+  writeText(harness, 'harness/provider/index.md', `${pinnedSplit}\n`)
+  writeText(harness, 'harness/provider/effect-harness.provider.json', `${JSON.stringify({
+    sourceEntries: {
+      'effect-official-source': {
+        anchor: {
+          value: pinnedSplit,
+        },
+      },
+    },
+    profiles: {
+      'codex-effect-v4': {
+        packageBaseline: {
+          effect: '4.0.0-beta.83',
+        },
+      },
+    },
+  }, null, 2)}\n`)
   writeText(harness, 'tests/effect-target-verify.test.ts', `assert.match(result.stderr, /expected 4\\.0\\.0-beta\\.83 or catalog:/u)\n`)
   commit(harness, 'Initial harness pin')
 
@@ -205,6 +221,8 @@ it.effect('source update syncs official source and baseline projections from a s
     assert.match(workspace, /'@effect\/tsgo': 0\.15\.0/u)
 
     assert.match(readFileSync(join(harness, 'harness/index.md'), 'utf8'), new RegExp(upstream.sourceHead, 'u'))
+    assert.match(readFileSync(join(harness, 'harness/provider/index.md'), 'utf8'), new RegExp(upstream.sourceHead, 'u'))
+    assert.match(readFileSync(join(harness, 'harness/provider/effect-harness.provider.json'), 'utf8'), new RegExp(upstream.sourceHead, 'u'))
     assert.match(readFileSync(join(harness, 'tests/effect-target-verify.test.ts'), 'utf8'), /expected 4\\\.0\\\.0-beta\\\.99/u)
   }
   finally {

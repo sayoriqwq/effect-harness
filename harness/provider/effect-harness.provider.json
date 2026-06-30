@@ -48,8 +48,7 @@
       "artifact",
       "artifact.sourceIdentity",
       "projectedContext",
-      "options.runtime",
-      "runtime",
+      "options",
       "surfaces",
       "verificationRecordId"
     ],
@@ -61,7 +60,7 @@
     },
     "sourceDelivery": {
       "mode": "artifact-identity-only",
-      "description": "Prelude records the provider artifact/source identity in the provider record. It does not materialize or maintain repos/effect in target repos unless a future contract explicitly adds that surface."
+      "description": "Prelude records provider artifact/source identity in the provider record. It does not materialize or maintain repos/effect in target repos."
     }
   },
   "profiles": {
@@ -83,7 +82,6 @@
         ]
       },
       "options": {
-        "runtime": "codex",
         "effect": "v4",
         "typecheck": "tsgo",
         "languageService": true,
@@ -135,10 +133,6 @@
               "patterns": [
                 "repos/**"
               ],
-              "alsoAffects": [
-                "project search",
-                "project file tree"
-              ],
               "requiresExplicitOptIn": true
             }
           },
@@ -155,10 +149,6 @@
               "patterns": [
                 "repos/**"
               ],
-              "alsoAffects": [
-                "file scanning",
-                "project file tree"
-              ],
               "requiresExplicitOptIn": true
             }
           },
@@ -174,18 +164,10 @@
               "setting": "file_scan_exclusions",
               "patterns": [
                 "repos/**"
-              ],
-              "alsoAffects": [
-                "file scanning",
-                "project search"
               ]
             }
           }
         }
-      },
-      "state": {
-        "preludePath": ".prelude/providers/effect-harness/provider.json",
-        "legacyStandalonePath": ".effect-harness.json"
       },
       "packageBaseline": {
         "effect": "4.0.0-beta.90",
@@ -198,17 +180,17 @@
       "managedSurfaces": {
         "targetReceives": [
           "provider record at .prelude/providers/effect-harness/provider.json",
-          "AGENTS.md managed block delimited by effect-harness markers",
           "package.json dependency, devDependency, and script structured pointers",
-          "tsconfig.json @effect/language-service plugin structured pointer",
-          "provider-owned runtime assets declared by provider record surfaces",
-          ".codex/effect-feedback directory and .gitkeep placeholder"
+          "tsconfig.json @effect/language-service plugin structured pointer"
         ],
-        "targetDoesNotReceiveByDefault": [
+        "targetDoesNotReceive": [
           "provider repo internal source pin repos/effect",
           "provider repo internal source manifest repos/effect.subtree.json",
           "provider repo internal Effect LLMS route repos/effect/LLMS.md",
-          "effect-harness repo-local maintainer .codex/skills"
+          "effect-harness runtime assets under .codex",
+          "effect-harness AGENTS.md managed block",
+          ".effect-harness.json standalone manifest",
+          ".codex/effect-feedback feedback intake"
         ]
       },
       "contributions": {
@@ -229,10 +211,10 @@
               "defaultCommand": "tsgo --noEmit"
             },
             "effect:status": {
-              "semantic": "report effect-harness source, package, provider, and target drift"
+              "semantic": "report effect-harness source and package drift"
             },
             "effect:verify": {
-              "semantic": "verify effect-harness target conformance"
+              "semantic": "verify Effect target baseline"
             },
             "verify": {
               "semantic": "must include pnpm effect:verify without replacing target-owned checks"
@@ -252,41 +234,19 @@
               }
             ]
           }
-        },
-        "agentsBlock": {
-          "file": "AGENTS.md",
-          "startMarker": "<!-- effect-harness:start -->",
-          "endMarker": "<!-- effect-harness:end -->",
-          "surfaceKind": "managedBlock"
-        },
-        "runtimeAssets": {
-          "surfaceKind": "ownedFile",
-          "authority": "provider-record-surfaces",
-          "namespace": ".codex",
-          "assets": [
-            ".codex/skills/effect-code/SKILL.md",
-            ".codex/skills/effect-code/agents/openai.yaml",
-            ".codex/skills/effect-feedback/SKILL.md",
-            ".codex/skills/effect-feedback/agents/openai.yaml",
-            ".codex/agents/effect-worker.md"
-          ],
-          "feedbackDirectory": ".codex/effect-feedback",
-          "feedbackPlaceholder": ".codex/effect-feedback/.gitkeep",
-          "sourceState": "runtime assets are provider-owned target surfaces. External source-entry/pin management belongs to Partita and provider-internal source entries, not this target provider contract."
         }
       },
       "verification": {
         "status": [
           "provider internal source entry exists and reports drift",
           "target package declarations match the package baseline or catalog entries",
-          "provider state records this provider id, version, profile, resolved options, artifact identity, and source identity"
+          "provider state records this provider id, version, profile, artifact identity, and source identity"
         ],
         "verify": [
           "package.json contributions are present by key",
           "tsgo --noEmit is the primary Effect diagnostic path",
           "@effect/language-service floatingEffect is error",
-          "AGENTS.md contains the current effect-harness managed block",
-          "provider runtime assets match ownedFile surfaces when those surfaces are declared",
+          "legacy effect-harness target runtime state is absent",
           "guardrails pass"
         ]
       }

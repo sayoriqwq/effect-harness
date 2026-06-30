@@ -1,4 +1,0 @@
-interface:
-  display_name: Effect Code
-  short_description: Write and review Effect v4 beta code
-  default_prompt: Use $effect-code and .codex/agents/effect-worker.md for focused Effect work.

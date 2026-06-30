@@ -22,7 +22,6 @@
     "HARNESS.md",
     "README.md",
     "dist",
-    "guide",
     "harness",
     "repos",
     "repos/effect.subtree.json"
@@ -38,8 +37,7 @@
     "effect:setup": "effect-tsgo setup",
     "effect:status": "node bin/effect-harness.ts status --harness .",
     "effect:update": "node bin/effect-harness.ts update-pin --harness .",
-    "effect:verify": "node bin/effect-harness.ts self-verify --harness .",
-    "guardrails": "node bin/effect-harness.ts self-verify --harness .",
+    "effect:verify": "node bin/effect-harness.ts provider-verify --harness .",
     "knip": "knip",
     "lint": "eslint",
     "lint:fix": "eslint --fix",

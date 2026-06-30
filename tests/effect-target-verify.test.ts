@@ -9,6 +9,24 @@ import * as Effect from 'effect/Effect'
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const cliPath = join(repoRoot, 'bin/effect-harness.ts')
 
+const baseline = {
+  'effect': '4.0.0-beta.90',
+  '@effect/platform-node': '4.0.0-beta.90',
+  '@effect/vitest': '4.0.0-beta.90',
+  '@effect/tsgo': '0.14.6',
+  '@effect/language-service': '0.86.2',
+  '@typescript/native-preview': '7.0.0-dev.20260624.1',
+} as const
+
+const providerBaselinePackages = [
+  'effect',
+  '@effect/platform-node',
+  '@effect/vitest',
+  '@effect/tsgo',
+  '@effect/language-service',
+  '@typescript/native-preview',
+] as const
+
 function tempDir() {
   return mkdtempSync(join(tmpdir(), 'effect-harness-target-'))
 }
@@ -20,37 +38,53 @@ function runCli(args: ReadonlyArray<string>) {
   })
 }
 
-function makeTarget(target: string) {
-  mkdirSync(target)
-  writeFileSync(join(target, 'package.json'), JSON.stringify({
+function packageJsonWithBaseline() {
+  return {
     name: 'effect-consumer-target',
     type: 'module',
-    scripts: {},
-  }, null, 2))
-  writeFileSync(join(target, 'tsconfig.json'), JSON.stringify({
-    compilerOptions: {
-      strict: true,
+    scripts: {
+      'effect:status': `node "${cliPath}" status --harness "${repoRoot}"`,
+      'effect:verify': `node "${cliPath}" verify --target . --harness "${repoRoot}"`,
+      'typecheck': 'tsgo --noEmit',
+      'verify': 'pnpm typecheck && pnpm effect:verify',
     },
-  }, null, 2))
-
-  const init = runCli([
-    'init',
-    '--target',
-    target,
-    '--harness',
-    repoRoot,
-  ])
-  assert.equal(init.status, 0, init.stderr)
+    dependencies: {
+      'effect': baseline.effect,
+      '@effect/platform-node': baseline['@effect/platform-node'],
+    },
+    devDependencies: {
+      '@effect/vitest': baseline['@effect/vitest'],
+      '@effect/tsgo': baseline['@effect/tsgo'],
+      '@effect/language-service': baseline['@effect/language-service'],
+      '@typescript/native-preview': baseline['@typescript/native-preview'],
+    },
+  }
 }
 
-const providerBaselinePackages = [
-  'effect',
-  '@effect/platform-node',
-  '@effect/vitest',
-  '@effect/tsgo',
-  '@effect/language-service',
-  '@typescript/native-preview',
-] as const
+function tsconfigWithEffectPlugin() {
+  return {
+    compilerOptions: {
+      strict: true,
+      plugins: [
+        {
+          name: '@effect/language-service',
+          options: {
+            diagnosticSeverity: {
+              floatingEffect: 'error',
+            },
+          },
+        },
+      ],
+    },
+  }
+}
+
+function makeTarget(target: string) {
+  mkdirSync(target, { recursive: true })
+  writeFileSync(join(target, 'package.json'), `${JSON.stringify(packageJsonWithBaseline(), null, 2)}\n`)
+  writeFileSync(join(target, 'tsconfig.json'), `${JSON.stringify(tsconfigWithEffectPlugin(), null, 2)}\n`)
+  writeFileSync(join(target, 'AGENTS.md'), '# Target Agents\n')
+}
 
 function packageSectionFor(name: string): 'dependencies' | 'devDependencies' {
   return name === 'effect' || name === '@effect/platform-node'
@@ -60,6 +94,24 @@ function packageSectionFor(name: string): 'dependencies' | 'devDependencies' {
 
 function jsonPointerSegment(segment: string): string {
   return segment.replace(/~/gu, '~0').replace(/\//gu, '~1')
+}
+
+function sourceIdentity() {
+  const manifest = JSON.parse(readFileSync(join(repoRoot, 'repos/effect.subtree.json'), 'utf8')) as {
+    repository: string
+    branch: string
+    split: string
+  }
+  return {
+    name: 'effect',
+    repository: manifest.repository,
+    branch: manifest.branch,
+    anchor: {
+      manifest: 'repos/effect.subtree.json',
+      field: 'split',
+      value: manifest.split,
+    },
+  }
 }
 
 function writePreludeProviderRecord(
@@ -80,8 +132,6 @@ function writePreludeProviderRecord(
   const tsconfigSurface = options.tsconfigSurface ?? true
   const typecheckSurface = options.typecheckSurface ?? true
   mkdirSync(join(target, '.prelude/providers/effect-harness'), { recursive: true })
-  writeFileSync(join(target, '.codex/effect-feedback/.gitkeep'), '')
-  rmSync(join(target, '.effect-harness.json'), { force: true })
 
   const packageJson = JSON.parse(readFileSync(join(target, 'package.json'), 'utf8')) as {
     dependencies: Record<string, string>
@@ -93,7 +143,7 @@ function writePreludeProviderRecord(
     : JSON.parse(readFileSync(join(target, dependencyPackagePath), 'utf8')) as {
       dependencies: Record<string, string>
       devDependencies: Record<string, string>
-      scripts: Record<string, string>
+      scripts?: Record<string, string>
     }
   const tsconfig = tsconfigSurface
     ? JSON.parse(readFileSync(join(target, 'tsconfig.json'), 'utf8')) as {
@@ -102,49 +152,17 @@ function writePreludeProviderRecord(
       }
     }
     : undefined
-  const agentsBlock = readFileSync(join(target, 'AGENTS.md'), 'utf8')
-    .match(/<!-- effect-harness:start -->[\s\S]*?<!-- effect-harness:end -->/u)?.[0] ?? ''
-  const ownedFiles = [
-    '.codex/skills/effect-code/SKILL.md',
-    '.codex/skills/effect-code/agents/openai.yaml',
-    '.codex/skills/effect-feedback/SKILL.md',
-    '.codex/skills/effect-feedback/agents/openai.yaml',
-    '.codex/agents/effect-worker.md',
-    '.codex/effect-feedback/.gitkeep',
-  ]
-  const ownedFileSurfaces = ownedFiles.map(filePath => ({
-    id: `provider-managed-file:effect-harness:${filePath}`,
-    owner: 'provider:effect-harness',
-    lifecycle: 'managed',
-    scope: 'file',
-    locator: filePath,
-    conflictPolicy: 'block',
-    contractVersion: '1',
-    implementationVersion: '0.1.0',
-    authority: 'owner',
-    kind: 'ownedFile',
-    path: filePath,
-    base: readFileSync(join(target, filePath), 'utf8'),
-    snapshot: readFileSync(join(target, filePath), 'utf8'),
-    operationId: `write-${filePath.replace(/[^a-z0-9]+/giu, '-')}`,
-  }))
+
   const typecheckSurfaces = typecheckSurface
     ? [{
         id: 'package-manifest:root:/scripts/typecheck',
         owner: 'provider:effect-harness',
         lifecycle: 'managed',
-        scope: 'entry',
-        locator: 'package.json#/scripts/typecheck',
-        conflictPolicy: 'block',
-        contractVersion: '1',
-        implementationVersion: '0.1.0',
-        authority: 'bounded',
         kind: 'structuredPointer',
         path: 'package.json',
         pointer: '/scripts/typecheck',
         base: packageJson.scripts.typecheck,
         snapshot: packageJson.scripts.typecheck,
-        operationId: 'write-package-json',
       }]
     : []
   const tsconfigSurfaces = tsconfigSurface
@@ -152,18 +170,11 @@ function writePreludeProviderRecord(
         id: 'tsconfig:root:/compilerOptions/plugins',
         owner: 'provider:effect-harness',
         lifecycle: 'managed',
-        scope: 'entry',
-        locator: 'tsconfig.json#/compilerOptions/plugins',
-        conflictPolicy: 'block',
-        contractVersion: '1',
-        implementationVersion: '0.1.0',
-        authority: 'bounded',
         kind: 'structuredPointer',
         path: 'tsconfig.json',
         pointer: '/compilerOptions/plugins',
         base: JSON.stringify(tsconfig?.compilerOptions.plugins),
         snapshot: JSON.stringify(tsconfig?.compilerOptions.plugins),
-        operationId: 'write-tsconfig',
       }]
     : []
   const baselinePackageSurfaces = baselineSurfaceNames.map((name) => {
@@ -174,20 +185,14 @@ function writePreludeProviderRecord(
       id: `package-manifest:${dependencyPackagePath}:${pointer}`,
       owner: 'provider:effect-harness',
       lifecycle: 'managed',
-      scope: 'entry',
-      locator: `${dependencyPackagePath}#${pointer}`,
-      conflictPolicy: 'block',
-      contractVersion: '1',
-      implementationVersion: '0.1.0',
-      authority: 'bounded',
       kind: 'structuredPointer',
       path: dependencyPackagePath,
       pointer,
       base: value,
       snapshot: value,
-      operationId: `write-package-json-${dependencyPackagePath.replace(/[^a-z0-9]+/giu, '-')}`,
     }
   })
+
   const providerRecordPath = join(target, '.prelude/providers/effect-harness/provider.json')
   writeFileSync(providerRecordPath, `${JSON.stringify({
     schemaVersion: 1,
@@ -198,21 +203,14 @@ function writePreludeProviderRecord(
     artifact: {
       id: 'effect-harness',
       version: '0.1.0',
-      packageBaseline: {
-        'effect': '4.0.0-beta.90',
-        '@effect/platform-node': '4.0.0-beta.90',
-        '@effect/vitest': '4.0.0-beta.90',
-        '@effect/tsgo': '0.14.6',
-        '@effect/language-service': '0.86.2',
-        '@typescript/native-preview': '7.0.0-dev.20260624.1',
-      },
+      sourceIdentity: sourceIdentity(),
+      packageBaseline: baseline,
     },
     projectedContext: {
       topology,
       packageScopes: ['effect-consumer-target'],
     },
     options: {
-      runtime: 'codex',
       effect: {
         major: 4,
       },
@@ -222,56 +220,20 @@ function writePreludeProviderRecord(
       },
       packageScopes: ['effect-consumer-target'],
     },
-    runtime: {
-      commands: {
-        status: packageJson.scripts['effect:status'],
-        verify: packageJson.scripts['effect:verify'],
-      },
-      routes: {
-        harness: join(repoRoot, 'HARNESS.md'),
-      },
-      files: ownedFiles,
-    },
     surfaces: [
       ...baselinePackageSurfaces,
       {
         id: 'package-manifest:root:/scripts/effect:verify',
         owner: 'provider:effect-harness',
         lifecycle: 'managed',
-        scope: 'entry',
-        locator: 'package.json#/scripts/effect:verify',
-        conflictPolicy: 'block',
-        contractVersion: '1',
-        implementationVersion: '0.1.0',
-        authority: 'bounded',
         kind: 'structuredPointer',
         path: 'package.json',
         pointer: '/scripts/effect:verify',
         base: packageJson.scripts['effect:verify'],
         snapshot: packageJson.scripts['effect:verify'],
-        operationId: 'write-package-json',
       },
       ...typecheckSurfaces,
       ...tsconfigSurfaces,
-      ...ownedFileSurfaces,
-      {
-        id: 'provider-managed-block:effect-harness:AGENTS.md#effect-harness',
-        owner: 'provider:effect-harness',
-        lifecycle: 'managed',
-        scope: 'entry',
-        locator: 'AGENTS.md#effect-harness',
-        conflictPolicy: 'block',
-        contractVersion: '1',
-        implementationVersion: '0.1.0',
-        authority: 'bounded',
-        kind: 'managedBlock',
-        path: 'AGENTS.md',
-        startMarker: '<!-- effect-harness:start -->',
-        endMarker: '<!-- effect-harness:end -->',
-        base: agentsBlock,
-        snapshot: agentsBlock,
-        operationId: 'write-agents-md-block',
-      },
     ],
     verificationRecordId: 'effect-harness:codex-effect-v4',
   }, null, 2)}\n`)
@@ -307,11 +269,27 @@ function rewriteBaselineSurfacePaths(providerRecord: string, path: string) {
     for (const surface of surfaces) {
       if (typeof surface.pointer === 'string' && baselinePointers.has(surface.pointer)) {
         surface.path = path
-        surface.locator = `${path}#${surface.pointer}`
       }
     }
   })
 }
+
+it.effect('target verifier accepts a target with the minimum baseline', () => Effect.sync(() => {
+  const root = tempDir()
+  const target = join(root, 'target')
+
+  try {
+    makeTarget(target)
+
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
+
+    assert.equal(result.status, 0, result.stderr)
+    assert.match(result.stdout, /Effect target verified against harness/u)
+  }
+  finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}))
 
 it.effect('target verifier rejects caret ranges for pinned Effect baseline dependencies', () => Effect.sync(() => {
   const root = tempDir()
@@ -319,19 +297,12 @@ it.effect('target verifier rejects caret ranges for pinned Effect baseline depen
 
   try {
     makeTarget(target)
-
     const packageJsonPath = join(target, 'package.json')
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
     packageJson.dependencies.effect = '^4.0.0-beta.90'
     writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /effect is \^4\.0\.0-beta\.90; expected 4\.0\.0-beta\.90 or catalog:/u)
@@ -347,7 +318,6 @@ it.effect('target verifier rejects stale pnpm catalog entries for catalog depend
 
   try {
     makeTarget(target)
-
     const packageJsonPath = join(target, 'package.json')
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
     packageJson.dependencies.effect = 'catalog:'
@@ -361,13 +331,7 @@ it.effect('target verifier rejects stale pnpm catalog entries for catalog depend
       '',
     ].join('\n'))
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /pnpm-workspace\.yaml catalog effect is 4\.0\.0-beta\.0; expected 4\.0\.0-beta\.90/u)
@@ -392,13 +356,7 @@ it.effect('target verifier scans monorepo app source directories with guardrails
       '',
     ].join('\n'))
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /Do not wrap asserted values in Effect\.succeed/u)
@@ -408,30 +366,7 @@ it.effect('target verifier scans monorepo app source directories with guardrails
   }
 }))
 
-it.effect('target verifier accepts a target with harness contracts', () => Effect.sync(() => {
-  const root = tempDir()
-  const target = join(root, 'target')
-
-  try {
-    makeTarget(target)
-
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
-
-    assert.equal(result.status, 0, result.stderr)
-    assert.match(result.stdout, /Effect target verified against harness/u)
-  }
-  finally {
-    rmSync(root, { recursive: true, force: true })
-  }
-}))
-
-it.effect('target verifier accepts a prelude provider record without legacy effect-harness manifest', () => Effect.sync(() => {
+it.effect('target verifier accepts a prelude provider record without legacy runtime state', () => Effect.sync(() => {
   const root = tempDir()
   const target = join(root, 'target')
 
@@ -439,13 +374,7 @@ it.effect('target verifier accepts a prelude provider record without legacy effe
     makeTarget(target)
     writePreludeProviderRecord(target)
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.equal(result.status, 0, result.stderr)
     assert.match(result.stdout, /Effect target verified against harness/u)
@@ -463,15 +392,7 @@ it.effect('target verifier accepts an explicit provider record path', () => Effe
     makeTarget(target)
     const providerRecord = writePreludeProviderRecord(target, { manifest: false })
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-      '--provider-record',
-      providerRecord,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot, '--provider-record', providerRecord])
 
     assert.equal(result.status, 0, result.stderr)
     assert.match(result.stdout, /Effect target verified against harness/u)
@@ -500,13 +421,7 @@ it.effect('target verifier accepts workspace provider records without root tscon
       typecheckSurface: false,
     })
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.equal(result.status, 0, result.stderr)
     assert.match(result.stdout, /Effect target verified against harness/u)
@@ -551,13 +466,7 @@ it.effect('target verifier accepts workspace provider package surfaces under a p
       typecheckSurface: false,
     })
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.equal(result.status, 0, result.stderr)
     assert.match(result.stdout, /Effect target verified against harness/u)
@@ -605,13 +514,7 @@ it.effect('target verifier rejects stale provider package surfaces under a packa
     childPackageJson.dependencies.effect = '4.0.0-beta.0'
     writeFileSync(childPackagePath, `${JSON.stringify(childPackageJson, null, 2)}\n`)
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /apps\/worker\/package\.json pointer \/dependencies\/effect/u)
@@ -637,13 +540,7 @@ it.effect('target verifier rejects provider records missing Effect baseline pack
     writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
     writePreludeProviderRecord(target, { baselineSurfaceNames: [] })
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /provider record surfaces must include Effect baseline package structured pointers/u)
@@ -690,13 +587,7 @@ it.effect('target verifier rejects forbidden Effect CLI in provider package scop
       typecheckSurface: false,
     })
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /apps\/worker\/package\.json must not depend on @effect\/cli/u)
@@ -759,13 +650,7 @@ it.effect('target verifier rejects stale provider catalog entries in package sco
       typecheckSurface: false,
     })
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /pnpm-workspace\.yaml catalog effect is 4\.0\.0-beta\.0; expected 4\.0\.0-beta\.90/u)
@@ -799,13 +684,7 @@ it.effect('target verifier rejects provider baseline surfaces with absolute path
     writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
     rewriteBaselineSurfacePaths(providerRecord, externalPackagePath)
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /path must be target-root-relative; got absolute path/u)
@@ -839,13 +718,7 @@ it.effect('target verifier rejects provider baseline surfaces with path traversa
     writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
     rewriteBaselineSurfacePaths(providerRecord, '../external/package.json')
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /path must not contain \.\. segments/u)
@@ -866,13 +739,7 @@ it.effect('target verifier rejects unsupported provider contract versions', () =
       record.contractVersion = '999'
     })
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /provider record contractVersion is 999; expected 1/u)
@@ -895,13 +762,7 @@ it.effect('target verifier rejects unsupported provider implementation versions'
       artifact.version = '999'
     })
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /provider record providerVersion is 999; expected 0\.1\.0/u)
@@ -912,66 +773,60 @@ it.effect('target verifier rejects unsupported provider implementation versions'
   }
 }))
 
-it.effect('target verifier rejects stale effect harness manifest content', () => Effect.sync(() => {
+it.effect('target verifier rejects legacy effect-harness target runtime state', () => Effect.sync(() => {
   const root = tempDir()
   const target = join(root, 'target')
 
   try {
     makeTarget(target)
-
-    const manifestPath = join(target, '.effect-harness.json')
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
-    manifest.source.split = 'stale-source-pin'
-    manifest.packageBaseline.effect = '4.0.0-beta.0'
-    manifest.commands.verify = 'effect-harness verify --target .'
-    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
-
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
-
-    assert.notEqual(result.status, 0)
-    assert.match(result.stderr, /\.effect-harness\.json source\.split is stale-source-pin/u)
-    assert.match(result.stderr, /\.effect-harness\.json packageBaseline\.effect is 4\.0\.0-beta\.0/u)
-    assert.match(result.stderr, /\.effect-harness\.json commands\.verify is effect-harness verify --target \.; expected/u)
-  }
-  finally {
-    rmSync(root, { recursive: true, force: true })
-  }
-}))
-
-it.effect('target verifier rejects stale managed AGENTS and runtime files', () => Effect.sync(() => {
-  const root = tempDir()
-  const target = join(root, 'target')
-
-  try {
-    makeTarget(target)
-
+    writeFileSync(join(target, '.effect-harness.json'), '{}\n')
+    mkdirSync(join(target, '.codex/skills/effect-code'), { recursive: true })
+    writeFileSync(join(target, '.codex/skills/effect-code/SKILL.md'), '# stale skill\n')
     writeFileSync(join(target, 'AGENTS.md'), [
       '<!-- effect-harness:start -->',
       '# stale route',
       '<!-- effect-harness:end -->',
       '',
     ].join('\n'))
-    writeFileSync(join(target, '.codex/skills/effect-code/SKILL.md'), '# stale skill\n')
-    writeFileSync(join(target, '.codex/skills/effect-code/extra.md'), '# extra managed content\n')
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
-    assert.match(result.stderr, /AGENTS\.md managed effect-harness route block does not match/u)
-    assert.match(result.stderr, /\.codex\/skills\/effect-code\/SKILL\.md does not match/u)
-    assert.match(result.stderr, /\.codex\/skills\/effect-code\/extra\.md is not managed/u)
+    assert.match(result.stderr, /\.effect-harness\.json is legacy effect-harness target state/u)
+    assert.match(result.stderr, /\.codex\/skills\/effect-code is legacy effect-harness target state/u)
+    assert.match(result.stderr, /AGENTS\.md contains a legacy effect-harness managed block/u)
+  }
+  finally {
+    rmSync(root, { recursive: true, force: true })
+  }
+}))
+
+it.effect('target verifier rejects legacy provider record runtime surfaces', () => Effect.sync(() => {
+  const root = tempDir()
+  const target = join(root, 'target')
+
+  try {
+    makeTarget(target)
+    const providerRecord = writePreludeProviderRecord(target)
+    updateProviderRecord(providerRecord, (record) => {
+      record.runtime = {
+        files: ['.codex/skills/effect-code/SKILL.md'],
+      }
+      const surfaces = record.surfaces as Array<Record<string, unknown>>
+      surfaces.push({
+        id: 'legacy-runtime',
+        owner: 'provider:effect-harness',
+        lifecycle: 'managed',
+        kind: 'ownedFile',
+        path: '.codex/skills/effect-code/SKILL.md',
+      })
+    })
+
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
+
+    assert.notEqual(result.status, 0)
+    assert.match(result.stderr, /runtime\.files is legacy/u)
+    assert.match(result.stderr, /targets legacy effect-harness \.codex runtime state/u)
   }
   finally {
     rmSync(root, { recursive: true, force: true })
@@ -984,19 +839,12 @@ it.effect('target verifier rejects effect-tsgo as the typecheck command', () => 
 
   try {
     makeTarget(target)
-
     const packageJsonPath = join(target, 'package.json')
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
     packageJson.scripts.typecheck = 'effect-tsgo --noEmit'
     writeFileSync(packageJsonPath, `${JSON.stringify(packageJson, null, 2)}\n`)
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /effect-tsgo is the setup\/patch manager/u)
@@ -1012,7 +860,6 @@ it.effect('target verifier rejects plain @effect/vitest tests without Effect-nat
 
   try {
     makeTarget(target)
-
     const sourceRoot = join(target, 'src')
     mkdirSync(sourceRoot)
     writeFileSync(join(sourceRoot, 'plain.test.ts'), [
@@ -1024,13 +871,7 @@ it.effect('target verifier rejects plain @effect/vitest tests without Effect-nat
       '',
     ].join('\n'))
 
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /must use it\.effect, it\.live, or layer from @effect\/vitest/u)
@@ -1046,7 +887,6 @@ it.effect('target verifier rejects local effect harness dispatcher scripts', () 
 
   try {
     makeTarget(target)
-
     const packageJsonPath = join(target, 'package.json')
     const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'))
     packageJson.scripts['effect:verify'] = 'node scripts/effect-harness-local.js verify'
@@ -1054,49 +894,11 @@ it.effect('target verifier rejects local effect harness dispatcher scripts', () 
     mkdirSync(join(target, 'scripts'))
     writeFileSync(join(target, 'scripts/effect-harness-local.js'), '#!/usr/bin/env node\n')
 
-    const manifestPath = join(target, '.effect-harness.json')
-    const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'))
-    manifest.commands.verify = packageJson.scripts['effect:verify']
-    writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`)
-
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
+    const result = runCli(['verify', '--target', target, '--harness', repoRoot])
 
     assert.notEqual(result.status, 0)
     assert.match(result.stderr, /local effect-harness dispatcher/u)
-    assert.match(result.stderr, /\.effect-harness\.json commands do not match a valid harness CLI entry/u)
-    assert.match(result.stderr, /effect-harness init/u)
-  }
-  finally {
-    rmSync(root, { recursive: true, force: true })
-  }
-}))
-
-it.effect('target verifier rejects targets missing installed runtime files', () => Effect.sync(() => {
-  const root = tempDir()
-  const target = join(root, 'target')
-
-  try {
-    makeTarget(target)
-    rmSync(join(target, '.codex'), { recursive: true, force: true })
-    rmSync(join(target, '.effect-harness.json'), { force: true })
-
-    const result = runCli([
-      'verify',
-      '--target',
-      target,
-      '--harness',
-      repoRoot,
-    ])
-
-    assert.notEqual(result.status, 0)
-    assert.match(result.stderr, /Missing file: \.effect-harness\.json/u)
-    assert.match(result.stderr, /Missing file: \.codex\/skills\/effect-code\/SKILL\.md/u)
+    assert.match(result.stderr, /Target repo must not include scripts\/effect-harness-local\.js/u)
   }
   finally {
     rmSync(root, { recursive: true, force: true })

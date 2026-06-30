@@ -6,12 +6,11 @@ import * as Path from 'effect/Path'
 import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
 import { targetGuardrailIncludes, verifyGuardrails } from '../harness/Guardrails.ts'
-import { initializeTarget } from '../harness/Init.ts'
 import { publishPackage } from '../harness/Publish.ts'
-import { verifyHarness } from '../harness/SelfVerify.ts'
 import { updateSourcePin, verifySourcePin } from '../harness/SourcePin.ts'
 import { showStatus } from '../harness/Status.ts'
-import { verifyTarget } from '../harness/TargetVerify.ts'
+import { verifyProviderRepository } from '../harness/verify/ProviderRepository.ts'
+import { verifyTarget } from '../harness/verify/Target.ts'
 
 export interface CliConfig {
   readonly harnessRoot: string
@@ -100,16 +99,6 @@ const snapshotFlag = Flag.file('snapshot').pipe(
 function makeCli(config: CliConfig) {
   const harness = harnessFlag(config.harnessRoot)
 
-  const init = Command.make('init', {
-    dryRun: dryRunFlag,
-    harness,
-    target: targetFlag,
-  }, Effect.fnUntraced(function* ({ dryRun, harness, target }) {
-    yield* initializeTarget({ dryRun, harness, target })
-  })).pipe(
-    Command.withDescription('Install the Effect harness route and target runtime into a repository'),
-  )
-
   const status = Command.make('status', {
     failOnOutdated: failOnOutdatedFlag,
     harness,
@@ -131,12 +120,12 @@ function makeCli(config: CliConfig) {
     Command.withDescription('Check a target repository against this harness contract'),
   )
 
-  const selfVerify = Command.make('self-verify', {
+  const providerVerify = Command.make('provider-verify', {
     harness,
   }, Effect.fnUntraced(function* ({ harness }) {
-    yield* verifyHarness(harness)
+    yield* verifyProviderRepository(harness)
   })).pipe(
-    Command.withDescription('Check this harness repository without generating a target project'),
+    Command.withDescription('Check the Effect source-entry provider repository'),
   )
 
   const sourceVerify = Command.make('source-verify', {
@@ -196,7 +185,7 @@ function makeCli(config: CliConfig) {
 
   return Command.make('effect-harness').pipe(
     Command.withDescription('Effect v4 beta harness CLI'),
-    Command.withSubcommands([init, status, verify, selfVerify, sourceVerify, guardrails, updatePin, publish]),
+    Command.withSubcommands([status, verify, providerVerify, sourceVerify, guardrails, updatePin, publish]),
   )
 }
 
