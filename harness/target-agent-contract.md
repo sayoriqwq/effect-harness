@@ -1,7 +1,20 @@
 # Target Agent Contract
 
-这份 contract 给 agent 读，用来接入和审查 `effect-harness init` 产物。人类理解 setup、
-默认补充能力和反馈路径时读 `guide/`。
+这份 contract 给 agent 读，用来接入和审查 standalone `effect-harness init` 产物。prelude-managed
+target 应读 `harness/provider/index.md` 和 `harness/provider/effect-harness.provider.json`，
+由 prelude 写入 `.prelude/providers/effect-harness/provider.json`。人类理解 setup、默认补充能力和
+反馈路径时读 `guide/`。
+
+prelude-managed target 的 verifier 入口：
+
+```bash
+effect-harness verify --target .
+effect-harness verify --target . --provider-record .prelude/providers/effect-harness/provider.json
+```
+
+默认入口先读 `.prelude/manifest.json` 的 `maintainProviders`，找到 `id === "effect-harness"`
+后读取 `recordPath`。`--provider-record` 只用于兼容期显式指定 record。`.effect-harness.json`
+只作为旧 standalone target 的迁移输入。
 
 主入口：
 
@@ -65,8 +78,8 @@ effect-harness init
    }
    ```
 
-6. 写入 `.effect-harness.json`。它是 target 上给 agent 和 verifier 读的 harness manifest，
-   必须记录：
+6. 写入 `.effect-harness.json`。它只用于 standalone CLI compatibility；prelude-managed
+   target 不应把它当成长期 source of truth。standalone manifest 必须记录：
 
    - `schemaVersion`
    - `harnessRoot`

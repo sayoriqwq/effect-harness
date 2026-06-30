@@ -7,7 +7,8 @@ Before writing non-trivial Effect code, read:
 - `__EFFECT_HARNESS_ROOT__/repos/effect/LLMS.md`
 - `__EFFECT_HARNESS_ROOT__/harness/index.md`
 - `__EFFECT_HARNESS_ROOT__/repos/effect.subtree.json`
-- `.effect-harness.json`
+- `.prelude/providers/effect-harness/provider.json` when this target is prelude-managed
+- `.effect-harness.json` only for standalone CLI compatibility
 
 Runtime skills and agents installed by the harness:
 

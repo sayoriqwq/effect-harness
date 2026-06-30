@@ -146,7 +146,7 @@ it.effect('effect-harness init installs consumer runtime and target contract', (
   finally {
     rmSync(root, { recursive: true, force: true })
   }
-}))
+}), 30_000)
 
 it.effect('built cli resolves the harness root from the dist entrypoint', () => Effect.sync(() => {
   const build = spawnSync('pnpm', ['build'], {

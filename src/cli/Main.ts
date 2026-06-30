@@ -38,6 +38,15 @@ const targetFlag = Flag.path('target').pipe(
   Flag.mapEffect(resolveFromCwd),
 )
 
+const providerRecordFlag = Flag.path('provider-record').pipe(
+  Flag.withDescription('Effect harness provider record path for prelude-managed targets'),
+  Flag.optional,
+  Flag.mapEffect(option => Option.match(option, {
+    onNone: () => Effect.sync((): string | undefined => undefined),
+    onSome: resolveFromCwd,
+  })),
+)
+
 const dryRunFlag = Flag.boolean('dry-run').pipe(
   Flag.withDescription('Preview writes without changing files'),
 )
@@ -129,9 +138,10 @@ function makeCli(config: CliConfig) {
 
   const verify = Command.make('verify', {
     harness,
+    providerRecord: providerRecordFlag,
     target: targetFlag,
-  }, Effect.fnUntraced(function* ({ harness, target }) {
-    yield* verifyTarget({ harness, target })
+  }, Effect.fnUntraced(function* ({ harness, providerRecord, target }) {
+    yield* verifyTarget({ harness, providerRecord, target })
   })).pipe(
     Command.withDescription('Check a target repository against this harness contract'),
   )

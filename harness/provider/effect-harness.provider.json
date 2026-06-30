@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "provider": {
+    "id": "effect-harness",
+    "contractVersion": "1",
+    "providerVersion": "0.1.0",
+    "defaultProfile": "codex-effect-v4"
+  },
+  "providerRecord": {
+    "requiredFields": [
+      "schemaVersion",
+      "id",
+      "contractVersion",
+      "providerVersion",
+      "profile",
+      "artifact",
+      "projectedContext",
+      "options.runtime",
+      "runtime",
+      "surfaces",
+      "verificationRecordId"
+    ],
+    "manifestLookup": {
+      "path": ".prelude/manifest.json",
+      "providerList": "maintainProviders",
+      "idField": "id",
+      "recordPathField": "recordPath"
+    }
+  },
+  "profiles": {
+    "codex-effect-v4": {
+      "options": {
+        "runtime": "codex",
+        "effect": "v4",
+        "typecheck": "tsgo",
+        "languageService": true,
+        "floatingEffect": "error",
+        "packageScopes": [
+          "effect",
+          "@effect/*",
+          "@typescript/native-preview"
+        ]
+      },
+      "state": {
+        "preludePath": ".prelude/providers/effect-harness/provider.json",
+        "legacyStandalonePath": ".effect-harness.json"
+      },
+      "officialSource": {
+        "manifest": "repos/effect.subtree.json",
+        "llmDocument": "repos/effect/LLMS.md",
+        "sourcePrefix": "repos/effect"
+      },
+      "packageBaseline": {
+        "effect": "4.0.0-beta.90",
+        "@effect/platform-node": "4.0.0-beta.90",
+        "@effect/vitest": "4.0.0-beta.90",
+        "@effect/tsgo": "0.14.6",
+        "@effect/language-service": "0.86.2",
+        "@typescript/native-preview": "7.0.0-dev.20260624.1"
+      },
+      "contributions": {
+        "packageJson": {
+          "dependencies": {
+            "effect": "4.0.0-beta.90",
+            "@effect/platform-node": "4.0.0-beta.90"
+          },
+          "devDependencies": {
+            "@effect/vitest": "4.0.0-beta.90",
+            "@effect/tsgo": "0.14.6",
+            "@effect/language-service": "0.86.2",
+            "@typescript/native-preview": "7.0.0-dev.20260624.1"
+          },
+          "scripts": {
+            "typecheck": {
+              "semantic": "primary Effect diagnostics",
+              "defaultCommand": "tsgo --noEmit"
+            },
+            "effect:status": {
+              "semantic": "report effect-harness source, package, provider, and target drift"
+            },
+            "effect:verify": {
+              "semantic": "verify effect-harness target conformance"
+            },
+            "verify": {
+              "semantic": "must include pnpm effect:verify without replacing target-owned checks"
+            }
+          }
+        },
+        "tsconfig": {
+          "compilerOptions": {
+            "plugins": [
+              {
+                "name": "@effect/language-service",
+                "options": {
+                  "diagnosticSeverity": {
+                    "floatingEffect": "error"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        "agentsBlock": {
+          "file": "AGENTS.md",
+          "startMarker": "<!-- effect-harness:start -->",
+          "endMarker": "<!-- effect-harness:end -->",
+          "source": "harness/runtime/codex/AGENTS.fragment.md"
+        },
+        "codexAssets": {
+          "sourceRoot": "harness/runtime/codex",
+          "skills": [
+            {
+              "id": "effect-code",
+              "source": "skills/effect-code/SKILL.md",
+              "target": ".codex/skills/effect-code/SKILL.md"
+            },
+            {
+              "id": "effect-feedback",
+              "source": "skills/effect-feedback/SKILL.md",
+              "target": ".codex/skills/effect-feedback/SKILL.md"
+            }
+          ],
+          "skillAgents": [
+            {
+              "id": "effect-code-openai",
+              "source": "skills/effect-code/agents/openai.yaml",
+              "target": ".codex/skills/effect-code/agents/openai.yaml"
+            },
+            {
+              "id": "effect-feedback-openai",
+              "source": "skills/effect-feedback/agents/openai.yaml",
+              "target": ".codex/skills/effect-feedback/agents/openai.yaml"
+            }
+          ],
+          "agents": [
+            {
+              "id": "effect-worker",
+              "source": "agents/effect-worker.md",
+              "target": ".codex/agents/effect-worker.md"
+            }
+          ],
+          "feedbackDirectory": ".codex/effect-feedback"
+        }
+      },
+      "verification": {
+        "status": [
+          "official source pin exists and reports drift",
+          "target package declarations match the package baseline or catalog entries",
+          "provider state records this provider id, version, profile, and resolved options"
+        ],
+        "verify": [
+          "package.json contributions are present by key",
+          "tsgo --noEmit is the primary Effect diagnostic path",
+          "@effect/language-service floatingEffect is error",
+          "AGENTS.md contains the current effect-harness managed block",
+          "Codex assets match provider ownedFile surfaces",
+          "guardrails pass"
+        ]
+      }
+    }
+  }
+}

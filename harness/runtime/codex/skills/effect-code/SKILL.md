@@ -47,7 +47,8 @@ business decisions that do not require Effect guidance.
    - `__EFFECT_HARNESS_ROOT__/repos/effect/ai-docs/src/`
    - `__EFFECT_HARNESS_ROOT__/repos/effect/migration/v3-to-v4.md`
    - `__EFFECT_HARNESS_ROOT__/harness/index.md`
-   - `.effect-harness.json`
+   - `.prelude/providers/effect-harness/provider.json` for prelude-managed targets
+   - `.effect-harness.json` only for standalone CLI compatibility
 3. Use `Context.Service` for services on this baseline.
 4. Treat `@effect/tsgo` suggestions as type-boundary work, not assertion cleanup.
 5. Prefer `Schema.Finite`, explicit fallback return types, named result unions/helpers, `satisfies`,

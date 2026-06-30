@@ -7,6 +7,7 @@
 
 - `harness/index.md`
 - `harness/exposure.md`
+- `harness/provider/index.md`
 - `harness/feedback/index.md`
 - `harness/target-agent-contract.md`
 - `repos/effect/LLMS.md`
@@ -17,7 +18,7 @@
 | Layer | Audience | Writing style | Files |
 | --- | --- | --- | --- |
 | Guide | 人 | 解释背景、路径和判断方式，优先可读性。 | `guide/` |
-| Harness contract | agent | 明确规则、输入、输出、验证命令和禁止事项。 | `harness/`、CLI/verifier |
+| Harness contract | agent | 明确 provider profile、规则、输入、输出、验证命令和禁止事项。 | `harness/`、CLI/verifier |
 | Official source | 人和 agent | Effect 语义真源。 | `repos/effect/`、`@effect/tsgo` |
 
 Guide 可以解释为什么这样设计；harness contract 必须让 agent 知道具体该读什么、改什么、
@@ -44,6 +45,6 @@ Guide 可以解释为什么这样设计；harness contract 必须让 agent 知�
 提升后的落点必须明确：
 
 - guide：帮助人理解怎么使用或判断。
-- runtime：由 `effect-harness init` 投递给 target。
+- runtime：由 prelude provider 或 standalone `effect-harness init` 投递给 target。
 - guardrail/verifier：把 recurring failure 变成会失败的检查。
 - repo-local skill：维护本仓库 harness contract 的流程。

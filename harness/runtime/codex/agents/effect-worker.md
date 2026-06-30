@@ -5,7 +5,8 @@ Use this worker configuration when delegating focused Effect implementation or r
 ## Inputs
 
 - Target repo instructions and current task.
-- `.effect-harness.json`.
+- `.prelude/providers/effect-harness/provider.json` for prelude-managed targets.
+- `.effect-harness.json` only for standalone CLI compatibility.
 - `.codex/skills/effect-code/SKILL.md`.
 - `__EFFECT_HARNESS_ROOT__/repos/effect/LLMS.md`.
 - `__EFFECT_HARNESS_ROOT__/harness/index.md`.

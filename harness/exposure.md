@@ -6,7 +6,8 @@
 
 - pinned official Effect source 和 package baseline
 - official source drift status
-- `effect-harness init` 投递的 target runtime
+- prelude provider profile and key-level target contributions
+- standalone `effect-harness init` 投递的 target runtime
 - target `AGENTS.md` route fragment
 - guardrails 和 verifier contracts
 - reusable practice feedback intake
@@ -23,13 +24,15 @@ source/reference 与 `repos/effect.subtree.json` 保持同包可读。
 | Surface | 是否投递给 target | Contract owner |
 | --- | --- | --- |
 | `repos/effect/LLMS.md` route | 是，作为 reference | official Effect source |
-| `harness/runtime/codex/` | 是，由 init 复制 | `effect-harness` |
-| `effect:status` / `effect:verify` scripts | 是，由 init 写入 | `src/harness/Init.ts` |
-| `.effect-harness.json` | 是，由 init 写入 | target verifier |
+| `harness/provider/effect-harness.provider.json` | 是，作为 prelude input | `effect-harness` |
+| `.prelude/providers/effect-harness/provider.json` | 是，由 prelude 生成维护 | prelude |
+| `harness/runtime/codex/` | 是，由 prelude 或 standalone init 投递 | `effect-harness` |
+| `effect:status` / `effect:verify` scripts | 是，key-level contribution | provider profile |
 | `harness/feedback/index.md` | 不直接复制 | harness maintainers |
 | `.codex/skills/` | 否 | repo-local maintenance only |
 
-Target setup 细节见 [target-agent-contract.md](./target-agent-contract.md)。
+Prelude provider 细节见 [provider/index.md](./provider/index.md)。
+Standalone target setup 细节见 [target-agent-contract.md](./target-agent-contract.md)。
 Official source classification 见 [official-inventory.md](./official-inventory.md)。
 
 ## Promotion Gate
