@@ -7,40 +7,6 @@
   "prefix": "repos/effect",
   "split": "3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6",
   "llmDocument": "repos/effect/LLMS.md",
-  "sourceEntry": {
-    "upstream": {
-      "repository": "https://github.com/Effect-TS/effect-smol.git",
-      "branch": "main"
-    },
-    "local": {
-      "prefix": "repos/effect"
-    },
-    "pin": {
-      "split": "3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6"
-    },
-    "anchor": {
-      "llmDocument": "repos/effect/LLMS.md"
-    },
-    "mode": {
-      "readOnly": true,
-      "referenceOnly": true
-    },
-    "commands": {
-      "update": "pnpm effect:update",
-      "verify": "pnpm effect:verify"
-    },
-    "agent": {
-      "route": "repos/effect/LLMS.md"
-    },
-    "importBlock": {
-      "enabled": true,
-      "prefix": "repos/effect",
-      "appliesTo": [
-        "application",
-        "test"
-      ]
-    }
-  },
   "packageBaseline": {
     "effect": "4.0.0-beta.90",
     "@effect/platform-node": "4.0.0-beta.90",

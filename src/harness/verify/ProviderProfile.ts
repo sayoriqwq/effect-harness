@@ -177,6 +177,7 @@ function assertEditorPolicy(errors: Array<string>, options: Record<string, unkno
 export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors: Array<string>, harness: string) {
   const providerProfile = yield* readJson(`${harness}/harness/provider/effect-harness.provider.json`, decodeJsonRecord)
   const sourceManifest = yield* readJson(`${harness}/repos/effect.subtree.json`, decodeJsonRecord)
+  const sourceContract = yield* readJson(`${harness}/.partita/source-entries.json`, decodeJsonRecord)
 
   const provider = recordField(errors, providerProfile, 'provider', 'provider profile')
   assertStringValue(errors, stringField(errors, provider, 'id', 'provider profile.provider'), 'effect-harness', 'provider profile.provider.id')
@@ -195,11 +196,16 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertStringValue(errors, stringField(errors, sourceEntry, 'prefix', 'provider profile.sourceEntries.effect-official-source'), 'repos/effect', 'provider profile.sourceEntries.effect-official-source.prefix')
   assertStringValue(errors, stringField(errors, sourceEntry, 'llmDocument', 'provider profile.sourceEntries.effect-official-source'), 'repos/effect/LLMS.md', 'provider profile.sourceEntries.effect-official-source.llmDocument')
   assertStringValue(errors, stringField(errors, sourceEntry, 'agentRoute', 'provider profile.sourceEntries.effect-official-source'), 'harness/effect-routes.md', 'provider profile.sourceEntries.effect-official-source.agentRoute')
+  const commands = recordField(errors, sourceEntry, 'commands', 'provider profile.sourceEntries.effect-official-source')
+  assertStringValue(errors, stringField(errors, commands, 'status', 'provider profile.sourceEntries.effect-official-source.commands'), 'partita source status --contract .partita/source-entries.json --name effect', 'provider profile.sourceEntries.effect-official-source.commands.status')
+  assertStringValue(errors, stringField(errors, commands, 'update', 'provider profile.sourceEntries.effect-official-source.commands'), 'partita source update --contract .partita/source-entries.json --name effect --dry-run', 'provider profile.sourceEntries.effect-official-source.commands.update')
+  assertStringValue(errors, stringField(errors, commands, 'verify', 'provider profile.sourceEntries.effect-official-source.commands'), 'partita source verify --contract .partita/source-entries.json --name effect', 'provider profile.sourceEntries.effect-official-source.commands.verify')
 
   const anchor = recordField(errors, sourceEntry, 'anchor', 'provider profile.sourceEntries.effect-official-source')
   assertStringValue(errors, stringField(errors, anchor, 'manifest', 'provider profile.sourceEntries.effect-official-source.anchor'), 'repos/effect.subtree.json', 'provider profile.sourceEntries.effect-official-source.anchor.manifest')
   assertStringValue(errors, stringField(errors, anchor, 'field', 'provider profile.sourceEntries.effect-official-source.anchor'), 'split', 'provider profile.sourceEntries.effect-official-source.anchor.field')
   assertStringValue(errors, stringField(errors, anchor, 'value', 'provider profile.sourceEntries.effect-official-source.anchor'), stringField(errors, sourceManifest, 'split', 'repos/effect.subtree.json') ?? '', 'provider profile.sourceEntries.effect-official-source.anchor.value')
+  assertPartitaSourceContract(errors, sourceContract, sourceManifest)
 
   const providerRecord = recordField(errors, providerProfile, 'providerRecord', 'provider profile')
   const sourceDelivery = recordField(errors, providerRecord, 'sourceDelivery', 'provider profile.providerRecord')
@@ -232,3 +238,36 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertRecordDoesNotContain(errors, contributions, 'agentsBlock', 'provider profile.profiles.codex-effect-v4.contributions')
   assertRecordDoesNotContain(errors, contributions, 'codexAssets', 'provider profile.profiles.codex-effect-v4.contributions')
 })
+
+function assertPartitaSourceContract(
+  errors: Array<string>,
+  sourceContract: Record<string, unknown>,
+  sourceManifest: Record<string, unknown>,
+): void {
+  const sources = arrayField(errors, sourceContract, 'sources', '.partita/source-entries.json')
+  const effectSource = sources?.find(source => isRecord(source) && source.name === 'effect')
+  if (!isRecord(effectSource)) {
+    errors.push('.partita/source-entries.json must include source entry named effect.')
+    return
+  }
+
+  const upstream = recordField(errors, effectSource, 'upstream', '.partita/source-entries.json source effect')
+  const local = recordField(errors, effectSource, 'local', '.partita/source-entries.json source effect')
+  const anchor = recordField(errors, effectSource, 'anchor', '.partita/source-entries.json source effect')
+  const agent = recordField(errors, effectSource, 'agent', '.partita/source-entries.json source effect')
+  const boundaries = recordField(errors, effectSource, 'boundaries', '.partita/source-entries.json source effect')
+  const ownership = recordField(errors, effectSource, 'ownership', '.partita/source-entries.json source effect')
+  const pin = recordField(errors, effectSource, 'pin', '.partita/source-entries.json source effect')
+
+  const split = stringField(errors, sourceManifest, 'split', 'repos/effect.subtree.json')
+  assertStringValue(errors, stringField(errors, upstream, 'repository', '.partita/source-entries.json source effect.upstream'), stringField(errors, sourceManifest, 'repository', 'repos/effect.subtree.json') ?? '', '.partita/source-entries.json source effect.upstream.repository')
+  assertStringValue(errors, stringField(errors, upstream, 'branch', '.partita/source-entries.json source effect.upstream'), stringField(errors, sourceManifest, 'branch', 'repos/effect.subtree.json') ?? '', '.partita/source-entries.json source effect.upstream.branch')
+  assertStringValue(errors, stringField(errors, upstream, 'ref', '.partita/source-entries.json source effect.upstream'), split ?? '', '.partita/source-entries.json source effect.upstream.ref')
+  assertStringValue(errors, stringField(errors, local, 'prefix', '.partita/source-entries.json source effect.local'), 'repos/effect', '.partita/source-entries.json source effect.local.prefix')
+  assertStringValue(errors, stringField(errors, anchor, 'llmDocument', '.partita/source-entries.json source effect.anchor'), 'repos/effect/LLMS.md', '.partita/source-entries.json source effect.anchor.llmDocument')
+  assertStringValue(errors, stringField(errors, agent, 'route', '.partita/source-entries.json source effect.agent'), 'harness/effect-routes.md', '.partita/source-entries.json source effect.agent.route')
+  assertStringValue(errors, stringField(errors, ownership, 'mode', '.partita/source-entries.json source effect.ownership'), 'provider', '.partita/source-entries.json source effect.ownership.mode')
+  assertBooleanValue(errors, booleanField(errors, boundaries, 'readOnly', '.partita/source-entries.json source effect.boundaries'), true, '.partita/source-entries.json source effect.boundaries.readOnly')
+  assertBooleanValue(errors, booleanField(errors, boundaries, 'importBlock', '.partita/source-entries.json source effect.boundaries'), true, '.partita/source-entries.json source effect.boundaries.importBlock')
+  assertStringValue(errors, stringField(errors, pin, 'ref', '.partita/source-entries.json source effect.pin'), split ?? '', '.partita/source-entries.json source effect.pin.ref')
+}

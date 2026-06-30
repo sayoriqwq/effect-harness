@@ -2,62 +2,35 @@ import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
 import { HarnessError } from './Errors.ts'
-import { analyzeGuardrailFile } from './GuardrailRules.ts'
-
-const sourceExtensions = new Set(['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts'])
-const defaultExcludes = new Set(['.git', '.turbo', 'dist', 'node_modules', 'repos', 'docs'])
-export const targetGuardrailIncludes = ['src', 'tests', 'scripts', 'apps', 'libs', 'packages'] as const
+import { moduleSources } from './ModuleSources.ts'
 
 export interface GuardrailOptions {
   readonly root: string
   readonly includes: ReadonlyArray<string>
-  readonly excludes?: ReadonlySet<string>
 }
 
-function extensionOf(file: string): string {
-  const match = file.match(/\.[^.]+$/u)
-  return match?.[0] ?? ''
+const sourceExtensions = ['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts'] as const
+
+function isSourceFile(file: string): boolean {
+  return sourceExtensions.some(extension => file.endsWith(extension))
 }
 
-function shouldSkip(file: string, excludes: ReadonlySet<string>): boolean {
-  return file
-    .split(/[\\/]/u)
-    .some(segment => excludes.has(segment))
-}
-
-function shouldSkipGuardrailSource(file: string): boolean {
-  return file.endsWith('/src/harness/GuardrailRules.ts')
-    || file.endsWith('/tests/effect-guardrails.test.ts')
-}
-
-const collectFiles = Effect.fnUntraced(function* (options: GuardrailOptions) {
+const collectSourceFiles = Effect.fnUntraced(function* (root: string, includes: ReadonlyArray<string>) {
   const fs = yield* FileSystem.FileSystem
-  const excludes = options.excludes ?? defaultExcludes
   const files: Array<string> = []
 
-  for (const include of options.includes) {
-    const source = `${options.root}/${include}`
-    const exists = yield* fs.exists(source)
-    if (!exists || shouldSkip(source, excludes) || shouldSkipGuardrailSource(source)) {
+  for (const include of includes) {
+    const directory = `${root}/${include}`
+    if (!(yield* fs.exists(directory))) {
       continue
     }
 
-    const stat = yield* fs.stat(source)
-    if (stat.type === 'Directory') {
-      const entries = yield* fs.readDirectory(source, { recursive: true })
-      for (const entry of entries) {
-        const file = `${source}/${entry}`
-        if (shouldSkip(file, excludes) || shouldSkipGuardrailSource(file)) {
-          continue
-        }
-        const fileStat = yield* fs.stat(file)
-        if (fileStat.type !== 'Directory' && sourceExtensions.has(extensionOf(file))) {
-          files.push(file)
-        }
+    for (const entry of yield* fs.readDirectory(directory, { recursive: true })) {
+      const file = `${directory}/${entry}`
+      const stat = yield* fs.stat(file)
+      if (stat.type !== 'Directory' && isSourceFile(file)) {
+        files.push(file)
       }
-    }
-    else if (sourceExtensions.has(extensionOf(source))) {
-      files.push(source)
     }
   }
 
@@ -66,21 +39,28 @@ const collectFiles = Effect.fnUntraced(function* (options: GuardrailOptions) {
 
 export const verifyGuardrails = Effect.fnUntraced(function* (options: GuardrailOptions) {
   const fs = yield* FileSystem.FileSystem
-  const files = yield* collectFiles(options)
-  const violations = []
+  const violations: Array<string> = []
+  const files = yield* collectSourceFiles(options.root, options.includes)
 
   for (const file of files) {
     const text = yield* fs.readFileString(file)
-    violations.push(...analyzeGuardrailFile(file, text))
+    for (const { source } of moduleSources(file, text)) {
+      if (source === '@effect/cli' || source.startsWith('@effect/cli/')) {
+        violations.push(`${file} imports ${source}; use effect/unstable/cli for this baseline.`)
+      }
+      if (source.includes('repos/effect')) {
+        violations.push(`${file} imports ${source}; repos/effect is read-only reference material.`)
+      }
+    }
   }
 
   if (violations.length > 0) {
-    yield* Console.error('Effect harness guardrails failed:')
+    yield* Console.error('Effect provider guardrails failed:')
     for (const violation of violations) {
-      yield* Console.error(`- ${violation.file}:${violation.line}: ${violation.message}`)
+      yield* Console.error(`- ${violation}`)
     }
-    return yield* new HarnessError({ message: 'Effect guardrails failed.' })
+    return yield* new HarnessError({ message: 'Effect provider guardrails failed.' })
   }
 
-  yield* Console.log(`Effect harness guardrails passed for ${files.length} files.`)
+  yield* Console.log(`Effect provider guardrails passed for ${files.length} files.`)
 })

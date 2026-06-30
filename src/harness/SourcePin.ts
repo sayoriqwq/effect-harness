@@ -1,33 +1,13 @@
-import type { EffectSubtreeManifest, OfficialSnapshot } from './Model.ts'
+import type { EffectSubtreeManifest } from './Model.ts'
 import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import * as FileSystem from 'effect/FileSystem'
-import * as Path from 'effect/Path'
 import { ChildProcessSpawner } from 'effect/unstable/process'
-import { formatJson, readJson } from '../platform/Json.ts'
+import { readJson } from '../platform/Json.ts'
 import { commandExitCode, commandLines, commandString } from '../platform/Process.ts'
 import { HarnessError } from './Errors.ts'
-import { decodeManifest, decodePackageJson, packageTargets } from './Model.ts'
+import { decodeManifest, decodePackageJson } from './Model.ts'
 import { moduleSources } from './ModuleSources.ts'
-import { resolveOfficialSnapshot } from './Status.ts'
-
-export interface UpdateSourcePinOptions {
-  readonly harness: string
-  readonly snapshot?: string | undefined
-  readonly dryRun: boolean
-}
-
-const baselineProjectionFiles = [
-  'AGENTS.md',
-  'README.md',
-  'HARNESS.md',
-  'harness/index.md',
-  'harness/source.md',
-  'harness/effect-routes.md',
-  'harness/provider/index.md',
-  'harness/provider/effect-harness.provider.json',
-  'tests/effect-target-verify.test.ts',
-] as const
 
 function hasVendoredImport(file: string, text: string, manifest: EffectSubtreeManifest): boolean {
   return moduleSources(file, text).some(({ source }) => source.includes(manifest.prefix))
@@ -36,10 +16,7 @@ function hasVendoredImport(file: string, text: string, manifest: EffectSubtreeMa
 function isApplicationSource(file: string, manifest: EffectSubtreeManifest): boolean {
   const sourceRoot = file.startsWith('bin/')
     || file.startsWith('src/')
-    || file.startsWith('scripts/')
     || file.startsWith('tests/')
-    || file.startsWith('apps/')
-    || file.startsWith('libs/')
   const sourceExtension = ['.js', '.jsx', '.mjs', '.cjs', '.ts', '.tsx', '.mts', '.cts']
     .some(extension => file.endsWith(extension))
 
@@ -79,204 +56,6 @@ const trackedFiles = Effect.fnUntraced(function* (root: string) {
   return yield* commandLines('git', ['ls-files'], { cwd: root })
 })
 
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&')
-}
-
-function regexLiteralVersion(value: string): string {
-  return value.replaceAll('.', '\\.')
-}
-
-function replaceRequiredLine(text: string, pattern: RegExp, replacement: (indent: string) => string, label: string): string {
-  let matched = false
-  const next = text.replace(pattern, (_line, indent: string) => {
-    matched = true
-    return replacement(indent)
-  })
-  if (!matched) {
-    throw new HarnessError({ message: `Cannot update pnpm-workspace.yaml; missing ${label}.` })
-  }
-  return next
-}
-
-function yamlKey(name: string): string {
-  return name.startsWith('@') ? `'${name}'` : name
-}
-
-function replaceYamlScalar(text: string, key: string, value: string): string {
-  return replaceRequiredLine(
-    text,
-    new RegExp(`^(\\s*${escapeRegex(yamlKey(key))}:\\s*).*$`, 'mu'),
-    indent => `${indent}${value}`,
-    `${key} scalar`,
-  )
-}
-
-function replaceTrustPolicyExclude(text: string, name: string, version: string): string {
-  return replaceRequiredLine(
-    text,
-    new RegExp(`^(\\s*-\\s*)'?${escapeRegex(name)}@[^'\\n]+?'?$`, 'mu'),
-    indent => `${indent}${name.startsWith('@') ? `'${name}@${version}'` : `${name}@${version}`}`,
-    `${name} trustPolicyExclude entry`,
-  )
-}
-
-function updateWorkspaceProjection(text: string, baseline: Readonly<Record<string, string>>): string {
-  let next = text
-
-  next = replaceTrustPolicyExclude(next, '@effect/platform-node', baseline['@effect/platform-node']!)
-  next = replaceTrustPolicyExclude(next, '@effect/platform-node-shared', baseline['@effect/platform-node']!)
-  next = replaceTrustPolicyExclude(next, '@effect/vitest', baseline['@effect/vitest']!)
-  next = replaceTrustPolicyExclude(next, 'effect', baseline.effect!)
-
-  next = replaceYamlScalar(next, '@effect/platform-node-shared', baseline['@effect/platform-node']!)
-  for (const { name } of packageTargets) {
-    next = replaceYamlScalar(next, name, baseline[name]!)
-  }
-
-  return next
-}
-
-function updateTextProjection(text: string, current: EffectSubtreeManifest, nextManifest: EffectSubtreeManifest): string {
-  let next = text.replaceAll(current.split, nextManifest.split)
-
-  for (const [name, version] of Object.entries(current.packageBaseline)) {
-    const nextVersion = nextManifest.packageBaseline[name]
-    if (!nextVersion || version === nextVersion) {
-      continue
-    }
-    next = next
-      .replaceAll(`${name}@${version}`, `${name}@${nextVersion}`)
-      .replaceAll(regexLiteralVersion(version), regexLiteralVersion(nextVersion))
-      .replaceAll(version, nextVersion)
-  }
-
-  return next
-}
-
-function nextPackageBaseline(
-  manifest: EffectSubtreeManifest,
-  official: OfficialSnapshot,
-): Effect.Effect<Record<string, string>, HarnessError> {
-  const baseline: Record<string, string> = { ...manifest.packageBaseline }
-  for (const { name, tag } of packageTargets) {
-    const version = official.packages?.[name]
-    if (!version) {
-      return Effect.fail(new HarnessError({ message: `Official snapshot is missing ${name} (${tag}).` }))
-    }
-    baseline[name] = version
-  }
-  return Effect.succeed(baseline)
-}
-
-function nextSourceEntryManifest(
-  manifest: EffectSubtreeManifest,
-  split: string,
-  packageBaseline: Readonly<Record<string, string>>,
-): EffectSubtreeManifest {
-  return {
-    ...manifest,
-    split,
-    sourceEntry: {
-      ...manifest.sourceEntry,
-      pin: {
-        split,
-      },
-    },
-    packageBaseline,
-  }
-}
-
-const assertCleanWorktree = Effect.fnUntraced(function* (root: string) {
-  const status = yield* commandString('git', ['status', '--porcelain'], { cwd: root })
-  if (status.length > 0) {
-    yield* Console.error('Refusing to update the Effect source pin with a dirty working tree:')
-    yield* Console.error(status)
-    return yield* new HarnessError({ message: 'Dirty worktree.' })
-  }
-})
-
-const syncOfficialSource = Effect.fnUntraced(function* (
-  root: string,
-  manifest: EffectSubtreeManifest,
-  sourceHead: string,
-) {
-  const fs = yield* FileSystem.FileSystem
-  const path = yield* Path.Path
-
-  yield* Effect.scoped(Effect.gen(function* () {
-    const checkout = yield* fs.makeTempDirectoryScoped({ prefix: 'effect-harness-source-' })
-    yield* commandString('git', ['init', '--initial-branch=main'], { cwd: checkout })
-    yield* commandString('git', ['fetch', '--depth=1', manifest.repository, manifest.branch], { cwd: checkout })
-    yield* commandString('git', ['checkout', '--detach', sourceHead], { cwd: checkout })
-
-    const target = path.join(root, manifest.prefix)
-    yield* fs.remove(target, { recursive: true, force: true })
-    yield* fs.makeDirectory(target, { recursive: true })
-
-    for (const entry of yield* fs.readDirectory(checkout)) {
-      if (entry === '.git') {
-        continue
-      }
-      yield* commandString('cp', ['-a', path.join(checkout, entry), path.join(target, entry)])
-    }
-  }))
-})
-
-const writeSourceUpdateProjection = Effect.fnUntraced(function* (
-  root: string,
-  current: EffectSubtreeManifest,
-  nextManifest: EffectSubtreeManifest,
-  options: { readonly dryRun: boolean },
-  changes: Array<string>,
-) {
-  const fs = yield* FileSystem.FileSystem
-  const path = yield* Path.Path
-
-  const manifestPath = path.join(root, 'repos/effect.subtree.json')
-  const nextManifestText = formatJson(nextManifest)
-  if ((yield* fs.readFileString(manifestPath)) !== nextManifestText) {
-    changes.push(`update ${manifestPath}`)
-    if (!options.dryRun) {
-      yield* fs.writeFileString(manifestPath, nextManifestText)
-    }
-  }
-
-  const workspacePath = path.join(root, 'pnpm-workspace.yaml')
-  const workspaceText = yield* fs.readFileString(workspacePath)
-  const nextWorkspaceText = updateWorkspaceProjection(workspaceText, nextManifest.packageBaseline)
-  if (workspaceText !== nextWorkspaceText) {
-    changes.push(`update ${workspacePath}`)
-    if (!options.dryRun) {
-      yield* fs.writeFileString(workspacePath, nextWorkspaceText)
-    }
-  }
-
-  for (const file of baselineProjectionFiles) {
-    const filePath = path.join(root, file)
-    const exists = yield* fs.exists(filePath)
-    if (!exists) {
-      continue
-    }
-    const text = yield* fs.readFileString(filePath)
-    const nextText = updateTextProjection(text, current, nextManifest)
-    if (text === nextText) {
-      continue
-    }
-    changes.push(`update ${filePath}`)
-    if (!options.dryRun) {
-      yield* fs.writeFileString(filePath, nextText)
-    }
-  }
-})
-
-const treeEntry = Effect.fnUntraced(function* (root: string, file: string) {
-  if (!(yield* hasGitHead(root))) {
-    return undefined
-  }
-  return yield* commandString('git', ['ls-tree', 'HEAD', file], { cwd: root })
-})
-
 const assertNoVendoredImports = Effect.fnUntraced(function* (
   errors: Array<string>,
   root: string,
@@ -287,8 +66,7 @@ const assertNoVendoredImports = Effect.fnUntraced(function* (
 
   for (const file of files) {
     const filePath = `${root}/${file}`
-    const exists = yield* fs.exists(filePath)
-    if (!exists) {
+    if (!(yield* fs.exists(filePath))) {
       continue
     }
 
@@ -306,15 +84,13 @@ const verifyPackageBaseline = Effect.fnUntraced(function* (
 ) {
   const fs = yield* FileSystem.FileSystem
   const packagePath = `${root}/package.json`
-  const packageExists = yield* fs.exists(packagePath)
-  if (!packageExists) {
+  if (!(yield* fs.exists(packagePath))) {
     return
   }
 
   const packageJson = yield* readJson(packagePath, decodePackageJson)
   const workspacePath = `${root}/pnpm-workspace.yaml`
-  const workspaceExists = yield* fs.exists(workspacePath)
-  const workspaceText = workspaceExists ? yield* fs.readFileString(workspacePath) : ''
+  const workspaceText = (yield* fs.exists(workspacePath)) ? yield* fs.readFileString(workspacePath) : ''
 
   for (const [name, version] of Object.entries(manifest.packageBaseline)) {
     const directVersion = packageJson.dependencies?.[name] ?? packageJson.devDependencies?.[name]
@@ -328,10 +104,16 @@ const verifyPackageBaseline = Effect.fnUntraced(function* (
   }
 })
 
+const treeEntry = Effect.fnUntraced(function* (root: string, file: string) {
+  if (!(yield* hasGitHead(root))) {
+    return undefined
+  }
+  return yield* commandString('git', ['ls-tree', 'HEAD', file], { cwd: root })
+})
+
 export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
   const fs = yield* FileSystem.FileSystem
-  const manifestPath = `${root}/repos/effect.subtree.json`
-  const manifest = yield* readJson(manifestPath, decodeManifest)
+  const manifest = yield* readJson(`${root}/repos/effect.subtree.json`, decodeManifest)
   const errors: Array<string> = []
   const sourcePath = `${root}/${manifest.prefix}`
 
@@ -378,9 +160,7 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
     errors.push(`${manifest.prefix} must be a git subtree, not a git submodule.`)
   }
 
-  if (manifest.sourceEntry.importBlock.enabled) {
-    yield* assertNoVendoredImports(errors, root, manifest)
-  }
+  yield* assertNoVendoredImports(errors, root, manifest)
   yield* verifyPackageBaseline(errors, root, manifest)
 
   if (errors.length > 0) {
@@ -392,40 +172,4 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
   }
 
   yield* Console.log(`Effect source entry verified: ${manifest.prefix} @ git-subtree-split ${manifest.split}`)
-})
-
-export const updateSourcePin = Effect.fnUntraced(function* (options: UpdateSourcePinOptions) {
-  const path = yield* Path.Path
-  const manifestPath = path.join(options.harness, 'repos/effect.subtree.json')
-  const manifest = yield* readJson(manifestPath, decodeManifest)
-  const official = yield* resolveOfficialSnapshot(manifest, options.snapshot)
-  const sourceHead = official.sourceHead
-  if (!sourceHead) {
-    return yield* new HarnessError({ message: 'Official snapshot is missing sourceHead.' })
-  }
-
-  const packageBaseline = yield* nextPackageBaseline(manifest, official)
-  const nextManifest = nextSourceEntryManifest(manifest, sourceHead, packageBaseline)
-  const changes: Array<string> = []
-
-  yield* assertCleanWorktree(options.harness)
-  if (manifest.split !== sourceHead) {
-    changes.push(`sync ${path.join(options.harness, manifest.prefix)} from ${manifest.repository} ${sourceHead}`)
-    if (!options.dryRun) {
-      yield* syncOfficialSource(options.harness, manifest, sourceHead)
-    }
-  }
-
-  yield* writeSourceUpdateProjection(options.harness, manifest, nextManifest, options, changes)
-
-  if (changes.length === 0) {
-    yield* Console.log(`Effect source pin already current: ${manifest.prefix} @ ${manifest.split}`)
-    return
-  }
-
-  for (const change of changes) {
-    yield* Console.log(`${options.dryRun ? 'Would ' : ''}${change}`)
-  }
-  yield* Console.log(`${options.dryRun ? 'Dry run complete' : 'Effect source pin updated'}: ${manifest.split} -> ${sourceHead}`)
-  yield* Console.log('Run pnpm install, review the source pin diff, commit with matching subtree trailers, then run pnpm verify and pnpm effect:status.')
 })

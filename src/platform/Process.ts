@@ -1,4 +1,3 @@
-import * as Console from 'effect/Console'
 import * as Effect from 'effect/Effect'
 import * as Stream from 'effect/Stream'
 import * as Str from 'effect/String'
@@ -51,32 +50,4 @@ export const commandLines = Effect.fnUntraced(function* (
 ) {
   const output = yield* commandString(command, args, options)
   return output.length === 0 ? [] : output.split('\n')
-})
-
-export const runStreaming = Effect.fnUntraced(function* (
-  command: string,
-  args: ReadonlyArray<string>,
-  options?: CommandOptions,
-) {
-  const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
-  return yield* Effect.scoped(Effect.gen(function* () {
-    const handle = yield* spawner.spawn(ChildProcess.make(command, args, options))
-    yield* handle.all.pipe(
-      Stream.decodeText(),
-      Stream.splitLines,
-      Stream.runForEach(line => Console.log(line)),
-    )
-    const exitCode = yield* handle.exitCode
-    if (exitCode !== ChildProcessSpawner.ExitCode(0)) {
-      return yield* new ProcessError({
-        args,
-        command,
-        ...(options?.cwd !== undefined ? { cwd: options.cwd } : {}),
-        exitCode: Number(exitCode),
-        message: `${command} ${args.join(' ')} failed with exit code ${exitCode}`,
-        stderr: '',
-        stdout: '',
-      })
-    }
-  }))
 })

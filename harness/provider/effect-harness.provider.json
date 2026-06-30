@@ -27,9 +27,9 @@
         "readOnlyForAgents": true
       },
       "commands": {
-        "status": "pnpm effect:status",
-        "update": "pnpm effect:update",
-        "verify": "node bin/effect-harness.ts source-verify --harness ."
+        "status": "partita source status --contract .partita/source-entries.json --name effect",
+        "update": "partita source update --contract .partita/source-entries.json --name effect --dry-run",
+        "verify": "partita source verify --contract .partita/source-entries.json --name effect"
       },
       "importBoundary": {
         "applicationImportsForbidden": true,
@@ -180,7 +180,7 @@
       "managedSurfaces": {
         "targetReceives": [
           "provider record at .prelude/providers/effect-harness/provider.json",
-          "package.json dependency, devDependency, and script structured pointers",
+          "package.json dependency and devDependency structured pointers",
           "tsconfig.json @effect/language-service plugin structured pointer"
         ],
         "targetDoesNotReceive": [
@@ -209,15 +209,6 @@
             "typecheck": {
               "semantic": "primary Effect diagnostics",
               "defaultCommand": "tsgo --noEmit"
-            },
-            "effect:status": {
-              "semantic": "report effect-harness source and package drift"
-            },
-            "effect:verify": {
-              "semantic": "verify Effect target baseline"
-            },
-            "verify": {
-              "semantic": "must include pnpm effect:verify without replacing target-owned checks"
             }
           }
         },
@@ -238,16 +229,16 @@
       },
       "verification": {
         "status": [
-          "provider internal source entry exists and reports drift",
-          "target package declarations match the package baseline or catalog entries",
-          "provider state records this provider id, version, profile, artifact identity, and source identity"
+          "provider internal source entry exists",
+          "Partita source-entry contract records source prefix, pin, anchor, route, and editor policy",
+          "provider profile records source identity and package baseline"
         ],
         "verify": [
-          "package.json contributions are present by key",
+          "source pin exists as committed git subtree",
+          "provider profile matches source manifest and Partita source-entry contract",
           "tsgo --noEmit is the primary Effect diagnostic path",
           "@effect/language-service floatingEffect is error",
-          "legacy effect-harness target runtime state is absent",
-          "guardrails pass"
+          "provider repository does not import from repos/effect or @effect/cli"
         ]
       }
     }

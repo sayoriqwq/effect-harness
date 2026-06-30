@@ -31,12 +31,6 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
-      - name: Check out Craft skill source
-        run: |
-          craft_ref="$(node -p "JSON.parse(require('node:fs').readFileSync('repos/craft-skills.manifest.json', 'utf8')).source.ref")"
-          git clone --filter=blob:none https://github.com/sayoriqwq/craft.git ../craft
-          git -C ../craft checkout "$craft_ref"
-
       - name: Enable pnpm
         run: |
           corepack enable

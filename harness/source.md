@@ -11,14 +11,14 @@
 - `repos/effect/` 是只读 managed copy，来自 `Effect-TS/effect-smol`。
 - `repos/effect/LLMS.md` 是上游 LLM coding guide。
 - `repos/effect.subtree.json` 记录 repository、branch、prefix、split、LLM document path 和 package baseline。
+- `.partita/source-entries.json` 记录 generic source-entry pin contract，由 Partita source CLI
+  负责 status/update/verify。
 - `harness/provider/effect-harness.provider.json` exposes this as
   `sourceEntries.effect-official-source` for Prelude provider identity.
 - `pnpm effect:verify` 检查 source 是否存在、是否误用 gitlink/submodule、LLM doc 是否存在、
   package baseline 是否一致，以及应用代码是否 import 了 pinned source。
   Git history 必须包含与 manifest split 对齐的 subtree trailer；manifest-only source pin 不通过验证。
-- `pnpm effect:status` 对比当前 pin、官方 npm dist-tags 和上游 source branch。
-- `pnpm effect:update` 是显式更新入口，会同步 source copy、manifest、workspace baseline
-  和 baseline docs/tests。
+- `pnpm source:status`、`pnpm source:update`、`pnpm source:verify` 借用 Partita source-entry CLI。
 
 当前选中的 split：
 
@@ -58,15 +58,14 @@ and Zed setting shapes are recorded separately in the provider profile.
 更新 source pin 是基础设施变更。先运行：
 
 ```bash
-pnpm effect:status
+pnpm source:status
 ```
 
-只有准备好评审 source pin 与 package baseline 更新时，才从 clean worktree 运行
-`pnpm effect:update`。这个命令会同步 `repos/effect/`、`repos/effect.subtree.json`、
-`pnpm-workspace.yaml` 和 minimal baseline projection files。更新后：
+只有准备好评审 source pin 与 package baseline 更新时，才从 clean worktree 走 Partita source
+workflow 和显式 git subtree 更新。更新后：
 
 1. 运行 `pnpm install`。
-2. 评审 source pin、package baseline 和 docs/tests diff。
+2. 评审 source pin、package baseline 和 route/profile diff。
 3. 提交带 `git-subtree-dir` / `git-subtree-split` trailer 的 source pin commit。
 4. 运行 `pnpm verify`。
-5. 运行 `pnpm effect:status`，确认 official status current。
+5. 运行 `pnpm source:verify`。

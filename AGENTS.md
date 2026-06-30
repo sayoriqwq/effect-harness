@@ -1,7 +1,7 @@
 # Agent Bootstrap
 
-This repo is the shared Effect v4 beta source-entry and baseline verifier. It is published as a CLI
-utility package.
+This repo is the shared Effect v4 beta provider profile and source route package. It is published as
+a CLI utility package.
 
 Before writing non-trivial Effect code here or in a target project, read:
 
@@ -11,6 +11,7 @@ Before writing non-trivial Effect code here or in a target project, read:
 - `harness/offcial-guide.md`
 - `harness/source.md`
 - `harness/effect-routes.md`
+- `.partita/source-entries.json`
 - `repos/effect/LLMS.md`
 - `repos/effect.subtree.json`
 
@@ -45,15 +46,16 @@ Hard boundaries:
 Validation:
 
 ```bash
-pnpm effect:status
+pnpm effect:verify
 pnpm verify
 ```
 
 Official source precedence:
 
-- Check `pnpm effect:status` before changing the Effect source pin or package baseline.
+- Use `pnpm source:status`, `pnpm source:update`, and `pnpm source:verify` for generic source-entry
+  pin workflow through Partita.
 - Use the `@effect/tsgo` patched `tsgo --noEmit` as the primary Effect diagnostic path.
   `effect-tsgo` is the setup/patch manager, not the `--noEmit` typecheck binary.
 - If local harness docs disagree with `harness/offcial-guide.md`, `repos/effect/LLMS.md`,
   `repos/effect/`, or `@effect/tsgo` diagnostics, follow the official source and update the
-  harness guardrails or minimal routes.
+  minimal provider routes.

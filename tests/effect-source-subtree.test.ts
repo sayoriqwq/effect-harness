@@ -72,37 +72,6 @@ function sourceEntryManifest(options: {
     prefix,
     split: options.split,
     llmDocument,
-    sourceEntry: {
-      upstream: {
-        repository,
-        branch,
-      },
-      local: {
-        prefix,
-      },
-      pin: {
-        split: options.split,
-      },
-      anchor: {
-        llmDocument,
-      },
-      mode: {
-        readOnly: true,
-        referenceOnly: true,
-      },
-      commands: {
-        update: 'pnpm effect:update',
-        verify: 'pnpm effect:verify',
-      },
-      agent: {
-        route: llmDocument,
-      },
-      importBlock: {
-        enabled: true,
-        prefix,
-        appliesTo: ['application', 'test'],
-      },
-    },
     packageBaseline: options.packageBaseline ?? {},
   }
 }
@@ -143,28 +112,20 @@ it.effect('source subtree verifier reads the split from the current HEAD history
   }
 }))
 
-it.effect('source subtree verifier rejects legacy manifests without a source-entry contract', () => Effect.sync(() => {
+it.effect('source subtree verifier accepts a minimal effect manifest without generic pin contract', () => Effect.sync(() => {
   const root = tempDir()
   const split = 'c'.repeat(40)
 
   try {
     initGit(root)
     writePinnedSource(root)
-    writeManifest(root, {
-      name: 'effect',
-      repository: defaultRepository,
-      branch: 'main',
-      prefix: defaultPrefix,
-      split,
-      llmDocument: defaultLlmDocument,
-      packageBaseline: {},
-    })
+    writeManifest(root, sourceEntryManifest({ split }))
     commitWithTrailer(root, split)
 
     const result = runSourceVerify(root)
 
-    assert.notEqual(result.status, 0, result.stdout)
-    assert.match(result.stderr, /must contain object field: sourceEntry/u)
+    assert.equal(result.status, 0, result.stderr)
+    assert.match(result.stdout, /Effect source entry verified/u)
   }
   finally {
     rmSync(root, { recursive: true, force: true })
@@ -283,35 +244,13 @@ it.effect('source subtree verifier rejects application imports from the source p
     writePinnedSource(root)
     writeManifest(root, sourceEntryManifest({ split }))
     mkdirSync(join(root, 'tests'), { recursive: true })
-    writeFileSync(join(root, 'tests/imports-source.ts'), 'import { Effect } from "../repos/effect/packages/effect/src/Effect.ts"\n')
+    writeFileSync(join(root, 'tests/imports-source.ts'), 'import { Effect } from "../repos/' + 'effect/packages/effect/src/Effect.ts"\n')
     commitWithTrailer(root, split)
 
     const result = runSourceVerify(root)
 
     assert.notEqual(result.status, 0, result.stdout)
     assert.match(result.stderr, /tests\/imports-source\.ts imports from repos\/effect/u)
-  }
-  finally {
-    rmSync(root, { recursive: true, force: true })
-  }
-}))
-
-it.effect('source subtree verifier rejects inconsistent source-entry pin metadata', () => Effect.sync(() => {
-  const root = tempDir()
-  const split = '5'.repeat(40)
-  const manifest = sourceEntryManifest({ split })
-
-  try {
-    initGit(root)
-    writePinnedSource(root)
-    manifest.sourceEntry.pin.split = '6'.repeat(40)
-    writeManifest(root, manifest)
-    commitWithTrailer(root, split)
-
-    const result = runSourceVerify(root)
-
-    assert.notEqual(result.status, 0, result.stdout)
-    assert.match(result.stderr, /source-entry metadata mismatch: sourceEntry\.pin\.split/u)
   }
   finally {
     rmSync(root, { recursive: true, force: true })

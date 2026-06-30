@@ -1,12 +1,13 @@
 # Effect Harness Route
 
-本仓当前只有一个职责：维护 pinned official Effect source-entry，并让配套 Effect v4 beta package
-baseline 可验证。
+本仓当前只有一个职责：维护 pinned official Effect source-entry 的 provider profile、agent route
+表和最小可验证 baseline。
 
 ## 真源
 
 - `harness/offcial-guide.md` 是仓内 guide 唯一真源。
 - `repos/effect.subtree.json` 是 source-entry 与 package-baseline manifest。
+- `.partita/source-entries.json` 是 Partita 管理的 generic source-entry contract。
 - `repos/effect/LLMS.md` 是 pinned 上游 Effect LLM guide。
 - `harness/effect-routes.md` 是 agent 读取 `repos/effect/` 的路线表。
 - `harness/provider/effect-harness.provider.json` 是最小 Prelude provider profile。
@@ -22,10 +23,10 @@ history 查，但不是当前真源。
 ## 验证
 
 ```bash
-pnpm effect:status
 pnpm effect:verify
 pnpm verify
 ```
 
-Target repository 只作为 package/tsgo/guardrail consumer 被验证。Prelude 可以通过 provider record
-维护 target state；effect-harness 不向 target 投影 runtime assets。
+`pnpm effect:verify` 只验证 provider 仓自身。`pnpm source:status`、`pnpm source:update`、
+`pnpm source:verify` 借用 Partita source-entry CLI。Target repository 由 Prelude provider
+maintain/verify；effect-harness 不向 target 投影 runtime assets。

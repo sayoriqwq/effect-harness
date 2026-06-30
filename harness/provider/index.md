@@ -11,8 +11,8 @@ Current authorities:
 
 ## Boundary
 
-Partita owns generic source-entry pin semantics. effect-harness owns only the Effect source-entry
-instance and Effect package baseline.
+Partita owns generic source-entry pin semantics and `.partita/source-entries.json`. effect-harness owns
+only the Effect source-entry instance route, provider profile, and Effect package baseline.
 
 Prelude owns target lifecycle. effect-harness may verify a Prelude provider record, but it does not
 project Codex runtime assets, feedback intake, target `AGENTS.md` blocks, or `.effect-harness.json`

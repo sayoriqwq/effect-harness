@@ -9,14 +9,14 @@ Partita 负责。本仓只维护已经 pin 进来的 Effect source-entry 实例�
 - `repos/effect/` 是 provider 仓内部只读参考源，target 仓库不接收这棵目录。
 - 业务代码和测试代码只能从已安装 package import，禁止从 `repos/effect` import。
 - `repos/effect/LLMS.md` 是上游 LLM guide，总是优先于零散猜测和 `node_modules`。
-- 是否追上最新官方上游，以 `pnpm effect:status` 为准；不要从本文档推断 latest。
-- 更新 source pin 只能走 `pnpm effect:update`，然后运行 `pnpm verify`。
+- generic source-entry status/update/verify 借用 Partita CLI：`pnpm source:status`、
+  `pnpm source:update`、`pnpm source:verify`。
 
 ## Route 表
 
 | Agent 意图 | 先读 | 深入核对 | 适用输出 | 注意 |
 | --- | --- | --- | --- | --- |
-| 判断当前 source pin 和 package baseline | `repos/effect.subtree.json`、`pnpm effect:status` | `harness/provider/effect-harness.provider.json`、`pnpm-workspace.yaml` | baseline 审计、provider drift 判断 | `effect:status` 可能显示当前 pin 落后官方；落后不等于本仓 baseline 不自洽 |
+| 判断当前 source pin 和 package baseline | `.partita/source-entries.json`、`repos/effect.subtree.json` | `harness/provider/effect-harness.provider.json`、`pnpm-workspace.yaml` | baseline 审计、provider drift 判断 | 本文档不声明 latest；需要更新时走 Partita source workflow |
 | 理解本仓如何接入 Effect source | `harness/source.md` | `harness/provider/index.md`、`harness/offcial-guide.md` | source-entry 维护、更新计划 | 这里是 Effect 实例，不是 Partita generic pin |
 | 开始写非平凡 Effect 代码 | `repos/effect/LLMS.md` | `repos/effect/ai-docs/src/index.md`、`repos/effect/.patterns/effect.md` | 代码方案、重构方案 | 先按上游 guide 建模，再查具体 API |
 | 查公开 API surface | `repos/effect/packages/effect/package.json` | `repos/effect/packages/effect/src/index.ts`、对应 `src/<Module>.ts` | import 建议、API 使用 | 不要建议 import `internal/*` 或 `*/index` 禁止项 |

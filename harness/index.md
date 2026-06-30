@@ -8,11 +8,11 @@
 | 意图 | 先读 | 真源 | 验证 |
 | --- | --- | --- | --- |
 | 理解已批准的 source-entry 计划 | `harness/offcial-guide.md` | official guide brief | n/a |
-| 查看 Effect source pin contract | `harness/source.md` | `repos/effect.subtree.json`、`repos/effect/LLMS.md` | `pnpm effect:verify` |
+| 查看 Effect source pin contract | `harness/source.md` | `.partita/source-entries.json`、`repos/effect.subtree.json`、`repos/effect/LLMS.md` | `pnpm source:verify`、`pnpm effect:verify` |
 | 按 agent 意图读取 Effect 源码 | `harness/effect-routes.md` | `repos/effect/LLMS.md`、`repos/effect/packages/**`、`repos/effect/ai-docs/src/**` | `pnpm effect:verify` |
-| 更新 Effect source pin | `harness/source.md` | upstream Effect repo 和 npm dist-tags | `pnpm verify`、subtree trailers |
+| 更新 Effect source pin | `harness/source.md` | Partita source contract、upstream Effect repo | `pnpm source:update`、`pnpm verify`、subtree trailers |
 | 查看 Prelude provider shape | `harness/provider/index.md` | `harness/provider/effect-harness.provider.json` | `pnpm effect:verify` |
-| 验证 target repo baseline | CLI `verify --target` | package baseline、tsgo config、guardrails | target `pnpm effect:verify` |
+| 查看 target 接入面 | `harness/provider/index.md` | Prelude provider record、package baseline、tsgo config | Prelude maintain/verify |
 
 ## 边界
 
