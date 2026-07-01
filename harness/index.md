@@ -19,7 +19,7 @@ updated: 2026-07-01
 | 文档 | 职责 | 不承载 |
 | --- | --- | --- |
 | `harness/offcial-guide.md` | 维护 Effect 官方 `Coding with LLMs` 小节的当前源口径、官方链接和官方段落。 | 本仓实践、迁移顺序、本机集成、provider profile、verifier 和 Prelude target surfaces。 |
-| `harness/offcial-migrate.md` | 描述官方三阶段建议在本仓的迁移状态、实现取舍、harness/provider 分层和下一步集成判断。 | 官方原文镜像、通用 GitHub pin 流程和目标项目生命周期实现。 |
+| `harness/offcial-migrate.md` | 描述官方三阶段建议在本仓的迁移状态、实现取舍、harness/provider 分层和集成判断。 | 官方原文镜像、通用 GitHub pin 流程和目标项目生命周期实现。 |
 | `harness/source.md` | 描述本仓 Effect source entry、subtree pin 和 source boundary。 | 通用 Partita pin 设计和 Prelude target maintain 逻辑。 |
 | `harness/effect-routes.md` | 给 agent 提供读取 `repos/effect/` 的路线表。 | 目标项目 runtime assets 和 provider record materialization。 |
 | `harness/provider/index.md` | 描述 Prelude 消费 effect-harness provider profile 的方式。 | 本仓 source route 的完整内容和通用 pin workflow。 |
@@ -32,6 +32,7 @@ updated: 2026-07-01
 | --- | --- | --- | --- |
 | 理解官方三阶段路线 | `harness/offcial-guide.md` | Effect 官方 Introduction / Coding with LLMs | 不适用 |
 | 理解第一阶段 source access 实现 | `harness/offcial-migrate.md` | `repos/effect.subtree.json`、`harness/source.md`、`harness/effect-routes.md`、provider profile | `pnpm effect:verify`、`pnpm verify` |
+| 理解第三阶段 LSP/tsgo 实现 | `harness/offcial-migrate.md` | `tsconfig.json`、provider profile、`@effect/tsgo` npm latest | `pnpm effect:verify`、`pnpm verify` |
 | 查看 Effect 源入口契约 | `harness/source.md` | `repos/effect.subtree.json`、`repos/effect/LLMS.md` | `pnpm source:verify`、`pnpm effect:verify` |
 | 按 agent 意图读取 Effect 源码 | `harness/effect-routes.md` | `repos/effect/LLMS.md`、`repos/effect/packages/**`、`repos/effect/ai-docs/src/**` | `pnpm effect:verify` |
 | 更新 Effect 源入口 | `harness/source.md` | Partita GitHub subtree contract、上游 Effect repo | `pnpm source:update`、`pnpm verify`、subtree trailers |
@@ -59,5 +60,5 @@ updated: 2026-07-01
   和 maintain。
 - 业务代码和测试代码禁止从 `repos/effect` import。
 - 本仓不再分发 Codex skills 或目标 runtime 资产。
-- `.effect-harness.json`、旧 effect-harness `.codex` 资产、反馈入口、effect-harness
-  `AGENTS.md` 管理块都是旧状态，应从目标项目中移除。
+- `.effect-harness.json`、effect-harness `.codex` 资产、反馈入口、effect-harness
+  `AGENTS.md` 管理块不属于当前 target surfaces。

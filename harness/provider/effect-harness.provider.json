@@ -161,12 +161,12 @@
         }
       },
       "packageBaseline": {
-        "effect": "4.0.0-beta.90",
-        "@effect/platform-node": "4.0.0-beta.90",
-        "@effect/vitest": "4.0.0-beta.90",
-        "@effect/tsgo": "0.14.6",
+        "effect": "4.0.0-beta.92",
+        "@effect/platform-node": "4.0.0-beta.92",
+        "@effect/vitest": "4.0.0-beta.92",
+        "@effect/tsgo": "0.15.0",
         "@effect/language-service": "0.86.2",
-        "@typescript/native-preview": "7.0.0-dev.20260624.1"
+        "@typescript/native-preview": "7.0.0-dev.20260630.1"
       },
       "managedSurfaces": {
         "targetReceives": [
@@ -187,16 +187,20 @@
       "contributions": {
         "packageJson": {
           "dependencies": {
-            "effect": "4.0.0-beta.90",
-            "@effect/platform-node": "4.0.0-beta.90"
+            "effect": "4.0.0-beta.92",
+            "@effect/platform-node": "4.0.0-beta.92"
           },
           "devDependencies": {
-            "@effect/vitest": "4.0.0-beta.90",
-            "@effect/tsgo": "0.14.6",
+            "@effect/vitest": "4.0.0-beta.92",
+            "@effect/tsgo": "0.15.0",
             "@effect/language-service": "0.86.2",
-            "@typescript/native-preview": "7.0.0-dev.20260624.1"
+            "@typescript/native-preview": "7.0.0-dev.20260630.1"
           },
           "scripts": {
+            "prepare": {
+              "semantic": "prepare Effect TypeScript-Go backend",
+              "defaultCommand": "effect-tsgo patch"
+            },
             "typecheck": {
               "semantic": "primary Effect diagnostics",
               "defaultCommand": "tsgo --noEmit"
@@ -208,11 +212,12 @@
             "plugins": [
               {
                 "name": "@effect/language-service",
-                "options": {
-                  "diagnosticSeverity": {
-                    "floatingEffect": "error"
-                  }
-                }
+                "diagnostics": true,
+                "diagnosticSeverity": {
+                  "floatingEffect": "error"
+                },
+                "ignoreEffectWarningsInTscExitCode": false,
+                "ignoreEffectErrorsInTscExitCode": false
               }
             ]
           }

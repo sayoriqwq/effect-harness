@@ -29,15 +29,19 @@ updated: 2026-07-01
 
 第二阶段尚未直接实现。
 
-第二阶段只参考官方参考仓库的工程化设计理念，不照抄其旧 Effect 写法或业务规则。
+第二阶段只参考官方参考仓库的工程化设计理念，不照抄其 Effect 写法或业务规则。
 
-第三阶段是当前下一块主迁移面。
+第三阶段基础迁移已经实现。
+
+第三阶段当前落地内容是：`@effect/tsgo@0.15.0`、`@effect/language-service@0.86.2`、
+`@typescript/native-preview@7.0.0-dev.20260630.1`、`tsgo --noEmit` 诊断入口、
+以及官方插件顶层配置 shape。
 
 ## Sequence
 
-当前迁移 SHOULD 先进入第三阶段。
+当前迁移已经直接进入第三阶段。
 
-`mikearnaldi/accountability` 的 Effect 代码和 lint 基线偏旧，不能作为本仓 v4 beta provider 的规则真源。
+`mikearnaldi/accountability` 的 Effect 代码和 lint 基线不能作为本仓 v4 beta provider 的规则真源。
 
 第二阶段只提供工程化设计理念：压短反馈回路、把项目约束变成可执行检查、把 agent 读取路径写成
 稳定文档、让验证命令成为完成工作的硬边界。
@@ -45,8 +49,9 @@ updated: 2026-07-01
 本仓 MUST NOT 照抄 `mikearnaldi/accountability` 的 v3 Effect 写法、业务规则、auto agent loop
 或前后端架构。
 
-本仓 SHOULD 先把 `@effect/tsgo` 和 `@effect/language-service` 作为 Effect 语义诊断主路径，
-再回头用第二阶段理念补齐 project-level guardrails。
+本仓已经先把 `@effect/tsgo` 和 `@effect/language-service` 作为 Effect 语义诊断主路径。
+
+后续再回头用第二阶段理念补齐 project-level guardrails。
 
 ## Layers
 
@@ -91,39 +96,40 @@ target surfaces。
 
 - accounting 业务规范。
 - React/TanStack 前端约束。
-- 旧 Effect service 写法。
-- 旧 language-service patch 命令。
+- 参考仓 Effect service 写法。
+- 参考仓 language-service 配置。
 - auto agent loop。
 
 第二阶段后续实现时，MUST 明确哪些反馈属于 provider profile，哪些反馈属于 Prelude target
 maintain，哪些反馈只属于本仓开发验证。
 
-第二阶段 MUST NOT 恢复旧的目标 runtime 模板、反馈入口、`.effect-harness.json`
+第二阶段 MUST NOT 恢复目标 runtime 模板、反馈入口、`.effect-harness.json`
 或 effect-harness 管理的 `AGENTS.md` block。
 
-第二阶段 SHOULD 保留项目级硬边界，例如禁止从 source pin import、禁止旧包入口、禁止目标项目
+第二阶段 SHOULD 保留项目级硬边界，例如禁止从 source pin import、禁止偏离 provider baseline 的包入口、禁止目标项目
 绕开 provider baseline、禁止测试绕开 `@effect/vitest`。
 
 第二阶段 SHOULD NOT 复制 `@effect/tsgo` 已经覆盖的 Effect 语义诊断。
 
 ## LSP
 
-第三阶段是当前下一块主迁移面。
+第三阶段基础迁移已经实现。
 
 第三阶段 provider profile 应声明目标项目使用 `@effect/tsgo`、`@effect/language-service`、
-native TypeScript backend 和 patched `tsgo --noEmit` 诊断路径。
+native TypeScript backend 和 `tsgo --noEmit` 诊断路径。
 
 第三阶段 MUST 以 `@effect/tsgo` diagnostics 和 Effect 官方 LSP 行为为准。
 
-第三阶段 MUST NOT 把 `effect-tsgo` setup/patch manager 误当作 `--noEmit` typecheck binary。
+第三阶段 MUST 使用 `effect-tsgo patch` 准备 Effect TypeScript-Go backend。
 
-第三阶段的 `@effect/language-service` 插件配置 MUST 使用官方读取的顶层字段，例如
-`diagnosticSeverity`，不能放在旧式 `options.diagnosticSeverity` 下。
+第三阶段 MUST 使用 `tsgo --noEmit` 执行 Effect 语义诊断。
 
-第三阶段 verifier SHOULD 检查 patched `tsgo` 版本输出包含 `+effect-tsgo`。
+第三阶段的 `@effect/language-service` 插件配置 MUST 使用官方插件字段。
 
-第三阶段 verifier SHOULD block `diagnosticSeverity: null`、缺失 `@effect/language-service`
-plugin、旧式 nested-only `options.diagnosticSeverity` 和 `ignoreEffectErrorsInTscExitCode: true`。
+第三阶段 verifier MUST 检查 `effect-tsgo --version` 输出包含当前 `@effect/tsgo` 基线版本。
+
+第三阶段 verifier MUST 检查本仓 `tsconfig.json`、provider profile、package scripts 和
+`effect-tsgo` 版本都匹配当前基线。
 
 ## Harness
 
@@ -134,7 +140,7 @@ plugin、旧式 nested-only `options.diagnosticSeverity` 和 `ignoreEffectErrors
 - `name` 是 `effect`。
 - `kind` 是 `github-subtree`。
 - `github.repository` 是 `Effect-TS/effect-smol`。
-- `github.ref` 和 `subtree.split` 是 `3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6`。
+- `github.ref` 和 `subtree.split` 是 `e11cccc7d5fe631abccc7d6e3bd296938de0fa2e`。
 - `local.prefix` 是 `repos/effect`。
 - `anchor.llmDocument` 是 `repos/effect/LLMS.md`。
 - `agent.route` 是 `harness/effect-routes.md`。
@@ -182,7 +188,7 @@ Provider 层交给 Prelude 的 target surfaces 是：
 
 - provider record at `.prelude/providers/effect-harness/provider.json`。
 - `package.json` dependency and devDependency structured pointers。
-- `package.json` script pointer for `tsgo --noEmit`。
+- `package.json` script pointer for `effect-tsgo patch` and `tsgo --noEmit`。
 - `tsconfig.json` `@effect/language-service` plugin pointer。
 - artifact/source identity fields for audit and drift。
 

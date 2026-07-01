@@ -6,14 +6,14 @@
     "repository": "Effect-TS/effect-smol",
     "url": "https://github.com/Effect-TS/effect-smol.git",
     "branch": "main",
-    "ref": "3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6"
+    "ref": "e11cccc7d5fe631abccc7d6e3bd296938de0fa2e"
   },
   "local": {
     "prefix": "repos/effect"
   },
   "subtree": {
-    "split": "3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6",
-    "trailer": "git-subtree-split: 3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6"
+    "split": "e11cccc7d5fe631abccc7d6e3bd296938de0fa2e",
+    "trailer": "git-subtree-split: e11cccc7d5fe631abccc7d6e3bd296938de0fa2e"
   },
   "anchor": {
     "llmDocument": "repos/effect/LLMS.md"

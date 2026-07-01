@@ -21,12 +21,12 @@
 
 基线：
 
-- `effect@4.0.0-beta.90`
-- `@effect/platform-node@4.0.0-beta.90`
-- `@effect/vitest@4.0.0-beta.90`
-- `@effect/tsgo@0.14.6`
+- `effect@4.0.0-beta.92`
+- `@effect/platform-node@4.0.0-beta.92`
+- `@effect/vitest@4.0.0-beta.92`
+- `@effect/tsgo@0.15.0`
 - `@effect/language-service@0.86.2`
-- `@typescript/native-preview@7.0.0-dev.20260624.1`
+- `@typescript/native-preview@7.0.0-dev.20260630.1`
 
 当前 v4 beta 模式：
 
@@ -43,7 +43,7 @@
 - 当前基线不新增 `Context.Tag` service definition。
 - 不新增目标项目本地 dispatcher scripts。
 - 不恢复仓内 `.codex/skills`、目标 runtime 模板、反馈入口、
-  `.effect-harness.json` 或 effect-harness 管理的 `AGENTS.md` blocks；这些都是旧表面。
+  `.effect-harness.json` 或 effect-harness 管理的 `AGENTS.md` blocks。
 - Partita 负责通用源入口 pin 流程；本仓只负责 Effect 源入口实例、路线、基线和 provider
   profile。
 - Prelude 负责目标项目生命周期；本仓不直接实现目标项目 maintain 系统。
@@ -59,7 +59,6 @@ pnpm verify
 
 - 通用源入口 pin 流程走 Partita：`pnpm source:status`、`pnpm source:update`、
   `pnpm source:verify`。
-- Effect 诊断主路径是 patched `tsgo --noEmit`。`effect-tsgo` 是 setup/patch manager，不是
-  `--noEmit` typecheck binary。
+- Effect 诊断主路径是 `tsgo --noEmit`，并由 `effect-tsgo patch` 准备 Effect TypeScript-Go backend。
 - 如果本仓 harness 文档与 `harness/offcial-guide.md`、`repos/effect/LLMS.md`、
   `repos/effect/` 或 `@effect/tsgo` diagnostics 冲突，服从官方真源并更新最小 provider route。

@@ -5,8 +5,9 @@ import { HarnessError } from '../Errors.ts'
 import { verifyGuardrails } from '../Guardrails.ts'
 import { verifySourcePin } from '../SourcePin.ts'
 import { verifyProviderProfileContract } from './ProviderProfile.ts'
+import { verifyTsgoBaseline } from './Tsgo.ts'
 
-const legacyProviderPaths = [
+const removedProviderPaths = [
   '.codex/skills',
   'guide',
   'harness/default-capabilities.md',
@@ -19,9 +20,9 @@ const legacyProviderPaths = [
 
 const assertNoLegacyProviderState = Effect.fnUntraced(function* (errors: Array<string>, harness: string) {
   const fs = yield* FileSystem.FileSystem
-  for (const path of legacyProviderPaths) {
+  for (const path of removedProviderPaths) {
     if (yield* fs.exists(`${harness}/${path}`)) {
-      errors.push(`${path} is legacy provider state and must not exist in the new baseline.`)
+      errors.push(`${path} does not belong to the current provider baseline.`)
     }
   }
 })
@@ -31,6 +32,7 @@ export const verifyProviderRepository = Effect.fnUntraced(function* (harness: st
 
   yield* verifySourcePin(harness)
   yield* verifyProviderProfileContract(errors, harness)
+  yield* verifyTsgoBaseline(errors, harness)
   yield* assertNoLegacyProviderState(errors, harness)
   yield* verifyGuardrails({
     root: harness,

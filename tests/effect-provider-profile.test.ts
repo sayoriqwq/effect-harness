@@ -17,6 +17,12 @@ function record(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>
 }
 
+function languageServicePlugin(plugins: ReadonlyArray<unknown>): Record<string, unknown> {
+  const plugin = plugins.find(value => record(value).name === '@effect/language-service')
+  assert.notEqual(plugin, undefined)
+  return record(plugin)
+}
+
 it.effect('provider profile exposes Effect source pin as provider-internal source entry', () => Effect.sync(() => {
   const profile = readJson(join(repoRoot, 'harness/provider/effect-harness.provider.json'))
   const sourceContract = readJson(join(repoRoot, 'repos/effect.subtree.json'))
@@ -36,7 +42,7 @@ it.effect('provider profile exposes Effect source pin as provider-internal sourc
   assert.equal(contract.path, 'repos/effect.subtree.json')
   assert.equal(contract.owner, 'partita')
   assert.equal(contract.format, 'github-subtree')
-  assert.equal(subtree.split, '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6')
+  assert.equal(subtree.split, 'e11cccc7d5fe631abccc7d6e3bd296938de0fa2e')
   assert.equal('repository' in sourceEntry, false)
   assert.equal('branch' in sourceEntry, false)
   assert.equal('prefix' in sourceEntry, false)
@@ -50,6 +56,42 @@ it.effect('provider profile exposes Effect source pin as provider-internal sourc
   assert.ok((sourceBoundary.targetMustNotReceive as ReadonlyArray<unknown>).includes('repos/effect'))
   assert.ok((sourceBoundary.allowedTargetSourceIdentity as ReadonlyArray<unknown>).includes('artifact.sourceIdentity.contractPath'))
   assert.equal('officialSource' in codexProfile, false)
+}))
+
+it.effect('provider profile and repository tsconfig use the current effect-tsgo plugin shape', () => Effect.sync(() => {
+  const profile = readJson(join(repoRoot, 'harness/provider/effect-harness.provider.json'))
+  const tsconfig = readJson(join(repoRoot, 'tsconfig.json'))
+  const codexProfile = record(record(profile.profiles)['codex-effect-v4'])
+  const packageBaseline = record(codexProfile.packageBaseline)
+  assert.equal(packageBaseline.effect, '4.0.0-beta.92')
+  assert.equal(packageBaseline['@effect/platform-node'], '4.0.0-beta.92')
+  assert.equal(packageBaseline['@effect/vitest'], '4.0.0-beta.92')
+  assert.equal(packageBaseline['@effect/tsgo'], '0.15.0')
+  assert.equal(packageBaseline['@effect/language-service'], '0.86.2')
+  assert.equal(packageBaseline['@typescript/native-preview'], '7.0.0-dev.20260630.1')
+
+  const contributions = record(codexProfile.contributions)
+  const packageJson = record(contributions.packageJson)
+  const scripts = record(packageJson.scripts)
+  assert.equal(record(scripts.prepare).defaultCommand, 'effect-tsgo patch')
+  assert.equal(record(scripts.typecheck).defaultCommand, 'tsgo --noEmit')
+
+  const providerTsconfig = record(contributions.tsconfig)
+  const providerCompilerOptions = record(providerTsconfig.compilerOptions)
+  const providerPlugin = languageServicePlugin(providerCompilerOptions.plugins as ReadonlyArray<unknown>)
+  assert.equal('options' in providerPlugin, false)
+  assert.equal(providerPlugin.diagnostics, true)
+  assert.equal(record(providerPlugin.diagnosticSeverity).floatingEffect, 'error')
+  assert.equal(providerPlugin.ignoreEffectWarningsInTscExitCode, false)
+  assert.equal(providerPlugin.ignoreEffectErrorsInTscExitCode, false)
+
+  const compilerOptions = record(tsconfig.compilerOptions)
+  const plugin = languageServicePlugin(compilerOptions.plugins as ReadonlyArray<unknown>)
+  assert.equal('options' in plugin, false)
+  assert.equal(plugin.diagnostics, true)
+  assert.equal(record(plugin.diagnosticSeverity).floatingEffect, 'error')
+  assert.equal(plugin.ignoreEffectWarningsInTscExitCode, false)
+  assert.equal(plugin.ignoreEffectErrorsInTscExitCode, false)
 }))
 
 it.effect('provider profile declares target managed surfaces and editor policy options', () => Effect.sync(() => {

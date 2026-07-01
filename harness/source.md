@@ -33,7 +33,7 @@
 - 写非平凡 Effect code 前先读 `repos/effect/LLMS.md`
 - 查 API definition 时读 `repos/effect/packages/effect/src/`
 - 查用法示例时读 `repos/effect/packages/effect/test/` 和 `repos/effect/ai-docs/src/`
-- 用 patched `tsgo --noEmit` 验证目标代码
+- 用 `tsgo --noEmit` 验证目标代码
 
 应用代码和测试代码禁止从 `repos/effect` import。
 

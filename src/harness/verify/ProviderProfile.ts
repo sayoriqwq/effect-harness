@@ -107,7 +107,7 @@ function assertArrayDoesNotContainText(
   source: string,
 ): void {
   if (values?.some(value => typeof value === 'string' && value.includes(text))) {
-    errors.push(`${source} must not include legacy text containing ${text}.`)
+    errors.push(`${source} must not include text containing ${text}.`)
   }
 }
 
@@ -118,17 +118,17 @@ function assertRecordDoesNotContain(
   source: string,
 ): void {
   if (record !== undefined && key in record) {
-    errors.push(`${source} must not contain legacy field ${key}.`)
+    errors.push(`${source} must not contain field ${key}.`)
   }
 }
 
 const expectedPackageBaseline: Readonly<Record<string, string>> = {
-  'effect': '4.0.0-beta.90',
-  '@effect/platform-node': '4.0.0-beta.90',
-  '@effect/vitest': '4.0.0-beta.90',
-  '@effect/tsgo': '0.14.6',
+  'effect': '4.0.0-beta.92',
+  '@effect/platform-node': '4.0.0-beta.92',
+  '@effect/vitest': '4.0.0-beta.92',
+  '@effect/tsgo': '0.15.0',
   '@effect/language-service': '0.86.2',
-  '@typescript/native-preview': '7.0.0-dev.20260624.1',
+  '@typescript/native-preview': '7.0.0-dev.20260630.1',
 }
 
 function assertPackageBaseline(

@@ -12,7 +12,7 @@ import { errorMessage } from '../src/harness/Errors.ts'
 const harnessRoot = resolveHarnessRoot(fileURLToPath(import.meta.url))
 const packageVersion = readPackageVersion(join(harnessRoot, 'package.json'))
 
-runCli({
+NodeRuntime.runMain(runCli({
   harnessRoot,
   version: packageVersion,
 }).pipe(
@@ -21,8 +21,7 @@ runCli({
       console.error(errorMessage(error))
       process.exitCode = 1
     })),
-  NodeRuntime.runMain,
-)
+))
 
 function resolveHarnessRoot(entrypoint: string) {
   const candidate = dirname(dirname(entrypoint))

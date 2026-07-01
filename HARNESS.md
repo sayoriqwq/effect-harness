@@ -13,7 +13,7 @@
 ## 真源
 
 - `harness/offcial-guide.md`：仓内 guide 唯一真源。
-- `harness/offcial-migrate.md`：官方第一阶段 source access 的 harness/provider 实现说明。
+- `harness/offcial-migrate.md`：官方 source access 与 LSP/tsgo 阶段的 harness/provider 实现说明。
 - `repos/effect.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 Effect 源入口唯一真源。
 - `repos/effect/LLMS.md`：pinned 上游 Effect LLM guide。
 - `harness/effect-routes.md`：agent 读取 `repos/effect/` 的路线表。
@@ -28,8 +28,7 @@
 ## 已移除表面
 
 新基线不包含仓内 Codex skills、目标 runtime 模板、反馈入口、目标
-`AGENTS.md` 管理块，也不保留 `.effect-harness.json` 独立状态。旧文件可以从 git
-history 查，但不是当前真源。
+`AGENTS.md` 管理块，也不保留 `.effect-harness.json` 独立状态。
 
 ## 验证
 

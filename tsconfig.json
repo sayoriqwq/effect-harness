@@ -6,11 +6,12 @@
     "plugins": [
       {
         "name": "@effect/language-service",
-        "options": {
-          "diagnosticSeverity": {
-            "floatingEffect": "error"
-          }
-        }
+        "diagnostics": true,
+        "diagnosticSeverity": {
+          "floatingEffect": "error"
+        },
+        "ignoreEffectWarningsInTscExitCode": false,
+        "ignoreEffectErrorsInTscExitCode": false
       }
     ],
     "types": [

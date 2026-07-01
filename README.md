@@ -15,7 +15,7 @@
 这一层只服务 `effect-harness` 自身的维护：
 
 - `harness/offcial-guide.md`：仓内 guide 唯一真源。
-- `harness/offcial-migrate.md`：官方第一阶段 source access 的本仓实现说明。
+- `harness/offcial-migrate.md`：官方 source access 与 LSP/tsgo 阶段的本仓实现说明。
 - `repos/effect/`：已 pin 的官方 Effect 源码，只供 agent 读取参考。
 - `repos/effect.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 Effect 源入口唯一真源。
 - `harness/effect-routes.md`：agent 读取 `repos/effect/` 的路线表。
@@ -32,7 +32,7 @@
 - `tsconfig.json` 指针：维护 `@effect/language-service` 插件和 `floatingEffect: error`。
 - 诊断路径：目标项目以 `tsgo --noEmit` 作为主要 Effect 诊断路径。
 
-目标项目不接收 `repos/effect/`、`repos/effect.subtree.json`、旧 `.codex/skills`、目标 runtime
+目标项目不接收 `repos/effect/`、`repos/effect.subtree.json`、`.codex/skills`、目标 runtime
 模板、反馈入口、`.effect-harness.json` 或 effect-harness 管理的 `AGENTS.md` 管理块。
 
 ## 职责边界
