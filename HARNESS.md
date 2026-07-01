@@ -15,6 +15,7 @@
 - `harness/offcial-guide.md`：仓内 guide 唯一真源。
 - `harness/offcial-migrate.md`：官方 source access 与 LSP/tsgo 阶段的 harness/provider 实现说明。
 - `harness/feedback-loop.md`：第二阶段 Codex feedback loop 和统一 verify pipeline。
+- `harness/diagnostic-layers.md`：tsgo diagnostics、ESLint 和 harness guardrails 的分层职责。
 - `repos/effect.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 Effect 源入口唯一真源。
 - `repos/tsgo.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 tsgo 源入口真源。
 - `repos/effect/LLMS.md`：pinned 上游 Effect LLM guide。

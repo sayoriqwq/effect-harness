@@ -15,6 +15,7 @@ sources:
   - harness/effect-routes.md
   - harness/tsgo.md
   - harness/tsgo-routes.md
+  - harness/diagnostic-layers.md
   - src/harness/verify/Pipeline.ts
   - src/harness/verify/VerifyStage.ts
   - https://developers.openai.com/codex/learn/best-practices
@@ -74,7 +75,7 @@ stage 真源是 `src/harness/verify/VerifyStage.ts`。本节只是 agent-readabl
 | `harness-contract` | `harness/index.md`、`harness/offcial-migrate.md`、`harness/feedback-loop.md` | Verify the provider repository contract and current harness baseline. | Read the harness index, migrate notes, and feedback loop contract before changing verifier behavior. |
 | `tsgo-diagnostics` | `harness/tsgo.md`、`harness/tsgo-routes.md` | Run tsgo --noEmit and enforce zero Effect diagnostics. | Use the tsgo diagnostic output first; read the tsgo policy and routes only when the diagnostic is not enough. |
 | `tests` | `harness/effect-routes.md` | Run the Effect test suite. | Read the Effect testing route and fix behavior through @effect/vitest patterns. |
-| `lint` | `AGENTS.md`、`eslint.config.js` | Run ESLint with zero warnings. | Read the agent rules and lint config, then fix repository boundary violations. |
+| `lint` | `harness/diagnostic-layers.md`、`AGENTS.md`、`eslint.config.mjs` | Run ESLint with zero warnings. | Read the diagnostic layering contract, agent rules, and lint config, then fix repository boundary violations without duplicating tsgo semantics. |
 | `knip` | `package.json` | Run knip and keep the package surface minimal. | Read package.json and source imports/exports, then remove unused package surface. |
 
 ## STAGE_SOURCE_PINS
@@ -125,12 +126,13 @@ MUST 修复代码或 policy。MUST NOT 用普通源码 suppressions、local over
 
 ## STAGE_LINT
 
-失败时先读 `AGENTS.md` 和 `eslint.config.js`。
+失败时先读 `harness/diagnostic-layers.md`、`AGENTS.md` 和 `eslint.config.mjs`。
 
 lint stage 要求 0 error 和 0 warning。
 
 lint 规则用于补 tsgo 未覆盖的仓库边界，例如 import boundary、CLI baseline、测试入口和
-Effect guardrails。
+harness syntax-level guardrails。Effect 类型语义、Schema 语义、Layer 语义和 Effect-native
+API 偏好由 `tsgo-diagnostics` stage 负责。
 
 ## STAGE_KNIP
 

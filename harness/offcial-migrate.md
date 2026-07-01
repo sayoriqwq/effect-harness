@@ -109,7 +109,7 @@ pipeline 采用 fail-fast，stage 顺序是：
 | `harness-contract` | `harness/index.md`、`harness/offcial-migrate.md`、`harness/feedback-loop.md` |
 | `tsgo-diagnostics` | `harness/tsgo.md`、`harness/tsgo-routes.md` |
 | `tests` | `harness/effect-routes.md` |
-| `lint` | `AGENTS.md`、`eslint.config.js` |
+| `lint` | `harness/diagnostic-layers.md`、`AGENTS.md`、`eslint.config.mjs` |
 | `knip` | `package.json` |
 
 本阶段不引入：

@@ -52,9 +52,9 @@ export const verifyStageSpecs = [
   {
     tag: 'lint',
     title: 'Lint',
-    routes: ['AGENTS.md', 'eslint.config.js'],
+    routes: ['harness/diagnostic-layers.md', 'AGENTS.md', 'eslint.config.mjs'],
     summary: 'Run ESLint with zero warnings.',
-    routeHint: 'Read the agent rules and lint config, then fix repository boundary violations.',
+    routeHint: 'Read the diagnostic layering contract, agent rules, and lint config, then fix repository boundary violations without duplicating tsgo semantics.',
   },
   {
     tag: 'knip',
