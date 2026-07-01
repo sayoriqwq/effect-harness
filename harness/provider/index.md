@@ -8,6 +8,7 @@ status: active
 sources:
   - harness/provider/effect-harness.provider.json
   - harness/offcial-migrate.md
+  - harness/tsgo.md
 updated: 2026-07-01
 ---
 
@@ -20,21 +21,25 @@ updated: 2026-07-01
 
 - `harness/provider/effect-harness.provider.json`
 - `repos/effect.subtree.json`
+- `repos/tsgo.subtree.json`
 - `repos/effect/LLMS.md`
+- `repos/tsgo/README.md`
 - `harness/offcial-guide.md`
 - `harness/offcial-migrate.md`
+- `harness/tsgo.md`
 
 ## 两层对应
 
-第一层是 harness 层：effect-harness 维护本仓内部的 Effect 源入口实例、路线、验证和 Effect
-package 基线。
+第一层是 harness 层：effect-harness 维护本仓内部的 Effect/tsgo 源入口实例、路线、验证、
+strict tsgo policy 和 Effect package 基线。
 
 第二层是 provider 层：Prelude 读取 provider profile，在目标项目中维护 provider record、
-package 基线、`tsconfig.json` language-service plugin 和 `tsgo --noEmit` 诊断脚本。
+package 基线、`tsconfig.json` language-service plugin、strict diagnostic gate 和
+`tsgo --noEmit` 诊断脚本。
 
-Partita 负责 GitHub subtree pin 语义和 `repos/effect.subtree.json`；effect-harness 不复制这套
-能力。Prelude 负责目标项目生命周期；effect-harness 不投影 Codex runtime 资产、反馈入口、目标
-`AGENTS.md` blocks 或 `.effect-harness.json` state。
+Partita 负责 GitHub subtree pin 语义和 source contract；effect-harness 不复制这套能力。Prelude
+负责目标项目生命周期；effect-harness 不投影 Codex runtime 资产、反馈入口、目标 `AGENTS.md`
+blocks 或 `.effect-harness.json` state。
 
 ## 目标项目接收面
 
@@ -43,21 +48,25 @@ Partita 负责 GitHub subtree pin 语义和 `repos/effect.subtree.json`；effect
 Prelude 应该接收：
 
 - `package.json` dependencies and scripts
-- `tsconfig.json` language-service plugin
+- `tsconfig.json` strict language-service plugin
 - `.prelude/providers/effect-harness/provider.json` provider record
-- provider artifact/source identity
+- provider artifact/source identities
 
 Prelude 不应该接收：
 
 - `repos/effect/` 本体
+- `repos/tsgo/` 本体
 - `repos/effect.subtree.json` 本体
+- `repos/tsgo.subtree.json` 本体
 - `repos/effect/LLMS.md` 本体
+- `repos/tsgo/README.md` 本体
 - `.codex` runtime files
 - effect-harness `AGENTS.md` 管理块
 - `.effect-harness.json` state
 - `.codex/effect-feedback` feedback intake
 
-目标项目可以接收 provider record 中的 source identity，但不接收 `repos/effect/` 本体。
+目标项目可以接收 provider record 中的 Effect source identity 和 tsgo source identity，但不接收
+provider-internal source tree 本体。
 
 包含 `.codex` runtime files、effect-harness `AGENTS.md` 管理块或 `.effect-harness.json`
 state 的 provider records 应按当前 profile 重新生成。
@@ -67,3 +76,15 @@ state 的 provider records 应按当前 profile 重新生成。
 profile 把 source-entry editor policy 记录为数据。`repos/**` 的 auto-import exclusion 是默认硬边界。
 watch/search exclusion 需要显式编辑器配置。文件隐藏是偏好项，不是默认项。VSCode 和 Zed 的配置
 shape 分开记录。
+
+## Tsgo policy
+
+profile 把 `harness/tsgo.md` 的 strict policy 投影为 `tsgoPolicy` 和
+`contributions.tsconfig.compilerOptions.plugins[]`。
+
+当前 provider 只有 `strict-v4` profile，不提供 relaxed 或 compatibility profile。
+
+目标项目接入后应修复 diagnostics，不通过 local override 降低 strict policy。
+
+`includeSuggestionsInTsc` 固定为 `true`；`ignoreEffectSuggestionsInTscExitCode`、
+`ignoreEffectWarningsInTscExitCode` 和 `ignoreEffectErrorsInTscExitCode` 固定为 `false`。

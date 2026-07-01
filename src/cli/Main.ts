@@ -1,7 +1,5 @@
 import process from 'node:process'
-import * as NodeServices from '@effect/platform-node/NodeServices'
-import * as Effect from 'effect/Effect'
-import * as Path from 'effect/Path'
+import { Effect, Path } from 'effect'
 import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
 import { verifySourcePin } from '../harness/SourcePin.ts'
@@ -53,6 +51,5 @@ function makeCli(config: CliConfig) {
 export function runCli(config: CliConfig) {
   return makeCli(config).pipe(
     Command.run({ version: config.version }),
-    Effect.provide(NodeServices.layer),
   )
 }

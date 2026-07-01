@@ -1,11 +1,11 @@
-import * as Data from 'effect/Data'
+import { Data } from 'effect'
 
-export class HarnessError extends Data.TaggedError('HarnessError')<{
+export class HarnessError extends Data.TaggedError('@sayoriqwq/effect-harness/harness/Errors/HarnessError')<{
   readonly message: string
   readonly cause?: unknown
 }> {}
 
-export class ProcessError extends Data.TaggedError('ProcessError')<{
+export class ProcessError extends Data.TaggedError('@sayoriqwq/effect-harness/harness/Errors/ProcessError')<{
   readonly args: ReadonlyArray<string>
   readonly command: string
   readonly exitCode?: number
@@ -17,8 +17,8 @@ export class ProcessError extends Data.TaggedError('ProcessError')<{
 }> {}
 
 export function errorMessage(error: unknown): string {
-  if (typeof error === 'object' && error !== null && '_tag' in error && error._tag === 'ProcessError') {
-    const processError = error as ProcessError
+  if (error instanceof ProcessError) {
+    const processError = error
     const lines = [processError.message]
     if (processError.stderr.trim().length > 0) {
       lines.push(`stderr:\n${processError.stderr.trim()}`)

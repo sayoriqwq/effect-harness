@@ -1,6 +1,4 @@
-import * as Console from 'effect/Console'
-import * as Effect from 'effect/Effect'
-import * as FileSystem from 'effect/FileSystem'
+import { Console, Effect, FileSystem } from 'effect'
 import { HarnessError } from './Errors.ts'
 import { moduleSources } from './ModuleSources.ts'
 
@@ -48,8 +46,8 @@ export const verifyGuardrails = Effect.fnUntraced(function* (options: GuardrailO
       if (source === '@effect/cli' || source.startsWith('@effect/cli/')) {
         violations.push(`${file} imports ${source}; use effect/unstable/cli for this baseline.`)
       }
-      if (source.includes('repos/effect')) {
-        violations.push(`${file} imports ${source}; repos/effect is read-only reference material.`)
+      if (source.includes('repos/effect') || source.includes('repos/tsgo')) {
+        violations.push(`${file} imports ${source}; repos source pins are read-only reference material.`)
       }
     }
   }

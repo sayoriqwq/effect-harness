@@ -1,13 +1,20 @@
-import * as Effect from 'effect/Effect'
-import * as Result from 'effect/Result'
+import { Effect, FileSystem, Result } from 'effect'
 import { readJson } from '../../platform/Json.ts'
 import { commandString } from '../../platform/Process.ts'
 import { errorMessage, HarnessError } from '../Errors.ts'
 import { isRecord } from './JsonFields.ts'
-
-const expectedEffectTsgoVersion = '0.15.0'
-const expectedPrepareCommand = 'effect-tsgo patch'
-const expectedTypecheckCommand = 'tsgo --noEmit'
+import { readTsgoStrictRuleMap } from './TsgoMetadata.ts'
+import {
+  expectedEffectTsgoVersion,
+  expectedPackageBaseline,
+  expectedPrepareCommand,
+  expectedTypecheckCommand,
+  requiredTsgoPolicyKeywords,
+  strictDiagnosticGate,
+  strictDiagnosticSeverity,
+  strictLanguageServicePlugin,
+} from './TsgoPolicy.ts'
+import { assertNoEffectDiagnosticSuppressions } from './TsgoSuppressions.ts'
 
 function decodeJsonRecord(value: unknown, source: string) {
   return isRecord(value)
@@ -77,16 +84,19 @@ function assertStringValue(
   }
 }
 
-function assertBooleanNotTrue(
-  errors: Array<string>,
-  actual: unknown,
-  source: string,
-): void {
-  if (actual === true) {
-    errors.push(`${source} must not be true in the new tsgo baseline.`)
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableJson).join(',')}]`
   }
-  else if (actual !== undefined && typeof actual !== 'boolean') {
-    errors.push(`${source} must be a boolean when present.`)
+  if (isRecord(value)) {
+    return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(',')}}`
+  }
+  return JSON.stringify(value)
+}
+
+function assertDeepEqual(errors: Array<string>, actual: unknown, expected: unknown, source: string): void {
+  if (stableJson(actual) !== stableJson(expected)) {
+    errors.push(`${source} does not match the strict tsgo policy.`)
   }
 }
 
@@ -121,34 +131,78 @@ function assertLanguageServicePlugin(
   if ('options' in plugin) {
     errors.push(`${source} must use the current @effect/language-service plugin shape.`)
   }
-
-  if (plugin.diagnostics !== undefined && plugin.diagnostics !== true) {
-    errors.push(`${source}.diagnostics must be true when present.`)
+  if ('overrides' in plugin) {
+    errors.push(`${source}.overrides must not lower the strict tsgo policy.`)
   }
-
   if (plugin.diagnosticSeverity === null) {
     errors.push(`${source}.diagnosticSeverity must not be null.`)
-  }
-  else if (!isRecord(plugin.diagnosticSeverity)) {
-    errors.push(`${source}.diagnosticSeverity must be an object.`)
-  }
-  else {
-    assertStringValue(
-      errors,
-      plugin.diagnosticSeverity.floatingEffect,
-      'error',
-      `${source}.diagnosticSeverity.floatingEffect`,
-    )
+    return
   }
 
-  assertBooleanNotTrue(errors, plugin.ignoreEffectWarningsInTscExitCode, `${source}.ignoreEffectWarningsInTscExitCode`)
-  assertBooleanNotTrue(errors, plugin.ignoreEffectErrorsInTscExitCode, `${source}.ignoreEffectErrorsInTscExitCode`)
+  assertDeepEqual(errors, plugin, strictLanguageServicePlugin, source)
 }
 
 function assertTsconfig(errors: Array<string>, tsconfig: Record<string, unknown>, source: string): void {
   const compilerOptions = recordField(errors, tsconfig, 'compilerOptions', source)
   const plugins = arrayField(errors, compilerOptions, 'plugins', `${source}.compilerOptions`)
-  assertLanguageServicePlugin(errors, findLanguageServicePlugin(errors, plugins, `${source}.compilerOptions.plugins`), `${source}.compilerOptions.plugins[@effect/language-service]`)
+  assertLanguageServicePlugin(
+    errors,
+    findLanguageServicePlugin(errors, plugins, `${source}.compilerOptions.plugins`),
+    `${source}.compilerOptions.plugins[@effect/language-service]`,
+  )
+}
+
+function assertPackageBaseline(
+  errors: Array<string>,
+  profileBaseline: Record<string, unknown> | undefined,
+): void {
+  if (profileBaseline === undefined) {
+    return
+  }
+
+  for (const [name, expected] of Object.entries(expectedPackageBaseline)) {
+    const actual = profileBaseline[name]
+    if (actual !== expected) {
+      errors.push(`provider profile packageBaseline.${name} is ${String(actual ?? 'missing')}; expected ${expected}.`)
+    }
+  }
+}
+
+function assertProviderTsgoPolicy(errors: Array<string>, codexProfile: Record<string, unknown> | undefined): void {
+  const tsgoPolicy = recordField(errors, codexProfile, 'tsgoPolicy', 'provider profile.profiles.codex-effect-v4')
+  assertStringValue(errors, tsgoPolicy?.mode, 'strict-v4', 'provider profile tsgoPolicy.mode')
+  assertStringValue(errors, tsgoPolicy?.effectVersion, expectedPackageBaseline.effect, 'provider profile tsgoPolicy.effectVersion')
+  assertStringValue(errors, tsgoPolicy?.tsgoVersion, expectedPackageBaseline['@effect/tsgo'], 'provider profile tsgoPolicy.tsgoVersion')
+  assertStringValue(errors, tsgoPolicy?.languageServiceVersion, expectedPackageBaseline['@effect/language-service'], 'provider profile tsgoPolicy.languageServiceVersion')
+  assertStringValue(errors, tsgoPolicy?.sourceEntry, 'tsgo-official-source', 'provider profile tsgoPolicy.sourceEntry')
+
+  const nativeBackend = recordField(errors, tsgoPolicy, 'nativeBackend', 'provider profile tsgoPolicy')
+  assertStringValue(errors, nativeBackend?.package, '@typescript/native-preview', 'provider profile tsgoPolicy.nativeBackend.package')
+  assertStringValue(errors, nativeBackend?.version, expectedPackageBaseline['@typescript/native-preview'], 'provider profile tsgoPolicy.nativeBackend.version')
+
+  const diagnosticGate = recordField(errors, tsgoPolicy, 'diagnosticGate', 'provider profile tsgoPolicy')
+  assertDeepEqual(errors, diagnosticGate, strictDiagnosticGate, 'provider profile tsgoPolicy.diagnosticGate')
+
+  const ruleMapSource = recordField(errors, tsgoPolicy, 'ruleMapSource', 'provider profile tsgoPolicy')
+  assertStringValue(errors, ruleMapSource?.metadata, 'repos/tsgo/_packages/tsgo/src/metadata.json', 'provider profile tsgoPolicy.ruleMapSource.metadata')
+  assertStringValue(errors, ruleMapSource?.policy, 'harness/tsgo.md', 'provider profile tsgoPolicy.ruleMapSource.policy')
+  assertStringValue(errors, ruleMapSource?.supportedEffect, 'v4', 'provider profile tsgoPolicy.ruleMapSource.supportedEffect')
+  if (ruleMapSource?.ruleCount !== Object.keys(strictDiagnosticSeverity).length) {
+    errors.push(`provider profile tsgoPolicy.ruleMapSource.ruleCount is ${String(ruleMapSource?.ruleCount ?? 'missing')}; expected ${Object.keys(strictDiagnosticSeverity).length}.`)
+  }
+
+  assertDeepEqual(
+    errors,
+    recordField(errors, tsgoPolicy, 'diagnosticSeverity', 'provider profile tsgoPolicy'),
+    strictDiagnosticSeverity,
+    'provider profile tsgoPolicy.diagnosticSeverity',
+  )
+  assertDeepEqual(
+    errors,
+    recordField(errors, tsgoPolicy, 'languageServicePlugin', 'provider profile tsgoPolicy'),
+    strictLanguageServicePlugin,
+    'provider profile tsgoPolicy.languageServicePlugin',
+  )
 }
 
 function assertProviderTsgoContribution(errors: Array<string>, profile: Record<string, unknown>): void {
@@ -170,12 +224,31 @@ function assertProviderTsgoContribution(errors: Array<string>, profile: Record<s
     findLanguageServicePlugin(errors, plugins, 'provider profile contributions tsconfig.compilerOptions.plugins'),
     'provider profile contributions tsconfig.compilerOptions.plugins[@effect/language-service]',
   )
+  assertProviderTsgoPolicy(errors, codexProfile)
+  assertPackageBaseline(errors, recordField(errors, codexProfile, 'packageBaseline', 'provider profile.profiles.codex-effect-v4'))
 }
 
 function assertPackageTypecheckScript(errors: Array<string>, packageJson: Record<string, unknown>): void {
   const scripts = stringRecordField(errors, packageJson, 'scripts', 'package.json')
   assertStringValue(errors, scripts?.prepare, expectedPrepareCommand, 'package.json.scripts.prepare')
   assertStringValue(errors, scripts?.typecheck, expectedTypecheckCommand, 'package.json.scripts.typecheck')
+}
+
+function assertStrictRuleMap(errors: Array<string>, metadataRuleMap: Readonly<Record<string, string>>): void {
+  assertDeepEqual(errors, metadataRuleMap, strictDiagnosticSeverity, 'repos/tsgo metadata derived strict rule map')
+}
+
+function assertTsgoPolicyDocument(errors: Array<string>, text: string): void {
+  for (const keyword of requiredTsgoPolicyKeywords) {
+    if (!text.includes(keyword)) {
+      errors.push(`harness/tsgo.md must contain policy keyword ${keyword}.`)
+    }
+  }
+  for (const ruleName of Object.keys(strictDiagnosticSeverity)) {
+    if (!text.includes(ruleName)) {
+      errors.push(`harness/tsgo.md POLICY_RULE_MAP must record ${ruleName}.`)
+    }
+  }
 }
 
 const verifyEffectTsgoBinary = Effect.fnUntraced(function* (errors: Array<string>, root: string) {
@@ -203,12 +276,18 @@ const verifyEffectTsgoBinary = Effect.fnUntraced(function* (errors: Array<string
 })
 
 export const verifyTsgoBaseline = Effect.fnUntraced(function* (errors: Array<string>, harness: string) {
+  const fs = yield* FileSystem.FileSystem
   const tsconfig = yield* readJson(`${harness}/tsconfig.json`, decodeJsonRecord)
   const providerProfile = yield* readJson(`${harness}/harness/provider/effect-harness.provider.json`, decodeJsonRecord)
   const packageJson = yield* readJson(`${harness}/package.json`, decodeJsonRecord)
+  const tsgoPolicyText = yield* fs.readFileString(`${harness}/harness/tsgo.md`)
+  const metadataRuleMap = yield* readTsgoStrictRuleMap(harness)
 
   assertTsconfig(errors, tsconfig, 'tsconfig.json')
   assertProviderTsgoContribution(errors, providerProfile)
   assertPackageTypecheckScript(errors, packageJson)
+  assertStrictRuleMap(errors, metadataRuleMap)
+  assertTsgoPolicyDocument(errors, tsgoPolicyText)
+  yield* assertNoEffectDiagnosticSuppressions(errors, harness)
   yield* verifyEffectTsgoBinary(errors, harness)
 })

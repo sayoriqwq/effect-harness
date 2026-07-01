@@ -1,6 +1,4 @@
-import * as Effect from 'effect/Effect'
-import * as Stream from 'effect/Stream'
-import * as Str from 'effect/String'
+import { Effect, String as Str, Stream } from 'effect'
 import { ChildProcess, ChildProcessSpawner } from 'effect/unstable/process'
 import { ProcessError } from '../harness/Errors.ts'
 

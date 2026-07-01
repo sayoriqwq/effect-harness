@@ -1,6 +1,4 @@
-import * as Console from 'effect/Console'
-import * as Effect from 'effect/Effect'
-import * as FileSystem from 'effect/FileSystem'
+import { Console, Effect, FileSystem } from 'effect'
 import { HarnessError } from '../Errors.ts'
 import { verifyGuardrails } from '../Guardrails.ts'
 import { verifySourcePin } from '../SourcePin.ts'

@@ -20,8 +20,10 @@ updated: 2026-07-01
 | --- | --- | --- |
 | `harness/offcial-guide.md` | 维护 Effect 官方 `Coding with LLMs` 小节的当前源口径、官方链接和官方段落。 | 本仓实践、迁移顺序、本机集成、provider profile、verifier 和 Prelude target surfaces。 |
 | `harness/offcial-migrate.md` | 描述官方三阶段建议在本仓的迁移状态、实现取舍、harness/provider 分层和集成判断。 | 官方原文镜像、通用 GitHub pin 流程和目标项目生命周期实现。 |
-| `harness/source.md` | 描述本仓 Effect source entry、subtree pin 和 source boundary。 | 通用 Partita pin 设计和 Prelude target maintain 逻辑。 |
+| `harness/source.md` | 描述本仓 provider-internal source entries、subtree pin 和 source boundary。 | 通用 Partita pin 设计和 Prelude target maintain 逻辑。 |
 | `harness/effect-routes.md` | 给 agent 提供读取 `repos/effect/` 的路线表。 | 目标项目 runtime assets 和 provider record materialization。 |
+| `harness/tsgo.md` | 记录 strict tsgo ADR、policy、rule map、exception 边界和 upgrade loop。 | Effect API 使用路线、通用 pin workflow 和 Prelude target lifecycle。 |
+| `harness/tsgo-routes.md` | 给 agent 提供读取 `repos/tsgo/` 的路线表。 | strict policy 决策和 provider target projection。 |
 | `harness/provider/index.md` | 描述 Prelude 消费 effect-harness provider profile 的方式。 | 本仓 source route 的完整内容和通用 pin workflow。 |
 
 ## Harness
@@ -32,10 +34,11 @@ updated: 2026-07-01
 | --- | --- | --- | --- |
 | 理解官方三阶段路线 | `harness/offcial-guide.md` | Effect 官方 Introduction / Coding with LLMs | 不适用 |
 | 理解第一阶段 source access 实现 | `harness/offcial-migrate.md` | `repos/effect.subtree.json`、`harness/source.md`、`harness/effect-routes.md`、provider profile | `pnpm effect:verify`、`pnpm verify` |
-| 理解第三阶段 LSP/tsgo 实现 | `harness/offcial-migrate.md` | `tsconfig.json`、provider profile、`@effect/tsgo` npm latest | `pnpm effect:verify`、`pnpm verify` |
-| 查看 Effect 源入口契约 | `harness/source.md` | `repos/effect.subtree.json`、`repos/effect/LLMS.md` | `pnpm source:verify`、`pnpm effect:verify` |
+| 理解第三阶段 LSP/tsgo 实现 | `harness/offcial-migrate.md`、`harness/tsgo.md` | `repos/tsgo.subtree.json`、`repos/tsgo/_packages/tsgo/src/metadata.json`、`tsconfig.json`、provider profile | `pnpm effect:verify`、`pnpm verify` |
+| 查看 source entry 契约 | `harness/source.md` | `repos/effect.subtree.json`、`repos/tsgo.subtree.json` | `pnpm source:verify`、`pnpm effect:verify` |
 | 按 agent 意图读取 Effect 源码 | `harness/effect-routes.md` | `repos/effect/LLMS.md`、`repos/effect/packages/**`、`repos/effect/ai-docs/src/**` | `pnpm effect:verify` |
-| 更新 Effect 源入口 | `harness/source.md` | Partita GitHub subtree contract、上游 Effect repo | `pnpm source:update`、`pnpm verify`、subtree trailers |
+| 按 agent 意图读取 tsgo 源码 | `harness/tsgo-routes.md` | `repos/tsgo/README.md`、`repos/tsgo/_packages/tsgo/src/**`、`repos/tsgo/internal/**`、`repos/tsgo/etscore/**` | `pnpm effect:verify` |
+| 更新 source entries | `harness/source.md` | Partita GitHub subtree contracts、上游 Effect/tsgo repos | `pnpm source:update`、`pnpm verify`、subtree trailers |
 | 验证本仓边界 | `HARNESS.md` | `src/harness/**`、provider profile、source contract | `pnpm effect:verify`、`pnpm verify` |
 
 ## Provider
@@ -46,19 +49,20 @@ updated: 2026-07-01
 | Prelude 消费内容 | 来源 | 由谁维护 | 目标项目是否接收源码 |
 | --- | --- | --- | --- |
 | provider profile | `harness/provider/index.md`、`harness/provider/effect-harness.provider.json` | effect-harness | 否 |
-| provider record 与 source identity | `harness/provider/effect-harness.provider.json` | Prelude | 否 |
+| provider record 与 source identities | `harness/provider/effect-harness.provider.json` | Prelude | 否 |
 | Effect package 基线 | provider profile | Prelude | 否 |
-| `tsgo --noEmit` 诊断路径 | provider profile | Prelude | 否 |
-| `@effect/language-service` 与 `floatingEffect: error` | provider profile | Prelude | 否 |
+| `tsgo --noEmit` 诊断路径 | provider profile、`harness/tsgo.md` | Prelude | 否 |
+| strict `@effect/language-service` policy | provider profile、`harness/tsgo.md` | Prelude | 否 |
 | 源码阅读路线 | `harness/effect-routes.md` | effect-harness | 仅 provider 仓内部使用 |
+| tsgo 源码阅读路线 | `harness/tsgo-routes.md` | effect-harness | 仅 provider 仓内部使用 |
 
 ## 边界
 
 - Partita 负责 GitHub subtree pin 流程；effect-harness 不自建第二套 pin CLI。
-- effect-harness 负责 Effect 源入口实例、路线、基线、provider profile 和本仓验证。
+- effect-harness 负责 Effect/tsgo 源入口实例、路线、基线、provider profile 和本仓验证。
 - Prelude 负责消费 provider profile，并在目标项目中维护 provider record、落地生成、drift、verify
   和 maintain。
-- 业务代码和测试代码禁止从 `repos/effect` import。
+- 业务代码和测试代码禁止从 `repos/effect` 或 `repos/tsgo` import。
 - 本仓不再分发 Codex skills 或目标 runtime 资产。
 - `.effect-harness.json`、effect-harness `.codex` 资产、反馈入口、effect-harness
   `AGENTS.md` 管理块不属于当前 target surfaces。

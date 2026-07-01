@@ -24,7 +24,8 @@
     "dist",
     "harness",
     "repos",
-    "repos/effect.subtree.json"
+    "repos/effect.subtree.json",
+    "repos/tsgo.subtree.json"
   ],
   "engines": {
     "node": ">=22.22.1"
@@ -38,9 +39,9 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "prepare": "effect-tsgo patch",
-    "source:status": "node ../partita/dist/bin/partita.js source status --root . --contract repos/effect.subtree.json --name effect",
-    "source:update": "node ../partita/dist/bin/partita.js source update --root . --contract repos/effect.subtree.json --name effect --dry-run",
-    "source:verify": "node ../partita/dist/bin/partita.js source verify --root . --contract repos/effect.subtree.json --name effect",
+    "source:status": "node ../partita/dist/bin/partita.js pin status --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect && node ../partita/dist/bin/partita.js pin status --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo",
+    "source:update": "node ../partita/dist/bin/partita.js pin update --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run && node ../partita/dist/bin/partita.js pin update --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run",
+    "source:verify": "node ../partita/dist/bin/partita.js pin verify --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect && node ../partita/dist/bin/partita.js pin verify --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo",
     "test": "vitest run tests/*.test.ts",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",

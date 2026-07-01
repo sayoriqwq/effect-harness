@@ -18,14 +18,33 @@
         "format": "github-subtree"
       },
       "commands": {
-        "status": "partita source status --contract repos/effect.subtree.json --name effect",
-        "update": "partita source update --contract repos/effect.subtree.json --name effect --dry-run",
-        "verify": "partita source verify --contract repos/effect.subtree.json --name effect"
+        "update": "partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run",
+        "verify": "partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect"
       },
       "importBoundary": {
         "applicationImportsForbidden": true,
         "testImportsForbidden": true,
         "message": "Do not import from repos/effect in application or test code."
+      }
+    },
+    "tsgo-official-source": {
+      "id": "tsgo-official-source",
+      "kind": "provider-internal-github-subtree",
+      "authority": "official",
+      "name": "tsgo",
+      "contract": {
+        "path": "repos/tsgo.subtree.json",
+        "owner": "partita",
+        "format": "github-subtree"
+      },
+      "commands": {
+        "update": "partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run",
+        "verify": "partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo"
+      },
+      "importBoundary": {
+        "applicationImportsForbidden": true,
+        "testImportsForbidden": true,
+        "message": "Do not import from repos/tsgo in application or test code."
       }
     }
   },
@@ -38,6 +57,7 @@
       "profile",
       "artifact",
       "artifact.sourceIdentity",
+      "artifact.sourceIdentities",
       "projectedContext",
       "options",
       "surfaces",
@@ -51,7 +71,7 @@
     },
     "sourceDelivery": {
       "mode": "artifact-identity-only",
-      "description": "Prelude records provider artifact/source identity in the provider record. It does not materialize or maintain repos/effect in target repos."
+      "description": "Prelude records provider artifact/source identities in the provider record. It does not materialize or maintain repos/effect or repos/tsgo in target repos."
     }
   },
   "profiles": {
@@ -63,20 +83,26 @@
         "targetMustNotReceive": [
           "repos/effect",
           "repos/effect.subtree.json",
-          "repos/effect/LLMS.md"
+          "repos/effect/LLMS.md",
+          "repos/tsgo",
+          "repos/tsgo.subtree.json",
+          "repos/tsgo/README.md"
         ],
         "allowedTargetSourceIdentity": [
           "artifact.sourceIdentity.name",
           "artifact.sourceIdentity.contractPath",
           "artifact.sourceIdentity.github",
-          "artifact.sourceIdentity.subtree"
+          "artifact.sourceIdentity.subtree",
+          "artifact.sourceIdentities[].name",
+          "artifact.sourceIdentities[].contractPath",
+          "artifact.sourceIdentities[].github",
+          "artifact.sourceIdentities[].subtree"
         ]
       },
       "options": {
         "effect": "v4",
         "typecheck": "tsgo",
         "languageService": true,
-        "floatingEffect": "error",
         "packageScopes": [
           "effect",
           "@effect/*",
@@ -178,6 +204,9 @@
           "provider repo internal source pin repos/effect",
           "provider repo internal subtree contract repos/effect.subtree.json",
           "provider repo internal Effect LLMS route repos/effect/LLMS.md",
+          "provider repo internal source pin repos/tsgo",
+          "provider repo internal subtree contract repos/tsgo.subtree.json",
+          "provider repo internal tsgo route harness/tsgo-routes.md",
           "effect-harness runtime assets under .codex",
           "effect-harness AGENTS.md managed block",
           ".effect-harness.json standalone manifest",
@@ -213,11 +242,124 @@
               {
                 "name": "@effect/language-service",
                 "diagnostics": true,
-                "diagnosticSeverity": {
-                  "floatingEffect": "error"
-                },
+                "includeSuggestionsInTsc": true,
+                "ignoreEffectSuggestionsInTscExitCode": false,
                 "ignoreEffectWarningsInTscExitCode": false,
-                "ignoreEffectErrorsInTscExitCode": false
+                "ignoreEffectErrorsInTscExitCode": false,
+                "diagnosticSeverity": {
+                  "anyUnknownInErrorContext": "error",
+                  "asyncFunction": "warning",
+                  "catchAllToMapError": "suggestion",
+                  "catchToOrElseSucceed": "suggestion",
+                  "catchUnfailableEffect": "suggestion",
+                  "classSelfMismatch": "error",
+                  "cryptoRandomUUID": "warning",
+                  "cryptoRandomUUIDInEffect": "warning",
+                  "deterministicKeys": "warning",
+                  "duplicatePackage": "warning",
+                  "effectDoNotation": "warning",
+                  "effectFnIife": "warning",
+                  "effectFnImplicitAny": "error",
+                  "effectFnOpportunity": "suggestion",
+                  "effectGenUsesAdapter": "warning",
+                  "effectInFailure": "warning",
+                  "effectInVoidSuccess": "warning",
+                  "effectMapFlatten": "suggestion",
+                  "effectMapVoid": "suggestion",
+                  "effectSucceedWithVoid": "suggestion",
+                  "extendsNativeError": "warning",
+                  "floatingEffect": "error",
+                  "genericEffectServices": "warning",
+                  "globalConsole": "warning",
+                  "globalConsoleInEffect": "warning",
+                  "globalDate": "warning",
+                  "globalDateInEffect": "warning",
+                  "globalErrorInEffectCatch": "warning",
+                  "globalErrorInEffectFailure": "warning",
+                  "globalFetch": "warning",
+                  "globalFetchInEffect": "warning",
+                  "globalRandom": "warning",
+                  "globalRandomInEffect": "warning",
+                  "globalTimers": "warning",
+                  "globalTimersInEffect": "warning",
+                  "instanceOfSchema": "warning",
+                  "layerMergeAllWithDependencies": "warning",
+                  "lazyEffect": "suggestion",
+                  "lazyPromiseInEffectSync": "warning",
+                  "leakingRequirements": "suggestion",
+                  "missedPipeableOpportunity": "warning",
+                  "missingEffectContext": "error",
+                  "missingEffectError": "error",
+                  "missingLayerContext": "error",
+                  "missingReturnYieldStar": "error",
+                  "missingStarInYieldEffectGen": "error",
+                  "multipleCatchTag": "suggestion",
+                  "multipleEffectProvide": "warning",
+                  "nestedEffectGenYield": "warning",
+                  "newPromise": "warning",
+                  "newSchemaClass": "warning",
+                  "nodeBuiltinImport": "warning",
+                  "outdatedApi": "warning",
+                  "overriddenSchemaConstructor": "error",
+                  "preferSchemaOverJson": "warning",
+                  "processEnv": "warning",
+                  "processEnvInEffect": "warning",
+                  "redundantMapError": "suggestion",
+                  "redundantOrDie": "suggestion",
+                  "redundantSchemaTagIdentifier": "suggestion",
+                  "returnEffectInGen": "suggestion",
+                  "runEffectInsideEffect": "suggestion",
+                  "schemaNumber": "suggestion",
+                  "schemaStructWithTag": "suggestion",
+                  "serviceNotAsClass": "warning",
+                  "strictBooleanExpressions": "warning",
+                  "strictEffectProvide": "warning",
+                  "tryCatchInEffectGen": "suggestion",
+                  "unknownInEffectCatch": "warning",
+                  "unnecessaryArrowBlock": "warning",
+                  "unnecessaryEffectGen": "suggestion",
+                  "unnecessaryFailYieldableError": "suggestion",
+                  "unnecessaryPipe": "suggestion",
+                  "unnecessaryPipeChain": "suggestion",
+                  "unnecessaryTypeofType": "suggestion",
+                  "unsafeEffectTypeAssertion": "warning"
+                },
+                "barrelImportPackages": [
+                  "effect"
+                ],
+                "topLevelNamedReexports": "follow",
+                "effectFn": [
+                  "span"
+                ],
+                "keyPatterns": [
+                  {
+                    "target": "service",
+                    "pattern": "default",
+                    "skipLeadingPath": [
+                      "src/"
+                    ]
+                  },
+                  {
+                    "target": "error",
+                    "pattern": "default",
+                    "skipLeadingPath": [
+                      "src/"
+                    ]
+                  },
+                  {
+                    "target": "custom",
+                    "pattern": "default",
+                    "skipLeadingPath": [
+                      "src/"
+                    ]
+                  }
+                ],
+                "extendedKeyDetection": true,
+                "layerGraphFollowDepth": 1,
+                "noExternal": true,
+                "inlays": true,
+                "allowedDuplicatedPackages": [],
+                "pipeableMinArgCount": 2
               }
             ]
           }
@@ -225,17 +367,245 @@
       },
       "verification": {
         "status": [
-          "provider internal source entry exists",
-          "Partita GitHub subtree contract records source prefix, pin, anchor, route, and editor policy",
-          "provider profile records source identity and package baseline"
+          "provider internal Effect and tsgo source entries exist",
+          "Partita GitHub subtree contracts record source prefix, pin, anchor, route, and editor policy",
+          "provider profile records source identities, package baseline, and strict tsgo policy"
         ],
         "verify": [
-          "source pin exists as committed git subtree",
-          "provider profile references the single Partita GitHub subtree contract",
+          "source pins exist as committed Git tree entries with subtree trailers",
+          "provider profile references the Partita GitHub subtree contracts",
           "tsgo --noEmit is the primary Effect diagnostic path",
-          "@effect/language-service floatingEffect is error",
-          "provider repository does not import from repos/effect or @effect/cli"
+          "@effect/language-service uses the strict v4 diagnostic rule map",
+          "provider repository does not import from repos/effect, repos/tsgo, or @effect/cli"
         ]
+      },
+      "sourceEntries": [
+        "effect-official-source",
+        "tsgo-official-source"
+      ],
+      "tsgoPolicy": {
+        "mode": "strict-v4",
+        "effectVersion": "4.0.0-beta.92",
+        "tsgoVersion": "0.15.0",
+        "languageServiceVersion": "0.86.2",
+        "sourceEntry": "tsgo-official-source",
+        "nativeBackend": {
+          "package": "@typescript/native-preview",
+          "version": "7.0.0-dev.20260630.1",
+          "alternative": "typescript >= 7 is recognized by @effect/tsgo but is not projected by this provider profile."
+        },
+        "diagnosticGate": {
+          "includeSuggestionsInTsc": true,
+          "ignoreEffectSuggestionsInTscExitCode": false,
+          "ignoreEffectWarningsInTscExitCode": false,
+          "ignoreEffectErrorsInTscExitCode": false
+        },
+        "ruleMapSource": {
+          "metadata": "repos/tsgo/_packages/tsgo/src/metadata.json",
+          "policy": "harness/tsgo.md",
+          "supportedEffect": "v4",
+          "ruleCount": 76
+        },
+        "diagnosticSeverity": {
+          "anyUnknownInErrorContext": "error",
+          "asyncFunction": "warning",
+          "catchAllToMapError": "suggestion",
+          "catchToOrElseSucceed": "suggestion",
+          "catchUnfailableEffect": "suggestion",
+          "classSelfMismatch": "error",
+          "cryptoRandomUUID": "warning",
+          "cryptoRandomUUIDInEffect": "warning",
+          "deterministicKeys": "warning",
+          "duplicatePackage": "warning",
+          "effectDoNotation": "warning",
+          "effectFnIife": "warning",
+          "effectFnImplicitAny": "error",
+          "effectFnOpportunity": "suggestion",
+          "effectGenUsesAdapter": "warning",
+          "effectInFailure": "warning",
+          "effectInVoidSuccess": "warning",
+          "effectMapFlatten": "suggestion",
+          "effectMapVoid": "suggestion",
+          "effectSucceedWithVoid": "suggestion",
+          "extendsNativeError": "warning",
+          "floatingEffect": "error",
+          "genericEffectServices": "warning",
+          "globalConsole": "warning",
+          "globalConsoleInEffect": "warning",
+          "globalDate": "warning",
+          "globalDateInEffect": "warning",
+          "globalErrorInEffectCatch": "warning",
+          "globalErrorInEffectFailure": "warning",
+          "globalFetch": "warning",
+          "globalFetchInEffect": "warning",
+          "globalRandom": "warning",
+          "globalRandomInEffect": "warning",
+          "globalTimers": "warning",
+          "globalTimersInEffect": "warning",
+          "instanceOfSchema": "warning",
+          "layerMergeAllWithDependencies": "warning",
+          "lazyEffect": "suggestion",
+          "lazyPromiseInEffectSync": "warning",
+          "leakingRequirements": "suggestion",
+          "missedPipeableOpportunity": "warning",
+          "missingEffectContext": "error",
+          "missingEffectError": "error",
+          "missingLayerContext": "error",
+          "missingReturnYieldStar": "error",
+          "missingStarInYieldEffectGen": "error",
+          "multipleCatchTag": "suggestion",
+          "multipleEffectProvide": "warning",
+          "nestedEffectGenYield": "warning",
+          "newPromise": "warning",
+          "newSchemaClass": "warning",
+          "nodeBuiltinImport": "warning",
+          "outdatedApi": "warning",
+          "overriddenSchemaConstructor": "error",
+          "preferSchemaOverJson": "warning",
+          "processEnv": "warning",
+          "processEnvInEffect": "warning",
+          "redundantMapError": "suggestion",
+          "redundantOrDie": "suggestion",
+          "redundantSchemaTagIdentifier": "suggestion",
+          "returnEffectInGen": "suggestion",
+          "runEffectInsideEffect": "suggestion",
+          "schemaNumber": "suggestion",
+          "schemaStructWithTag": "suggestion",
+          "serviceNotAsClass": "warning",
+          "strictBooleanExpressions": "warning",
+          "strictEffectProvide": "warning",
+          "tryCatchInEffectGen": "suggestion",
+          "unknownInEffectCatch": "warning",
+          "unnecessaryArrowBlock": "warning",
+          "unnecessaryEffectGen": "suggestion",
+          "unnecessaryFailYieldableError": "suggestion",
+          "unnecessaryPipe": "suggestion",
+          "unnecessaryPipeChain": "suggestion",
+          "unnecessaryTypeofType": "suggestion",
+          "unsafeEffectTypeAssertion": "warning"
+        },
+        "languageServicePlugin": {
+          "name": "@effect/language-service",
+          "diagnostics": true,
+          "includeSuggestionsInTsc": true,
+          "ignoreEffectSuggestionsInTscExitCode": false,
+          "ignoreEffectWarningsInTscExitCode": false,
+          "ignoreEffectErrorsInTscExitCode": false,
+          "diagnosticSeverity": {
+            "anyUnknownInErrorContext": "error",
+            "asyncFunction": "warning",
+            "catchAllToMapError": "suggestion",
+            "catchToOrElseSucceed": "suggestion",
+            "catchUnfailableEffect": "suggestion",
+            "classSelfMismatch": "error",
+            "cryptoRandomUUID": "warning",
+            "cryptoRandomUUIDInEffect": "warning",
+            "deterministicKeys": "warning",
+            "duplicatePackage": "warning",
+            "effectDoNotation": "warning",
+            "effectFnIife": "warning",
+            "effectFnImplicitAny": "error",
+            "effectFnOpportunity": "suggestion",
+            "effectGenUsesAdapter": "warning",
+            "effectInFailure": "warning",
+            "effectInVoidSuccess": "warning",
+            "effectMapFlatten": "suggestion",
+            "effectMapVoid": "suggestion",
+            "effectSucceedWithVoid": "suggestion",
+            "extendsNativeError": "warning",
+            "floatingEffect": "error",
+            "genericEffectServices": "warning",
+            "globalConsole": "warning",
+            "globalConsoleInEffect": "warning",
+            "globalDate": "warning",
+            "globalDateInEffect": "warning",
+            "globalErrorInEffectCatch": "warning",
+            "globalErrorInEffectFailure": "warning",
+            "globalFetch": "warning",
+            "globalFetchInEffect": "warning",
+            "globalRandom": "warning",
+            "globalRandomInEffect": "warning",
+            "globalTimers": "warning",
+            "globalTimersInEffect": "warning",
+            "instanceOfSchema": "warning",
+            "layerMergeAllWithDependencies": "warning",
+            "lazyEffect": "suggestion",
+            "lazyPromiseInEffectSync": "warning",
+            "leakingRequirements": "suggestion",
+            "missedPipeableOpportunity": "warning",
+            "missingEffectContext": "error",
+            "missingEffectError": "error",
+            "missingLayerContext": "error",
+            "missingReturnYieldStar": "error",
+            "missingStarInYieldEffectGen": "error",
+            "multipleCatchTag": "suggestion",
+            "multipleEffectProvide": "warning",
+            "nestedEffectGenYield": "warning",
+            "newPromise": "warning",
+            "newSchemaClass": "warning",
+            "nodeBuiltinImport": "warning",
+            "outdatedApi": "warning",
+            "overriddenSchemaConstructor": "error",
+            "preferSchemaOverJson": "warning",
+            "processEnv": "warning",
+            "processEnvInEffect": "warning",
+            "redundantMapError": "suggestion",
+            "redundantOrDie": "suggestion",
+            "redundantSchemaTagIdentifier": "suggestion",
+            "returnEffectInGen": "suggestion",
+            "runEffectInsideEffect": "suggestion",
+            "schemaNumber": "suggestion",
+            "schemaStructWithTag": "suggestion",
+            "serviceNotAsClass": "warning",
+            "strictBooleanExpressions": "warning",
+            "strictEffectProvide": "warning",
+            "tryCatchInEffectGen": "suggestion",
+            "unknownInEffectCatch": "warning",
+            "unnecessaryArrowBlock": "warning",
+            "unnecessaryEffectGen": "suggestion",
+            "unnecessaryFailYieldableError": "suggestion",
+            "unnecessaryPipe": "suggestion",
+            "unnecessaryPipeChain": "suggestion",
+            "unnecessaryTypeofType": "suggestion",
+            "unsafeEffectTypeAssertion": "warning"
+          },
+          "barrelImportPackages": [
+            "effect"
+          ],
+          "topLevelNamedReexports": "follow",
+          "effectFn": [
+            "span"
+          ],
+          "keyPatterns": [
+            {
+              "target": "service",
+              "pattern": "default",
+              "skipLeadingPath": [
+                "src/"
+              ]
+            },
+            {
+              "target": "error",
+              "pattern": "default",
+              "skipLeadingPath": [
+                "src/"
+              ]
+            },
+            {
+              "target": "custom",
+              "pattern": "default",
+              "skipLeadingPath": [
+                "src/"
+              ]
+            }
+          ],
+          "extendedKeyDetection": true,
+          "layerGraphFollowDepth": 1,
+          "noExternal": true,
+          "inlays": true,
+          "allowedDuplicatedPackages": [],
+          "pipeableMinArgCount": 2
+        }
       }
     }
   }

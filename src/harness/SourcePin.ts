@@ -1,7 +1,5 @@
 import type { EffectSubtreeManifest } from './Model.ts'
-import * as Console from 'effect/Console'
-import * as Effect from 'effect/Effect'
-import * as FileSystem from 'effect/FileSystem'
+import { Console, Effect, FileSystem } from 'effect'
 import { ChildProcessSpawner } from 'effect/unstable/process'
 import { readJson } from '../platform/Json.ts'
 import { commandExitCode, commandLines, commandString } from '../platform/Process.ts'
@@ -9,8 +7,44 @@ import { HarnessError } from './Errors.ts'
 import { decodeManifest, decodePackageJson, decodeProviderPackageBaseline } from './Model.ts'
 import { moduleSources } from './ModuleSources.ts'
 
-const subtreeContractPath = 'repos/effect.subtree.json'
+interface ExpectedSourcePin {
+  readonly name: string
+  readonly contractPath: string
+  readonly repository: string
+  readonly prefix: string
+  readonly anchor: string
+  readonly route: string
+  readonly updateCommand: string
+  readonly verifyCommand: string
+  readonly filesExclude: string
+}
+
 const providerProfilePath = 'harness/provider/effect-harness.provider.json'
+
+const expectedSourcePins: ReadonlyArray<ExpectedSourcePin> = [
+  {
+    name: 'effect',
+    contractPath: 'repos/effect.subtree.json',
+    repository: 'https://github.com/Effect-TS/effect-smol',
+    prefix: 'repos/effect',
+    anchor: 'repos/effect/LLMS.md',
+    route: 'harness/effect-routes.md',
+    updateCommand: 'partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
+    verifyCommand: 'partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
+    filesExclude: 'enabled',
+  },
+  {
+    name: 'tsgo',
+    contractPath: 'repos/tsgo.subtree.json',
+    repository: 'https://github.com/Effect-TS/tsgo',
+    prefix: 'repos/tsgo',
+    anchor: 'repos/tsgo/README.md',
+    route: 'harness/tsgo-routes.md',
+    updateCommand: 'partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run',
+    verifyCommand: 'partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo',
+    filesExclude: 'disabled',
+  },
+]
 
 function hasVendoredImport(file: string, text: string, manifest: EffectSubtreeManifest): boolean {
   return moduleSources(file, text).some(({ source }) => source.includes(manifest.local.prefix))
@@ -44,8 +78,8 @@ const latestSubtreeSplit = Effect.fnUntraced(function* (root: string, prefix: st
     }
 
     const match = entry.match(/git-subtree-split:\s*([0-9a-f]{40})/u)
-    if (match) {
-      return match[1]
+    if (match !== null) {
+      return match[1]!
     }
   }
 
@@ -97,7 +131,7 @@ const verifyPackageBaseline = Effect.fnUntraced(function* (
 
   for (const [name, version] of Object.entries(packageBaseline)) {
     const directVersion = packageJson.dependencies?.[name] ?? packageJson.devDependencies?.[name]
-    if (directVersion && directVersion !== version && directVersion !== 'catalog:') {
+    if (directVersion !== undefined && directVersion.length > 0 && directVersion !== version && directVersion !== 'catalog:') {
       errors.push(`${name} is ${directVersion} in package.json; expected ${version} or catalog:.`)
     }
 
@@ -126,42 +160,68 @@ function assertBooleanValue(errors: Array<string>, actual: boolean, expected: bo
   }
 }
 
-function assertGitHubSubtreeContract(errors: Array<string>, manifest: EffectSubtreeManifest): void {
-  assertStringValue(errors, manifest.kind, 'github-subtree', `${subtreeContractPath}.kind`)
-  assertStringValue(errors, manifest.github.repository, 'Effect-TS/effect-smol', `${subtreeContractPath}.github.repository`)
-  assertStringValue(errors, manifest.github.url, 'https://github.com/Effect-TS/effect-smol.git', `${subtreeContractPath}.github.url`)
-  assertStringValue(errors, manifest.github.branch, 'main', `${subtreeContractPath}.github.branch`)
-  assertStringValue(errors, manifest.local.prefix, 'repos/effect', `${subtreeContractPath}.local.prefix`)
-  assertStringValue(errors, manifest.anchor.llmDocument, 'repos/effect/LLMS.md', `${subtreeContractPath}.anchor.llmDocument`)
-  assertStringValue(errors, manifest.agent.route, 'harness/effect-routes.md', `${subtreeContractPath}.agent.route`)
-  assertStringValue(errors, manifest.commands.status, 'partita source status --contract repos/effect.subtree.json --name effect', `${subtreeContractPath}.commands.status`)
-  assertStringValue(errors, manifest.commands.update, 'partita source update --contract repos/effect.subtree.json --name effect --dry-run', `${subtreeContractPath}.commands.update`)
-  assertStringValue(errors, manifest.commands.verify, 'partita source verify --contract repos/effect.subtree.json --name effect', `${subtreeContractPath}.commands.verify`)
-  assertStringValue(errors, manifest.editorPolicy.autoImportExclude, 'block', `${subtreeContractPath}.editorPolicy.autoImportExclude`)
-  assertStringValue(errors, manifest.editorPolicy.watcherExclude, 'recommended', `${subtreeContractPath}.editorPolicy.watcherExclude`)
-  assertStringValue(errors, manifest.editorPolicy.searchExclude, 'recommended', `${subtreeContractPath}.editorPolicy.searchExclude`)
-  assertStringValue(errors, manifest.editorPolicy.filesExclude, 'enabled', `${subtreeContractPath}.editorPolicy.filesExclude`)
-  assertStringValue(errors, manifest.ownership.mode, 'provider', `${subtreeContractPath}.ownership.mode`)
-  assertBooleanValue(errors, manifest.boundaries.readOnly, true, `${subtreeContractPath}.boundaries.readOnly`)
-  assertBooleanValue(errors, manifest.boundaries.importBlock, true, `${subtreeContractPath}.boundaries.importBlock`)
-  assertStringValue(errors, manifest.subtree.split, manifest.github.ref, `${subtreeContractPath}.subtree.split`)
-  assertStringValue(errors, manifest.subtree.trailer, `git-subtree-split: ${manifest.subtree.split}`, `${subtreeContractPath}.subtree.trailer`)
+function assertGitHubSubtreeContract(
+  errors: Array<string>,
+  manifest: EffectSubtreeManifest,
+  expected: ExpectedSourcePin,
+): void {
+  assertStringValue(errors, manifest.name, expected.name, `${expected.contractPath}.name`)
+  assertStringValue(errors, manifest.github.repository, expected.repository, `${expected.contractPath}.github.repository`)
+  assertStringValue(errors, manifest.github.branch, 'main', `${expected.contractPath}.github.branch`)
+  assertStringValue(errors, manifest.local.prefix, expected.prefix, `${expected.contractPath}.local.prefix`)
+  assertStringValue(errors, manifest.mechanism, 'git-subtree', `${expected.contractPath}.mechanism`)
+  assertStringValue(errors, manifest.anchor.llmDocument, expected.anchor, `${expected.contractPath}.anchor.llmDocument`)
+  assertStringValue(errors, manifest.agent.route, expected.route, `${expected.contractPath}.agent.route`)
+  assertStringValue(errors, manifest.commands.update, expected.updateCommand, `${expected.contractPath}.commands.update`)
+  assertStringValue(errors, manifest.commands.verify, expected.verifyCommand, `${expected.contractPath}.commands.verify`)
+  assertStringValue(errors, manifest.editorPolicy.autoImportExclude, 'block', `${expected.contractPath}.editorPolicy.autoImportExclude`)
+  assertStringValue(errors, manifest.editorPolicy.watcherExclude, 'recommended', `${expected.contractPath}.editorPolicy.watcherExclude`)
+  assertStringValue(errors, manifest.editorPolicy.searchExclude, 'recommended', `${expected.contractPath}.editorPolicy.searchExclude`)
+  assertStringValue(errors, manifest.editorPolicy.filesExclude, expected.filesExclude, `${expected.contractPath}.editorPolicy.filesExclude`)
+  assertStringValue(errors, manifest.ownership.mode, 'provider', `${expected.contractPath}.ownership.mode`)
+  assertBooleanValue(errors, manifest.boundaries.readOnly, true, `${expected.contractPath}.boundaries.readOnly`)
+  assertBooleanValue(errors, manifest.boundaries.importBlock, true, `${expected.contractPath}.boundaries.importBlock`)
+  assertStringValue(errors, manifest.subtree.split, manifest.github.ref, `${expected.contractPath}.subtree.split`)
+  assertStringValue(errors, manifest.subtree.trailer, `git-subtree-split: ${manifest.subtree.split}`, `${expected.contractPath}.subtree.trailer`)
 
   if (!/^[0-9a-f]{40}$/u.test(manifest.subtree.split)) {
-    errors.push(`${subtreeContractPath}.subtree.split must be a 40-character lowercase git commit SHA.`)
+    errors.push(`${expected.contractPath}.subtree.split must be a 40-character lowercase git commit SHA.`)
   }
 
-  if (!manifest.github.url.startsWith('https://github.com/')) {
-    errors.push(`${subtreeContractPath}.github.url must be a GitHub HTTPS URL.`)
+  if (!manifest.github.repository.startsWith('https://github.com/')) {
+    errors.push(`${expected.contractPath}.github.repository must be a GitHub HTTPS URL.`)
   }
 }
 
-export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
+const providerProfileExists = Effect.fnUntraced(function* (root: string) {
   const fs = yield* FileSystem.FileSystem
-  const manifest = yield* readJson(`${root}/${subtreeContractPath}`, decodeManifest)
-  const errors: Array<string> = []
+  return yield* fs.exists(`${root}/${providerProfilePath}`)
+})
+
+const requiredSourcePins = Effect.fnUntraced(function* (root: string) {
+  const fs = yield* FileSystem.FileSystem
+  if (yield* providerProfileExists(root)) {
+    return expectedSourcePins
+  }
+
+  const existing: Array<ExpectedSourcePin> = []
+  for (const expected of expectedSourcePins) {
+    if (yield* fs.exists(`${root}/${expected.contractPath}`)) {
+      existing.push(expected)
+    }
+  }
+  return existing.length > 0 ? existing : [expectedSourcePins[0]!]
+})
+
+const verifyOneSourcePin = Effect.fnUntraced(function* (
+  errors: Array<string>,
+  root: string,
+  expected: ExpectedSourcePin,
+) {
+  const fs = yield* FileSystem.FileSystem
+  const manifest = yield* readJson(`${root}/${expected.contractPath}`, decodeManifest)
   const sourcePath = `${root}/${manifest.local.prefix}`
-  assertGitHubSubtreeContract(errors, manifest)
+  assertGitHubSubtreeContract(errors, manifest, expected)
 
   if (!(yield* fs.exists(sourcePath))) {
     errors.push(`Missing pinned source directory: ${manifest.local.prefix}`)
@@ -174,23 +234,27 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
   }
 
   const entry = yield* treeEntry(root, manifest.local.prefix)
-  if (entry?.startsWith('160000 ')) {
+  if (entry !== undefined && entry.startsWith('160000 ')) {
     errors.push(`${manifest.local.prefix} is a gitlink submodule; expected a git subtree directory.`)
   }
-  else if (entry && !entry.startsWith('040000 tree ')) {
+  else if (entry !== undefined && entry.length > 0 && !entry.startsWith('040000 tree ')) {
     errors.push(`${manifest.local.prefix} is not recorded as a Git tree entry.`)
   }
-  else if (!entry) {
+  else if (entry === undefined || entry.length === 0) {
     errors.push(`${manifest.local.prefix} is not recorded in HEAD; source pins must be committed Git tree entries.`)
   }
 
   if (!(yield* fs.exists(`${root}/${manifest.anchor.llmDocument}`))) {
-    errors.push(`Missing Effect source-entry LLM anchor: ${manifest.anchor.llmDocument}`)
+    errors.push(`Missing source-entry LLM anchor: ${manifest.anchor.llmDocument}`)
+  }
+
+  if (!(yield* fs.exists(`${root}/${manifest.agent.route}`))) {
+    errors.push(`Missing source-entry agent route: ${manifest.agent.route}`)
   }
 
   if (yield* hasGitHead(root)) {
     const split = yield* latestSubtreeSplit(root, manifest.local.prefix)
-    if (!split) {
+    if (split === undefined) {
       errors.push(`Missing git subtree split for ${manifest.local.prefix}; contract-only source pins are not accepted.`)
     }
     else if (split !== manifest.subtree.split) {
@@ -207,20 +271,31 @@ export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
   }
 
   yield* assertNoVendoredImports(errors, root, manifest)
+})
 
-  const profilePath = `${root}/${providerProfilePath}`
-  if (yield* fs.exists(profilePath)) {
-    const packageBaseline = yield* readJson(profilePath, decodeProviderPackageBaseline)
+export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
+  const errors: Array<string> = []
+  const pins = yield* requiredSourcePins(root)
+
+  for (const expected of pins) {
+    yield* verifyOneSourcePin(errors, root, expected)
+  }
+
+  if (yield* providerProfileExists(root)) {
+    const packageBaseline = yield* readJson(`${root}/${providerProfilePath}`, decodeProviderPackageBaseline)
     yield* verifyPackageBaseline(errors, root, packageBaseline)
   }
 
   if (errors.length > 0) {
-    yield* Console.error('Effect source subtree verification failed:')
+    yield* Console.error('Source subtree verification failed:')
     for (const error of errors) {
       yield* Console.error(`- ${error}`)
     }
-    return yield* new HarnessError({ message: 'Effect source subtree verification failed.' })
+    return yield* new HarnessError({ message: 'Source subtree verification failed.' })
   }
 
-  yield* Console.log(`Effect source entry verified: ${manifest.local.prefix} @ git-subtree-split ${manifest.subtree.split}`)
+  for (const expected of pins) {
+    const manifest = yield* readJson(`${root}/${expected.contractPath}`, decodeManifest)
+    yield* Console.log(`Source entry verified: ${manifest.local.prefix} @ git-subtree-split ${manifest.subtree.split}`)
+  }
 })

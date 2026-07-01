@@ -1,16 +1,15 @@
 {
   "schemaVersion": 1,
   "name": "effect",
-  "kind": "github-subtree",
   "github": {
-    "repository": "Effect-TS/effect-smol",
-    "url": "https://github.com/Effect-TS/effect-smol.git",
+    "repository": "https://github.com/Effect-TS/effect-smol",
     "branch": "main",
     "ref": "e11cccc7d5fe631abccc7d6e3bd296938de0fa2e"
   },
   "local": {
     "prefix": "repos/effect"
   },
+  "mechanism": "git-subtree",
   "subtree": {
     "split": "e11cccc7d5fe631abccc7d6e3bd296938de0fa2e",
     "trailer": "git-subtree-split: e11cccc7d5fe631abccc7d6e3bd296938de0fa2e"
@@ -18,13 +17,12 @@
   "anchor": {
     "llmDocument": "repos/effect/LLMS.md"
   },
+  "commands": {
+    "update": "partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run",
+    "verify": "partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect"
+  },
   "agent": {
     "route": "harness/effect-routes.md"
-  },
-  "commands": {
-    "status": "partita source status --contract repos/effect.subtree.json --name effect",
-    "update": "partita source update --contract repos/effect.subtree.json --name effect --dry-run",
-    "verify": "partita source verify --contract repos/effect.subtree.json --name effect"
   },
   "editorPolicy": {
     "autoImportExclude": "block",
@@ -36,7 +34,7 @@
     "mode": "provider"
   },
   "boundaries": {
-    "readOnly": true,
-    "importBlock": true
+    "importBlock": true,
+    "readOnly": true
   }
 }

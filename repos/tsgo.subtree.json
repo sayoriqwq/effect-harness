@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "name": "tsgo",
+  "github": {
+    "repository": "https://github.com/Effect-TS/tsgo",
+    "branch": "main",
+    "ref": "43ed476270fb3cf78fe7afac2086d67340ca0486"
+  },
+  "local": {
+    "prefix": "repos/tsgo"
+  },
+  "mechanism": "git-subtree",
+  "subtree": {
+    "split": "43ed476270fb3cf78fe7afac2086d67340ca0486",
+    "trailer": "git-subtree-split: 43ed476270fb3cf78fe7afac2086d67340ca0486"
+  },
+  "anchor": {
+    "llmDocument": "repos/tsgo/README.md"
+  },
+  "commands": {
+    "update": "partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run",
+    "verify": "partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo"
+  },
+  "agent": {
+    "route": "harness/tsgo-routes.md"
+  },
+  "editorPolicy": {
+    "autoImportExclude": "block",
+    "watcherExclude": "recommended",
+    "searchExclude": "recommended",
+    "filesExclude": "disabled"
+  },
+  "ownership": {
+    "mode": "provider"
+  },
+  "boundaries": {
+    "importBlock": true,
+    "readOnly": true
+  }
+}

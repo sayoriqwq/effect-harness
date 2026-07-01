@@ -7,8 +7,8 @@
 1. Harness 层：描述 `effect-harness` 本仓自己怎么运转。
 2. Provider 层：描述本仓交给 Prelude 集成 effect-harness 的内容。
 
-通用外部仓库 pin 流程由 Partita 负责；本仓只承载 Effect 这一份源入口实例、Effect 基线、
-读取路线和 Prelude provider profile。
+通用外部仓库 pin 流程由 Partita 负责；本仓只承载 Effect/tsgo 源入口实例、Effect 基线、
+strict tsgo policy、读取路线和 Prelude provider profile。
 
 ## Harness 层
 
@@ -19,6 +19,10 @@
 - `repos/effect/`：已 pin 的官方 Effect 源码，只供 agent 读取参考。
 - `repos/effect.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 Effect 源入口唯一真源。
 - `harness/effect-routes.md`：agent 读取 `repos/effect/` 的路线表。
+- `repos/tsgo/`：已 pin 的 `Effect-TS/tsgo` 源码，只供 agent 读取参考。
+- `repos/tsgo.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 tsgo 源入口真源。
+- `harness/tsgo.md`：strict tsgo ADR、policy、rule map 和 upgrade loop。
+- `harness/tsgo-routes.md`：agent 读取 `repos/tsgo/` 的路线表。
 - `src/`：本仓最小验证器，只验证 provider 仓自身边界。
 
 ## Provider 层
@@ -29,16 +33,17 @@
 - provider record：记录接入的 `effect-harness` profile、artifact 与 source identity。
 - package 基线：维护 `effect`、`@effect/platform-node`、`@effect/tsgo`、
   `@effect/language-service` 等版本约束。
-- `tsconfig.json` 指针：维护 `@effect/language-service` 插件和 `floatingEffect: error`。
-- 诊断路径：目标项目以 `tsgo --noEmit` 作为主要 Effect 诊断路径。
+- `tsconfig.json` 指针：维护 strict `@effect/language-service` 插件。
+- 诊断路径：目标项目以 `tsgo --noEmit` 作为主要 Effect 诊断路径，warning 和 suggestion 也参与
+  hard gate。
 
-目标项目不接收 `repos/effect/`、`repos/effect.subtree.json`、`.codex/skills`、目标 runtime
+目标项目不接收 `repos/effect/`、`repos/tsgo/`、subtree contracts、`.codex/skills`、目标 runtime
 模板、反馈入口、`.effect-harness.json` 或 effect-harness 管理的 `AGENTS.md` 管理块。
 
 ## 职责边界
 
 - Partita：通用外部源入口 pin/status/update/verify。
-- effect-harness：Effect 源入口实例、路线表、baseline、provider profile、本仓验证。
+- effect-harness：Effect/tsgo 源入口实例、路线表、baseline、provider profile、本仓验证。
 - Prelude：消费 provider profile，并维护目标项目生命周期、provider record、目标项目落地生成、
   drift/verify/maintain。
 
@@ -53,5 +58,7 @@ pnpm verify
 `pnpm effect:verify` 只验证本 provider 仓自身：源入口 pin、Partita GitHub subtree 契约、
 provider profile 和 import 边界。
 
-更新 Effect 源入口前先读 [harness/source.md](./harness/source.md)。agent 需要读取 pinned
-Effect 源码时先读 [harness/effect-routes.md](./harness/effect-routes.md)。
+更新 source entries 前先读 [harness/source.md](./harness/source.md)。agent 需要读取 pinned
+Effect 源码时先读 [harness/effect-routes.md](./harness/effect-routes.md)。agent 需要调整
+strict tsgo policy 或读取 tsgo source 时，先读 [harness/tsgo.md](./harness/tsgo.md) 和
+[harness/tsgo-routes.md](./harness/tsgo-routes.md)。

@@ -1,19 +1,18 @@
-import * as Effect from 'effect/Effect'
+import { Effect } from 'effect'
 import { HarnessError } from './Errors.ts'
 
 export interface EffectSubtreeManifest {
   readonly schemaVersion: 1
-  readonly name: 'effect'
-  readonly kind: 'github-subtree'
+  readonly name: string
   readonly github: {
     readonly repository: string
-    readonly url: string
     readonly branch: string
     readonly ref: string
   }
   readonly local: {
     readonly prefix: string
   }
+  readonly mechanism: 'git-subtree'
   readonly subtree: {
     readonly split: string
     readonly trailer: string
@@ -25,7 +24,6 @@ export interface EffectSubtreeManifest {
     readonly route: string
   }
   readonly commands: {
-    readonly status: string
     readonly update: string
     readonly verify: string
   }
@@ -171,17 +169,16 @@ export function decodeManifest(value: unknown, source: string): Effect.Effect<Ef
 
     return {
       schemaVersion: yield* literalNumberField(value, 'schemaVersion', 1, source),
-      name: yield* literalStringField(value, 'name', 'effect', source),
-      kind: yield* literalStringField(value, 'kind', 'github-subtree', source),
+      name: yield* stringField(value, 'name', source),
       github: {
         repository: yield* stringField(github, 'repository', `${source}.github`),
-        url: yield* stringField(github, 'url', `${source}.github`),
         branch: yield* stringField(github, 'branch', `${source}.github`),
         ref: yield* stringField(github, 'ref', `${source}.github`),
       },
       local: {
         prefix: yield* stringField(local, 'prefix', `${source}.local`),
       },
+      mechanism: yield* literalStringField(value, 'mechanism', 'git-subtree', source),
       subtree: {
         split: yield* stringField(subtree, 'split', `${source}.subtree`),
         trailer: yield* stringField(subtree, 'trailer', `${source}.subtree`),
@@ -193,7 +190,6 @@ export function decodeManifest(value: unknown, source: string): Effect.Effect<Ef
         route: yield* stringField(agent, 'route', `${source}.agent`),
       },
       commands: {
-        status: yield* stringField(commands, 'status', `${source}.commands`),
         update: yield* stringField(commands, 'update', `${source}.commands`),
         verify: yield* stringField(commands, 'verify', `${source}.commands`),
       },
