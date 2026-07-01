@@ -141,6 +141,11 @@ pnpm verify
 5. `lint`
 6. `knip`
 
-失败输出包含 stage route。按 route 回到对应文档和 pinned source 修复。
+verify stage 真源是 `src/harness/verify/VerifyStage.ts`。`harness/feedback-loop.md` 是
+agent-readable projection，并由 `harness-contract` stage 检查是否覆盖 code-defined keywords、
+stage tags、routes、summary 和 routeHint。
+
+失败输出包含 stage tag、title、route、routeHint 和底层工具原始输出。按 route 回到对应文档和
+pinned source 修复。
 
 提交前必须确认 `STATUS.md` 没有未完成 checkbox。

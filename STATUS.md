@@ -93,7 +93,7 @@ updated: 2026-07-01
 ## Docs
 
 - [x] `harness/index.md` 已集中描述文档职责和阅读路线。
-- [x] `harness/feedback-loop.md` 已记录第二阶段 Codex feedback loop 和 verify pipeline。
+- [x] `harness/feedback-loop.md` 已投影第二阶段 Codex feedback loop 和 code-defined verify pipeline。
 - [x] `harness/source.md` 已改为双 source entry 口径。
 - [x] `harness/offcial-migrate.md` 已记录第一阶段和第三阶段完成态。
 - [x] `harness/provider/index.md` 已记录 Prelude provider profile 消费边界。
@@ -112,7 +112,9 @@ updated: 2026-07-01
 
 - [x] `pnpm verify` 是唯一完成态验证命令。
 - [x] `pnpm verify` 由 Effect pipeline 组织。
+- [x] verify stage 真源是 `src/harness/verify/VerifyStage.ts`。
 - [x] verify pipeline 采用 fail-fast。
 - [x] verify pipeline stage 固定为 `source-pins`、`harness-contract`、`tsgo-diagnostics`、`tests`、`lint`、`knip`。
-- [x] verify pipeline 失败输出包含 stage route。
+- [x] verify pipeline 失败输出包含 stage tag、title、route、routeHint 和底层工具原始输出。
+- [x] `harness-contract` stage 检查 `harness/feedback-loop.md` 覆盖 code-defined keywords、stage tags、routes、summary 和 routeHint。
 - [x] 最终目标是 `tsgo --noEmit` 输出 0 error、0 warning、0 suggestion、0 message。

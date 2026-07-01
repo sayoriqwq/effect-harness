@@ -16,6 +16,7 @@ sources:
   - harness/tsgo.md
   - harness/tsgo-routes.md
   - src/harness/verify/Pipeline.ts
+  - src/harness/verify/VerifyStage.ts
   - https://developers.openai.com/codex/learn/best-practices
   - https://developers.openai.com/codex/prompting
   - https://developers.openai.com/codex/guides/agents-md
@@ -24,7 +25,7 @@ updated: 2026-07-01
 
 # Feedback Loop
 
-## Baseline
+## BASELINE
 
 进入第二阶段 loop 前，当前仓库 MUST 已经满足干净基线。
 
@@ -37,7 +38,7 @@ pnpm verify
 `pnpm verify` 是唯一完成命令。`source:verify`、`effect:verify`、`typecheck`、`test`、`lint`
 和 `knip` 只作为局部排错入口，不作为完成态替代命令。
 
-## Loop
+## ROUTE_TABLE
 
 Codex 在本仓写 Effect 程序逻辑，或修改 source route、tsgo policy、provider profile、
 verify pipeline、harness 边界时，MUST 按以下闭环执行：
@@ -53,23 +54,30 @@ verify pipeline、harness 边界时，MUST 按以下闭环执行：
 
 MUST NOT 通过 suppress、override、恢复旧口径或从 `repos/**` import 来让 loop 变绿。
 
-## Verify Pipeline
+agent 默认从 `harness/index.md` 和 route tables 选择读取路径。这里不维护额外 task intake
+分类，也不把任务强行归入单选 kind。
+
+如果修改前判断和失败后的 stage route 冲突，MUST 服从 failed stage route。
+
+## VERIFY_PIPELINE
 
 `pnpm verify` 由 Effect pipeline 组织，入口是 `effect-harness verify --harness .`。
 
 pipeline 采用 fail-fast。stage 按重要性排序，越接近真源和 harness contract 的检查越靠前。
-失败输出 MUST 包含稳定 stage 名和 route 提示。
+失败输出 MUST 包含 code-defined stage tag、title、route、routeHint 和底层工具原始输出。
 
-| Stage | Route | 检查 |
-| --- | --- | --- |
-| `source-pins` | `harness/source.md` | Partita GitHub subtree contracts、source prefix、anchor、route、read-only/import boundary。 |
-| `harness-contract` | `harness/index.md`、`harness/offcial-migrate.md` | provider 仓 contract、legacy surface 清理、strict tsgo policy、import guardrails。 |
-| `tsgo-diagnostics` | `harness/tsgo.md`、`harness/tsgo-routes.md` | `tsgo --noEmit`，要求 0 error、0 warning、0 suggestion、0 message。 |
-| `tests` | `harness/effect-routes.md` | `@effect/vitest` 测试。 |
-| `lint` | `AGENTS.md`、`eslint.config.js` | ESLint，warning 数量必须为 0。 |
-| `knip` | `package.json` | exports、imports 和 package surface 清理。 |
+stage 真源是 `src/harness/verify/VerifyStage.ts`。本节只是 agent-readable projection。
 
-## source-pins
+| Stage | Route | Summary | Route Hint |
+| --- | --- | --- | --- |
+| `source-pins` | `harness/source.md` | Verify pinned GitHub subtree source entries. | Read the source-entry contract and fix Partita source pin drift. |
+| `harness-contract` | `harness/index.md`、`harness/offcial-migrate.md`、`harness/feedback-loop.md` | Verify the provider repository contract and current harness baseline. | Read the harness index, migrate notes, and feedback loop contract before changing verifier behavior. |
+| `tsgo-diagnostics` | `harness/tsgo.md`、`harness/tsgo-routes.md` | Run tsgo --noEmit and enforce zero Effect diagnostics. | Use the tsgo diagnostic output first; read the tsgo policy and routes only when the diagnostic is not enough. |
+| `tests` | `harness/effect-routes.md` | Run the Effect test suite. | Read the Effect testing route and fix behavior through @effect/vitest patterns. |
+| `lint` | `AGENTS.md`、`eslint.config.js` | Run ESLint with zero warnings. | Read the agent rules and lint config, then fix repository boundary violations. |
+| `knip` | `package.json` | Run knip and keep the package surface minimal. | Read package.json and source imports/exports, then remove unused package surface. |
+
+## STAGE_SOURCE_PINS
 
 失败时先读 `harness/source.md`。
 
@@ -82,9 +90,9 @@ pipeline 采用 fail-fast。stage 按重要性排序，越接近真源和 harnes
 - anchor 和 agent route 必须存在。
 - source prefix 不能变成 submodule 或 nested Git repository。
 
-## harness-contract
+## STAGE_HARNESS_CONTRACT
 
-失败时先读 `harness/index.md` 和 `harness/offcial-migrate.md`。
+失败时先读 `harness/index.md`、`harness/offcial-migrate.md` 和 `harness/feedback-loop.md`。
 
 这一 stage 验证当前仓库仍处于新基线。
 
@@ -96,7 +104,7 @@ pipeline 采用 fail-fast。stage 按重要性排序，越接近真源和 harnes
 - CLI 必须使用 `effect/unstable/cli`，不能恢复 `@effect/cli`。
 - 当前 service definition baseline 是 `Context.Service`。
 
-## tsgo-diagnostics
+## STAGE_TSGO_DIAGNOSTICS
 
 失败时先读 `harness/tsgo.md` 和 `harness/tsgo-routes.md`。
 
@@ -108,14 +116,14 @@ pipeline 采用 fail-fast。stage 按重要性排序，越接近真源和 harnes
 MUST 修复代码或 policy。MUST NOT 用普通源码 suppressions、local override 或放宽 rule map
 绕过失败。
 
-## tests
+## STAGE_TESTS
 
 失败时先读 `harness/effect-routes.md` 中 testing 路线。
 
 本仓测试使用 `@effect/vitest`。Effect 程序测试 SHOULD 使用 `it.effect`、`it.live` 或 `layer`
 组织，不用普通 `vitest` 入口替代。
 
-## lint
+## STAGE_LINT
 
 失败时先读 `AGENTS.md` 和 `eslint.config.js`。
 
@@ -124,14 +132,14 @@ lint stage 要求 0 error 和 0 warning。
 lint 规则用于补 tsgo 未覆盖的仓库边界，例如 import boundary、CLI baseline、测试入口和
 Effect guardrails。
 
-## knip
+## STAGE_KNIP
 
 失败时先读 `package.json` 和相关 source exports/imports。
 
 knip stage 用于保持 provider package surface 最小。修复时 SHOULD 优先删除不需要的 exports、
 imports 或 package fields，而不是为了 silence knip 添加无意义引用。
 
-## Done
+## DONE
 
 一次 loop 只有在以下条件同时满足时才完成：
 

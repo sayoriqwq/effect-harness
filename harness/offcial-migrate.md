@@ -98,12 +98,15 @@ Node runtime、services、Schema、HTTP、AI、SQL、Cluster/RPC/Workflow 等路
 
 `pnpm verify` 由 Effect pipeline 组织，入口是 `effect-harness verify --harness .`。
 
+verify stage 真源是 `src/harness/verify/VerifyStage.ts`。`harness/feedback-loop.md` 只是
+agent-readable projection，并由 `harness-contract` stage 校验覆盖。
+
 pipeline 采用 fail-fast，stage 顺序是：
 
 | Stage | Route |
 | --- | --- |
 | `source-pins` | `harness/source.md` |
-| `harness-contract` | `harness/index.md`、`harness/offcial-migrate.md` |
+| `harness-contract` | `harness/index.md`、`harness/offcial-migrate.md`、`harness/feedback-loop.md` |
 | `tsgo-diagnostics` | `harness/tsgo.md`、`harness/tsgo-routes.md` |
 | `tests` | `harness/effect-routes.md` |
 | `lint` | `AGENTS.md`、`eslint.config.js` |
