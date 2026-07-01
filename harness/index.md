@@ -14,6 +14,16 @@ updated: 2026-07-01
 本仓文档按 harness 层和 provider 层组织。阅读时先判断当前工作是在维护本仓自己，
 还是在定义交给 Prelude 集成的 provider contract。
 
+## Documents
+
+| 文档 | 职责 | 不承载 |
+| --- | --- | --- |
+| `harness/offcial-guide.md` | 维护 Effect 官方 `Coding with LLMs` 小节的当前源口径、官方链接和官方段落。 | 本仓实践、迁移顺序、本机集成、provider profile、verifier 和 Prelude target surfaces。 |
+| `harness/offcial-migrate.md` | 描述官方三阶段建议在本仓的迁移状态、实现取舍、harness/provider 分层和下一步集成判断。 | 官方原文镜像、通用 GitHub pin 流程和目标项目生命周期实现。 |
+| `harness/source.md` | 描述本仓 Effect source entry、subtree pin 和 source boundary。 | 通用 Partita pin 设计和 Prelude target maintain 逻辑。 |
+| `harness/effect-routes.md` | 给 agent 提供读取 `repos/effect/` 的路线表。 | 目标项目 runtime assets 和 provider record materialization。 |
+| `harness/provider/index.md` | 描述 Prelude 消费 effect-harness provider profile 的方式。 | 本仓 source route 的完整内容和通用 pin workflow。 |
+
 ## Harness
 
 这一层回答“`effect-harness` 本仓自己怎么运转”。
