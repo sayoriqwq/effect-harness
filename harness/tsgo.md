@@ -228,7 +228,7 @@ provider strict profile 固定：
 
 ## VERIFIER_CONTRACT
 
-`pnpm effect:verify` MUST 检查：
+`pnpm verify` MUST 通过 `harness-contract` 和 `tsgo-diagnostics` stages 检查：
 
 - `harness/tsgo.md` 包含所有稳定 policy keyword。
 - `harness/tsgo.md` 包含当前 strict v4 rule map 的所有 rule name。

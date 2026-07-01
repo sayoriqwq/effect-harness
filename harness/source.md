@@ -70,12 +70,12 @@ pnpm source:verify
 `source:update` 当前仍是 dry-run 更新计划。真实 source pin 更新必须提交包含
 `git-subtree-dir` / `git-subtree-split` trailer 的 commit。
 
-provider 仓自身验证入口是：
+完成态验证入口是：
 
 ```bash
-pnpm effect:verify
 pnpm verify
 ```
 
-`pnpm effect:verify` 会检查 source prefix、Git tree entry、subtree trailer、anchor、route、
-provider profile、package baseline 和 import boundary。
+`pnpm verify` 的 `source-pins` stage 会调用 Partita pin verifier。`harness-contract` stage 会继续
+检查 source prefix、Git tree entry、subtree trailer、anchor、route、provider profile、
+package baseline 和 import boundary。

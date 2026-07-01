@@ -14,6 +14,7 @@
 
 - `harness/offcial-guide.md`：仓内 guide 唯一真源。
 - `harness/offcial-migrate.md`：官方 source access 与 LSP/tsgo 阶段的 harness/provider 实现说明。
+- `harness/feedback-loop.md`：第二阶段 Codex feedback loop 和统一 verify pipeline。
 - `repos/effect.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 Effect 源入口唯一真源。
 - `repos/tsgo.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 tsgo 源入口真源。
 - `repos/effect/LLMS.md`：pinned 上游 Effect LLM guide。
@@ -36,10 +37,11 @@
 ## 验证
 
 ```bash
-pnpm effect:verify
 pnpm verify
 ```
 
-`pnpm effect:verify` 只验证 provider 仓自身。`pnpm source:status`、`pnpm source:update`、
-`pnpm source:verify` 借用 Partita GitHub subtree CLI。目标项目由 Prelude provider
-maintain/verify；effect-harness 不直接向目标项目投影 runtime 资产。
+完成态只认 `pnpm verify`。该命令由 Effect pipeline 组织，按 `source-pins`、
+`harness-contract`、`tsgo-diagnostics`、`tests`、`lint`、`knip` 顺序 fail-fast 执行。
+`pnpm source:status`、`pnpm source:update` 和局部 verify scripts 只作为排错入口。
+
+目标项目由 Prelude provider maintain/verify；effect-harness 不直接向目标项目投影 runtime 资产。

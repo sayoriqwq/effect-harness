@@ -30,6 +30,7 @@ updated: 2026-07-01
 
 - [x] `effect-harness` 保持为 Effect v4 beta 的 Prelude provider profile 与 source route package。
 - [x] 本仓只维护 provider-internal source entries、routes、baseline、strict tsgo policy、provider profile 和 verifier。
+- [x] 第二阶段当前只建设本仓 Codex feedback loop，暂不处理 Prelude target 集成。
 - [x] Partita 负责通用 GitHub subtree pin workflow。
 - [x] Prelude 负责 target lifecycle、provider record、drift、verify 和 maintain。
 - [x] 旧 `.codex/skills`、target runtime 模板、feedback intake、`.effect-harness.json`、target dispatcher scripts 和 managed `AGENTS.md` block 未恢复。
@@ -92,6 +93,7 @@ updated: 2026-07-01
 ## Docs
 
 - [x] `harness/index.md` 已集中描述文档职责和阅读路线。
+- [x] `harness/feedback-loop.md` 已记录第二阶段 Codex feedback loop 和 verify pipeline。
 - [x] `harness/source.md` 已改为双 source entry 口径。
 - [x] `harness/offcial-migrate.md` 已记录第一阶段和第三阶段完成态。
 - [x] `harness/provider/index.md` 已记录 Prelude provider profile 消费边界。
@@ -108,7 +110,9 @@ updated: 2026-07-01
 
 ## Verification
 
-- [x] `pnpm source:verify` 是完成态必须通过的 source pin verifier。
-- [x] `pnpm effect:verify` 是完成态必须通过的 provider repository verifier。
-- [x] `pnpm verify` 是完成态必须通过的总验证命令。
+- [x] `pnpm verify` 是唯一完成态验证命令。
+- [x] `pnpm verify` 由 Effect pipeline 组织。
+- [x] verify pipeline 采用 fail-fast。
+- [x] verify pipeline stage 固定为 `source-pins`、`harness-contract`、`tsgo-diagnostics`、`tests`、`lint`、`knip`。
+- [x] verify pipeline 失败输出包含 stage route。
 - [x] 最终目标是 `tsgo --noEmit` 输出 0 error、0 warning、0 suggestion、0 message。

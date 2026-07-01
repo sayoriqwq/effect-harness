@@ -20,6 +20,7 @@ updated: 2026-07-01
 | --- | --- | --- |
 | `harness/offcial-guide.md` | 维护 Effect 官方 `Coding with LLMs` 小节的当前源口径、官方链接和官方段落。 | 本仓实践、迁移顺序、本机集成、provider profile、verifier 和 Prelude target surfaces。 |
 | `harness/offcial-migrate.md` | 描述官方三阶段建议在本仓的迁移状态、实现取舍、harness/provider 分层和集成判断。 | 官方原文镜像、通用 GitHub pin 流程和目标项目生命周期实现。 |
+| `harness/feedback-loop.md` | 定义第二阶段 Codex feedback loop、统一 verify pipeline、stage route 和完成条件。 | Provider target materialization、repo skill/hook/rules 建设和通用 Partita pin 流程。 |
 | `harness/source.md` | 描述本仓 provider-internal source entries、subtree pin 和 source boundary。 | 通用 Partita pin 设计和 Prelude target maintain 逻辑。 |
 | `harness/effect-routes.md` | 给 agent 提供读取 `repos/effect/` 的路线表。 | 目标项目 runtime assets 和 provider record materialization。 |
 | `harness/tsgo.md` | 记录 strict tsgo ADR、policy、rule map、exception 边界和 upgrade loop。 | Effect API 使用路线、通用 pin workflow 和 Prelude target lifecycle。 |
@@ -33,13 +34,14 @@ updated: 2026-07-01
 | 意图 | 先读 | 真源 | 验证 |
 | --- | --- | --- | --- |
 | 理解官方三阶段路线 | `harness/offcial-guide.md` | Effect 官方 Introduction / Coding with LLMs | 不适用 |
-| 理解第一阶段 source access 实现 | `harness/offcial-migrate.md` | `repos/effect.subtree.json`、`harness/source.md`、`harness/effect-routes.md`、provider profile | `pnpm effect:verify`、`pnpm verify` |
-| 理解第三阶段 LSP/tsgo 实现 | `harness/offcial-migrate.md`、`harness/tsgo.md` | `repos/tsgo.subtree.json`、`repos/tsgo/_packages/tsgo/src/metadata.json`、`tsconfig.json`、provider profile | `pnpm effect:verify`、`pnpm verify` |
-| 查看 source entry 契约 | `harness/source.md` | `repos/effect.subtree.json`、`repos/tsgo.subtree.json` | `pnpm source:verify`、`pnpm effect:verify` |
-| 按 agent 意图读取 Effect 源码 | `harness/effect-routes.md` | `repos/effect/LLMS.md`、`repos/effect/packages/**`、`repos/effect/ai-docs/src/**` | `pnpm effect:verify` |
-| 按 agent 意图读取 tsgo 源码 | `harness/tsgo-routes.md` | `repos/tsgo/README.md`、`repos/tsgo/_packages/tsgo/src/**`、`repos/tsgo/internal/**`、`repos/tsgo/etscore/**` | `pnpm effect:verify` |
+| 执行第二阶段 feedback loop | `harness/feedback-loop.md` | `src/harness/verify/Pipeline.ts`、`harness/effect-routes.md`、`harness/tsgo-routes.md` | `pnpm verify` |
+| 理解第一阶段 source access 实现 | `harness/offcial-migrate.md` | `repos/effect.subtree.json`、`harness/source.md`、`harness/effect-routes.md`、provider profile | `pnpm verify` |
+| 理解第三阶段 LSP/tsgo 实现 | `harness/offcial-migrate.md`、`harness/tsgo.md` | `repos/tsgo.subtree.json`、`repos/tsgo/_packages/tsgo/src/metadata.json`、`tsconfig.json`、provider profile | `pnpm verify` |
+| 查看 source entry 契约 | `harness/source.md` | `repos/effect.subtree.json`、`repos/tsgo.subtree.json` | `pnpm verify` |
+| 按 agent 意图读取 Effect 源码 | `harness/effect-routes.md` | `repos/effect/LLMS.md`、`repos/effect/packages/**`、`repos/effect/ai-docs/src/**` | `pnpm verify` |
+| 按 agent 意图读取 tsgo 源码 | `harness/tsgo-routes.md` | `repos/tsgo/README.md`、`repos/tsgo/_packages/tsgo/src/**`、`repos/tsgo/internal/**`、`repos/tsgo/etscore/**` | `pnpm verify` |
 | 更新 source entries | `harness/source.md` | Partita GitHub subtree contracts、上游 Effect/tsgo repos | `pnpm source:update`、`pnpm verify`、subtree trailers |
-| 验证本仓边界 | `HARNESS.md` | `src/harness/**`、provider profile、source contract | `pnpm effect:verify`、`pnpm verify` |
+| 验证本仓边界 | `HARNESS.md` | `src/harness/**`、provider profile、source contract | `pnpm verify` |
 
 ## Provider
 

@@ -3,6 +3,7 @@ import { Effect, Path } from 'effect'
 import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
 import { verifySourcePin } from '../harness/SourcePin.ts'
+import { verifyPipeline } from '../harness/verify/Pipeline.ts'
 import { verifyProviderRepository } from '../harness/verify/ProviderRepository.ts'
 
 export interface CliConfig {
@@ -42,9 +43,17 @@ function makeCli(config: CliConfig) {
     Command.withDescription('Check the pinned official Effect source subtree'),
   )
 
+  const verify = Command.make('verify', {
+    harness,
+  }, Effect.fnUntraced(function* ({ harness }) {
+    yield* verifyPipeline(harness)
+  })).pipe(
+    Command.withDescription('Run the full Effect harness verification pipeline'),
+  )
+
   return Command.make('effect-harness').pipe(
     Command.withDescription('Effect v4 beta provider CLI'),
-    Command.withSubcommands([providerVerify, sourceVerify]),
+    Command.withSubcommands([verify, providerVerify, sourceVerify]),
   )
 }
 

@@ -25,10 +25,9 @@ const assertNoLegacyProviderState = Effect.fnUntraced(function* (errors: Array<s
   }
 })
 
-export const verifyProviderRepository = Effect.fnUntraced(function* (harness: string) {
+export const verifyHarnessContract = Effect.fnUntraced(function* (harness: string) {
   const errors: Array<string> = []
 
-  yield* verifySourcePin(harness)
   yield* verifyProviderProfileContract(errors, harness)
   yield* verifyTsgoBaseline(errors, harness)
   yield* assertNoLegacyProviderState(errors, harness)
@@ -42,4 +41,9 @@ export const verifyProviderRepository = Effect.fnUntraced(function* (harness: st
   }
 
   yield* Console.log('Effect provider repository verified.')
+})
+
+export const verifyProviderRepository = Effect.fnUntraced(function* (harness: string) {
+  yield* verifySourcePin(harness)
+  yield* verifyHarnessContract(harness)
 })

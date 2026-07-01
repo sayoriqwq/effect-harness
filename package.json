@@ -45,7 +45,7 @@
     "test": "vitest run tests/*.test.ts",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",
-    "verify": "pnpm effect:verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip"
+    "verify": "node bin/effect-harness.ts verify --harness ."
   },
   "dependencies": {
     "@effect/platform-node": "catalog:",

@@ -12,6 +12,7 @@
 - `HARNESS.md`
 - `README.md`
 - `harness/index.md`
+- `harness/feedback-loop.md`
 - `harness/offcial-guide.md`
 - `harness/offcial-migrate.md`
 - `harness/source.md`
@@ -55,7 +56,6 @@
 验证：
 
 ```bash
-pnpm effect:verify
 pnpm verify
 ```
 

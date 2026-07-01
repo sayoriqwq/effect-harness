@@ -16,6 +16,7 @@ strict tsgo policy、读取路线和 Prelude provider profile。
 
 - `harness/offcial-guide.md`：仓内 guide 唯一真源。
 - `harness/offcial-migrate.md`：官方 source access 与 LSP/tsgo 阶段的本仓实现说明。
+- `harness/feedback-loop.md`：第二阶段 Codex feedback loop 和统一 verify pipeline。
 - `repos/effect/`：已 pin 的官方 Effect 源码，只供 agent 读取参考。
 - `repos/effect.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 Effect 源入口唯一真源。
 - `harness/effect-routes.md`：agent 读取 `repos/effect/` 的路线表。
@@ -51,14 +52,15 @@ strict tsgo policy、读取路线和 Prelude provider profile。
 
 ```bash
 pnpm install
-pnpm effect:verify
 pnpm verify
 ```
 
-`pnpm effect:verify` 只验证本 provider 仓自身：源入口 pin、Partita GitHub subtree 契约、
-provider profile 和 import 边界。
+完成态只认 `pnpm verify`。该命令由 Effect pipeline 组织，按 `source-pins`、
+`harness-contract`、`tsgo-diagnostics`、`tests`、`lint`、`knip` 顺序 fail-fast 执行。
 
-更新 source entries 前先读 [harness/source.md](./harness/source.md)。agent 需要读取 pinned
-Effect 源码时先读 [harness/effect-routes.md](./harness/effect-routes.md)。agent 需要调整
-strict tsgo policy 或读取 tsgo source 时，先读 [harness/tsgo.md](./harness/tsgo.md) 和
+写非平凡 Effect 代码或修改 harness 约束前，先读
+[harness/feedback-loop.md](./harness/feedback-loop.md)。更新 source entries 前先读
+[harness/source.md](./harness/source.md)。agent 需要读取 pinned Effect 源码时先读
+[harness/effect-routes.md](./harness/effect-routes.md)。agent 需要调整 strict tsgo policy 或读取
+tsgo source 时，先读 [harness/tsgo.md](./harness/tsgo.md) 和
 [harness/tsgo-routes.md](./harness/tsgo-routes.md)。
