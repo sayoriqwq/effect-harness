@@ -48,7 +48,7 @@ Harness 层维护 provider 仓内部事实：
 - `harness/tsgo-routes.md`
 - `src/harness/**` verifier
 
-Provider 层把这些事实投影为 Prelude 可消费的 profile：
+Provider 层把这些事实投影为下一阶段 Prelude 可消费的 profile：
 
 - package baseline
 - source identities
@@ -57,7 +57,8 @@ Provider 层把这些事实投影为 Prelude 可消费的 profile：
 - strict `@effect/language-service` plugin policy
 - target 不接收 provider-internal source trees 的边界
 
-Prelude 负责目标项目 lifecycle、provider record、drift、verify 和 maintain。
+当前阶段先维护 `fixture/` 的独立运行能力。Prelude 目标项目 lifecycle、provider record、drift、
+verify 和 maintain 推到下一阶段。
 
 ## Stage 1
 
@@ -84,7 +85,7 @@ Node runtime、services、Schema、HTTP、AI、SQL、Cluster/RPC/Workflow 等路
 
 ## Stage 2
 
-第二阶段当前聚焦 `effect-harness` 本仓 harness，不处理 Prelude target 集成。
+第二阶段当前聚焦 `effect-harness` 本仓 harness 和本地 `fixture/`，不处理 Prelude target 集成。
 
 本仓把 Codex feedback loop 固定为：
 
@@ -171,8 +172,8 @@ strict policy 要求 `tsgo --noEmit` 达到 0 error、0 warning、0 suggestion�
 - `effect-official-source`
 - `tsgo-official-source`
 
-provider profile 对目标项目的交付是 identity-only。目标项目接收 provider record 中的 source
-identity，不接收 `repos/effect/`、`repos/tsgo/` 或 subtree contract 本体。
+provider profile 对 source entries 的交付是 identity-only。目标项目接收 provider record 中的 source
+identity 和 docs bundle，不接收 `repos/effect/`、`repos/tsgo/` 或 subtree contract 本体。
 
 Provider target surfaces 保持最小：
 
@@ -180,6 +181,7 @@ Provider target surfaces 保持最小：
 - `package.json` dependencies/devDependencies/script pointers
 - `tsconfig.json` language-service plugin projection
 - provider artifact/source identities
+- `.prelude/providers/effect-harness/docs` documentation bundle
 
 Provider 明确不交付：
 

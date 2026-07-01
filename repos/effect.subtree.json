@@ -18,8 +18,8 @@
     "llmDocument": "repos/effect/LLMS.md"
   },
   "commands": {
-    "update": "partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run",
-    "verify": "partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect"
+    "update": "npx --yes @sayoriqwq/partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run",
+    "verify": "npx --yes @sayoriqwq/partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect"
   },
   "agent": {
     "route": "harness/effect-routes.md"

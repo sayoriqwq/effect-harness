@@ -44,6 +44,7 @@ export default antfu(
   {
     ignores: [
       'docs/**',
+      'fixture/**',
       'repos/**',
       'node_modules/**',
       '.turbo/**',

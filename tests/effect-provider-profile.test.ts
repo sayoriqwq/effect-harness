@@ -125,6 +125,7 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok(targetReceives.some(surface => surface.includes('provider record')))
     assert.ok(targetReceives.some(surface => surface.includes('package.json')))
     assert.ok(targetReceives.some(surface => surface.includes('tsconfig.json')))
+    assert.ok(targetReceives.some(surface => surface.includes('documentation bundle')))
     assert.equal(targetReceives.some(surface => surface.includes('AGENTS.md managed block')), false)
     assert.equal(targetReceives.some(surface => surface.includes('runtime assets')), false)
     assert.equal(targetReceives.some(surface => surface.includes('feedback')), false)
@@ -141,6 +142,14 @@ it.layer(NodeServices.layer)((it) => {
     assert.equal('codexAssets' in contributions, false)
     assert.equal('runtimeAssets' in contributions, false)
     assert.equal('agentsBlock' in contributions, false)
+
+    const documentationBundle = record(contributions.documentationBundle)
+    assert.equal(documentationBundle.targetRoot, '.prelude/providers/effect-harness/docs')
+    assert.equal(documentationBundle.mode, 'copy-provider-documents')
+    const documents = documentationBundle.documents as ReadonlyArray<unknown>
+    assert.ok(documents.some(document => record(document).sourcePath === 'HARNESS.md'))
+    assert.ok(documents.some(document => record(document).sourcePath === 'harness/provider/index.md'))
+    assert.ok(documents.some(document => record(document).sourcePath === 'harness/tsgo.md'))
 
     const editorPolicy = record(record(codexProfile.options).editorPolicy)
     const autoImportExclude = record(editorPolicy.autoImportExclude)

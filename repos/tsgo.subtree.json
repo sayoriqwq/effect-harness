@@ -18,8 +18,8 @@
     "llmDocument": "repos/tsgo/README.md"
   },
   "commands": {
-    "update": "partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run",
-    "verify": "partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo"
+    "update": "npx --yes @sayoriqwq/partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run",
+    "verify": "npx --yes @sayoriqwq/partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo"
   },
   "agent": {
     "route": "harness/tsgo-routes.md"

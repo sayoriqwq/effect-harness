@@ -67,6 +67,16 @@ pnpm source:update
 pnpm source:verify
 ```
 
+Partita 已发布为 `@sayoriqwq/partita@0.1.0`，bin 为 `partita`，source pin 子命令面是
+`partita pin plan/status/verify/add/update`。本仓 `source:*` scripts 和 provider-facing command
+strings 直接走 npm 包入口：
+
+```bash
+npx --yes @sayoriqwq/partita pin status --name effect --prefix repos/effect --contract repos/effect.subtree.json
+npx --yes @sayoriqwq/partita pin update --name effect --prefix repos/effect --contract repos/effect.subtree.json --dry-run
+npx --yes @sayoriqwq/partita pin verify --name effect --prefix repos/effect --contract repos/effect.subtree.json
+```
+
 `source:update` 当前仍是 dry-run 更新计划。真实 source pin 更新必须提交包含
 `git-subtree-dir` / `git-subtree-split` trailer 的 commit。
 

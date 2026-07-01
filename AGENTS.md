@@ -1,11 +1,14 @@
 # Agent 启动规则
 
-本仓是 Effect v4 beta 的 Prelude provider profile 与源入口路线包，并以 CLI utility package
+本仓是 Effect v4 beta 的 provider profile、源入口路线包与本地 fixture，并以 CLI utility package
 发布。这里有两层语境：
 
 - Harness 层：维护 `effect-harness` 本仓自己的源入口、路线、基线和验证。
-- Provider 层：声明 Prelude 集成 effect-harness 时应消费的 provider profile、source identity、
-  package 基线和诊断入口。
+- Provider 层：声明下一阶段 Prelude 集成 effect-harness 时应消费的 provider profile、source
+  identity、package 基线和诊断入口。
+
+当前阶段不接入 Prelude target materialization；先维护 gitignored `fixture/`，并要求该 fixture
+可以独立安装、运行和验证。
 
 在本仓写 Effect 程序逻辑，或修改 source route、tsgo policy、provider profile、verify
 pipeline、harness 边界前，先读：
@@ -52,7 +55,7 @@ pipeline、harness 边界前，先读：
   `.effect-harness.json` 或 effect-harness 管理的 `AGENTS.md` blocks。
 - Partita 负责通用源入口 pin 流程；本仓只负责 Effect/tsgo 源入口实例、路线、基线、strict
   tsgo policy 和 provider profile。
-- Prelude 负责目标项目生命周期；本仓不直接实现目标项目 maintain 系统。
+- Prelude 负责目标项目生命周期；当前阶段推到下一阶段，本仓不直接实现目标项目 maintain 系统。
 
 验证：
 

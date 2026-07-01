@@ -3,7 +3,7 @@ audience: [agent, human]
 authors:
   - codex
 reviewed_by: []
-purpose: 定义 Prelude 集成 effect-harness 时应该消费的 provider profile 边界。
+purpose: 定义下一阶段 Prelude 集成 effect-harness 时应该消费的 provider profile 边界。
 status: active
 sources:
   - harness/provider/effect-harness.provider.json
@@ -12,10 +12,11 @@ sources:
 updated: 2026-07-01
 ---
 
-# Prelude Provider Profile
+# Next-stage Prelude Provider Profile
 
-本目录暴露给 Prelude 使用的最小 provider profile。它只描述 effect-harness 能给目标项目带来的
-约束面，不直接实现目标项目 maintain。
+本目录暴露最小 provider profile。当前阶段只维护 profile 与本地 `fixture/`；Prelude target
+materialization 推到下一阶段。profile 只描述 effect-harness 能给目标项目带来的约束面，不直接
+实现目标项目 maintain。
 
 当前真源：
 
@@ -33,26 +34,27 @@ updated: 2026-07-01
 第一层是 harness 层：effect-harness 维护本仓内部的 Effect/tsgo 源入口实例、路线、验证、
 strict tsgo policy 和 Effect package 基线。
 
-第二层是 provider 层：Prelude 读取 provider profile，在目标项目中维护 provider record、
-package 基线、`tsconfig.json` language-service plugin、strict diagnostic gate 和
-`tsgo --noEmit` 诊断脚本。
+第二层是 provider 层：下一阶段 Prelude 读取 provider profile，在目标项目中维护 provider record、
+package 基线、`tsconfig.json` language-service plugin、strict diagnostic gate 和 `tsgo --noEmit`
+诊断脚本。
 
-Partita 负责 GitHub subtree pin 语义和 source contract；effect-harness 不复制这套能力。Prelude
-负责目标项目生命周期；effect-harness 不投影 Codex runtime 资产、反馈入口、目标 `AGENTS.md`
-blocks 或 `.effect-harness.json` state。
+Partita 负责 GitHub subtree pin 语义和 source contract；effect-harness 不复制这套能力。当前阶段
+先维护本地 `fixture/`，Prelude 目标项目生命周期集成推到下一阶段。effect-harness 不投影 Codex
+runtime 资产、反馈入口、目标 `AGENTS.md` blocks 或 `.effect-harness.json` state。
 
 ## 目标项目接收面
 
-当前 provider target surfaces 只保留结构化指针。
+当前 provider target surfaces 保留结构化指针和 provider docs bundle。
 
-Prelude 应该接收：
+下一阶段 Prelude 应该接收：
 
 - `package.json` dependencies and scripts
 - `tsconfig.json` strict language-service plugin
 - `.prelude/providers/effect-harness/provider.json` provider record
 - provider artifact/source identities
+- `.prelude/providers/effect-harness/docs` provider documentation bundle
 
-Prelude 不应该接收：
+下一阶段 Prelude 不应该接收：
 
 - `repos/effect/` 本体
 - `repos/tsgo/` 本体
@@ -65,8 +67,11 @@ Prelude 不应该接收：
 - `.effect-harness.json` state
 - `.codex/effect-feedback` feedback intake
 
-目标项目可以接收 provider record 中的 Effect source identity 和 tsgo source identity，但不接收
-provider-internal source tree 本体。
+目标项目可以接收 provider record 中的 Effect source identity、tsgo source identity 和 docs bundle，
+但不接收 provider-internal source tree 本体。
+
+docs bundle 是 harness 的必要输出，不是 runtime asset。composer SHOULD 按
+`contributions.documentationBundle` 复制或解析文档，并保持目标路径和文档列表可审查。
 
 包含 `.codex` runtime files、effect-harness `AGENTS.md` 管理块或 `.effect-harness.json`
 state 的 provider records 应按当前 profile 重新生成。

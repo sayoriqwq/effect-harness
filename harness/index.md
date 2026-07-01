@@ -11,8 +11,8 @@ updated: 2026-07-01
 
 # Harness Index
 
-本仓文档按 harness 层和 provider 层组织。阅读时先判断当前工作是在维护本仓自己，
-还是在定义交给 Prelude 集成的 provider contract。
+本仓文档按 harness 层和 provider 层组织。阅读时先判断当前工作是在维护本仓和 `fixture/`，
+还是在定义下一阶段交给 Prelude 集成的 provider contract。
 
 ## Documents
 
@@ -26,7 +26,7 @@ updated: 2026-07-01
 | `harness/effect-routes.md` | 给 agent 提供读取 `repos/effect/` 的路线表。 | 目标项目 runtime assets 和 provider record materialization。 |
 | `harness/tsgo.md` | 记录 strict tsgo ADR、policy、rule map、exception 边界和 upgrade loop。 | Effect API 使用路线、通用 pin workflow 和 Prelude target lifecycle。 |
 | `harness/tsgo-routes.md` | 给 agent 提供读取 `repos/tsgo/` 的路线表。 | strict policy 决策和 provider target projection。 |
-| `harness/provider/index.md` | 描述 Prelude 消费 effect-harness provider profile 的方式。 | 本仓 source route 的完整内容和通用 pin workflow。 |
+| `harness/provider/index.md` | 描述下一阶段 Prelude 消费 effect-harness provider profile 的方式。 | 本仓 source route 的完整内容和通用 pin workflow。 |
 
 ## Harness
 
@@ -44,19 +44,21 @@ updated: 2026-07-01
 | 按 agent 意图读取 tsgo 源码 | `harness/tsgo-routes.md` | `repos/tsgo/README.md`、`repos/tsgo/_packages/tsgo/src/**`、`repos/tsgo/internal/**`、`repos/tsgo/etscore/**` | `pnpm verify` |
 | 更新 source entries | `harness/source.md` | Partita GitHub subtree contracts、上游 Effect/tsgo repos | `pnpm source:update`、`pnpm verify`、subtree trailers |
 | 验证本仓边界 | `HARNESS.md` | `src/harness/**`、provider profile、source contract | `pnpm verify` |
+| 维护本地 fixture | `README.md`、`HARNESS.md` | `fixture/` 本地展开、根仓 provider/source/docs 配置 | fixture 内 `pnpm verify` |
 
 ## Provider
 
-这一层回答“Prelude 集成 effect-harness 时应该消费什么”。本仓只声明 provider profile；
-实际生成、drift 和维护由 Prelude 执行。
+这一层回答“下一阶段 Prelude 集成 effect-harness 时应该消费什么”。本仓只声明 provider profile；
+实际生成、drift 和维护推到下一阶段由 Prelude 执行。当前阶段先维护 `fixture/` 的独立运行能力。
 
-| Prelude 消费内容 | 来源 | 由谁维护 | 目标项目是否接收源码 |
+| 下一阶段 Prelude 消费内容 | 来源 | 由谁维护 | 目标项目是否接收源码 |
 | --- | --- | --- | --- |
 | provider profile | `harness/provider/index.md`、`harness/provider/effect-harness.provider.json` | effect-harness | 否 |
-| provider record 与 source identities | `harness/provider/effect-harness.provider.json` | Prelude | 否 |
-| Effect package 基线 | provider profile | Prelude | 否 |
-| `tsgo --noEmit` 诊断路径 | provider profile、`harness/tsgo.md` | Prelude | 否 |
-| strict `@effect/language-service` policy | provider profile、`harness/tsgo.md` | Prelude | 否 |
+| provider record 与 source identities | `harness/provider/effect-harness.provider.json` | 下一阶段 Prelude | 否 |
+| Effect package 基线 | provider profile | 下一阶段 Prelude | 否 |
+| `tsgo --noEmit` 诊断路径 | provider profile、`harness/tsgo.md` | 下一阶段 Prelude | 否 |
+| strict `@effect/language-service` policy | provider profile、`harness/tsgo.md` | 下一阶段 Prelude | 否 |
+| provider docs bundle | provider profile、`harness/provider/index.md` | 下一阶段 Prelude | 否 |
 | 源码阅读路线 | `harness/effect-routes.md` | effect-harness | 仅 provider 仓内部使用 |
 | tsgo 源码阅读路线 | `harness/tsgo-routes.md` | effect-harness | 仅 provider 仓内部使用 |
 
@@ -64,8 +66,8 @@ updated: 2026-07-01
 
 - Partita 负责 GitHub subtree pin 流程；effect-harness 不自建第二套 pin CLI。
 - effect-harness 负责 Effect/tsgo 源入口实例、路线、基线、provider profile 和本仓验证。
-- Prelude 负责消费 provider profile，并在目标项目中维护 provider record、落地生成、drift、verify
-  和 maintain。
+- 当前阶段先维护 `fixture/`；Prelude 后续负责消费 provider profile，并在目标项目中维护 provider
+  record、落地生成、drift、verify 和 maintain。
 - 业务代码和测试代码禁止从 `repos/effect` 或 `repos/tsgo` import。
 - 本仓不再分发 Codex skills 或目标 runtime 资产。
 - `.effect-harness.json`、effect-harness `.codex` 资产、反馈入口、effect-harness

@@ -122,6 +122,21 @@ function assertRecordDoesNotContain(
   }
 }
 
+const expectedDocumentationDocuments = [
+  ['harness', 'HARNESS.md', 'HARNESS.md'],
+  ['readme', 'README.md', 'README.md'],
+  ['index', 'harness/index.md', 'harness/index.md'],
+  ['provider-index', 'harness/provider/index.md', 'harness/provider/index.md'],
+  ['feedback-loop', 'harness/feedback-loop.md', 'harness/feedback-loop.md'],
+  ['diagnostic-layers', 'harness/diagnostic-layers.md', 'harness/diagnostic-layers.md'],
+  ['official-guide', 'harness/offcial-guide.md', 'harness/offcial-guide.md'],
+  ['official-migrate', 'harness/offcial-migrate.md', 'harness/offcial-migrate.md'],
+  ['source', 'harness/source.md', 'harness/source.md'],
+  ['effect-routes', 'harness/effect-routes.md', 'harness/effect-routes.md'],
+  ['tsgo', 'harness/tsgo.md', 'harness/tsgo.md'],
+  ['tsgo-routes', 'harness/tsgo-routes.md', 'harness/tsgo-routes.md'],
+] as const
+
 const expectedPackageBaseline: Readonly<Record<string, string>> = {
   'effect': '4.0.0-beta.92',
   '@effect/platform-node': '4.0.0-beta.92',
@@ -178,6 +193,27 @@ function assertEditorPolicy(errors: Array<string>, options: Record<string, unkno
   assertBooleanValue(errors, booleanField(errors, filesExclude, 'requiresExplicitOptIn', 'profile.options.editorPolicy.filesExclude'), true, 'profile.options.editorPolicy.filesExclude.requiresExplicitOptIn')
 }
 
+function assertDocumentationBundle(errors: Array<string>, contributions: Record<string, unknown> | undefined): void {
+  const documentationBundle = recordField(errors, contributions, 'documentationBundle', 'provider profile.profiles.codex-effect-v4.contributions')
+  assertStringValue(errors, stringField(errors, documentationBundle, 'targetRoot', 'provider profile documentationBundle'), '.prelude/providers/effect-harness/docs', 'provider profile documentationBundle.targetRoot')
+  assertStringValue(errors, stringField(errors, documentationBundle, 'mode', 'provider profile documentationBundle'), 'copy-provider-documents', 'provider profile documentationBundle.mode')
+  const documents = arrayField(errors, documentationBundle, 'documents', 'provider profile documentationBundle')
+
+  for (const [id, sourcePath, targetPath] of expectedDocumentationDocuments) {
+    const matchingDocument = documents?.find((document) => {
+      if (!isRecord(document)) {
+        return false
+      }
+      return document.id === id
+        && document.sourcePath === sourcePath
+        && document.targetPath === targetPath
+    })
+    if (matchingDocument === undefined) {
+      errors.push(`provider profile documentationBundle.documents must include ${id} from ${sourcePath} to ${targetPath}.`)
+    }
+  }
+}
+
 export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors: Array<string>, harness: string) {
   const providerProfile = yield* readJson(`${harness}/harness/provider/effect-harness.provider.json`, decodeJsonRecord)
   const effectContract = yield* readJson(`${harness}/repos/effect.subtree.json`, decodeJsonRecord)
@@ -196,14 +232,14 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertProviderSourceEntry(errors, sourceEntries, {
     contractPath: 'repos/effect.subtree.json',
     id: 'effect-official-source',
-    updateCommand: 'partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
-    verifyCommand: 'partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
+    updateCommand: 'npx --yes @sayoriqwq/partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
+    verifyCommand: 'npx --yes @sayoriqwq/partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
   })
   assertProviderSourceEntry(errors, sourceEntries, {
     contractPath: 'repos/tsgo.subtree.json',
     id: 'tsgo-official-source',
-    updateCommand: 'partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run',
-    verifyCommand: 'partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo',
+    updateCommand: 'npx --yes @sayoriqwq/partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run',
+    verifyCommand: 'npx --yes @sayoriqwq/partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo',
   })
   assertPartitaSubtreeContract(errors, effectContract, {
     anchor: 'repos/effect/LLMS.md',
@@ -213,8 +249,8 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
     prefix: 'repos/effect',
     repository: 'https://github.com/Effect-TS/effect-smol',
     route: 'harness/effect-routes.md',
-    updateCommand: 'partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
-    verifyCommand: 'partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
+    updateCommand: 'npx --yes @sayoriqwq/partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
+    verifyCommand: 'npx --yes @sayoriqwq/partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
   })
   assertPartitaSubtreeContract(errors, tsgoContract, {
     anchor: 'repos/tsgo/README.md',
@@ -224,8 +260,8 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
     prefix: 'repos/tsgo',
     repository: 'https://github.com/Effect-TS/tsgo',
     route: 'harness/tsgo-routes.md',
-    updateCommand: 'partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run',
-    verifyCommand: 'partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo',
+    updateCommand: 'npx --yes @sayoriqwq/partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run',
+    verifyCommand: 'npx --yes @sayoriqwq/partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo',
   })
 
   const providerRecord = recordField(errors, providerProfile, 'providerRecord', 'provider profile')
@@ -260,6 +296,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertRecordDoesNotContain(errors, contributions, 'runtimeAssets', 'provider profile.profiles.codex-effect-v4.contributions')
   assertRecordDoesNotContain(errors, contributions, 'agentsBlock', 'provider profile.profiles.codex-effect-v4.contributions')
   assertRecordDoesNotContain(errors, contributions, 'codexAssets', 'provider profile.profiles.codex-effect-v4.contributions')
+  assertDocumentationBundle(errors, contributions)
 })
 
 interface ExpectedProviderSourceEntry {
