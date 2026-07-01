@@ -1,27 +1,40 @@
-# Harness 文档索引
+---
+audience: [agent, human]
+authors:
+  - codex
+reviewed_by: []
+purpose: 组织 effect-harness harness 层与 provider 层的文档入口。
+status: active
+sources: []
+updated: 2026-07-01
+---
 
-本仓文档按两层组织。阅读时先判断当前工作属于哪一层，避免把 provider 仓自身维护和目标项目
-maintain 混在一起。
+# Harness Index
 
-## 第一层：本仓建设层
+本仓文档按 harness 层和 provider 层组织。阅读时先判断当前工作是在维护本仓自己，
+还是在定义交给 Prelude 集成的 provider contract。
 
-这一层回答“我们现在在 `effect-harness` 里做什么”。
+## Harness
+
+这一层回答“`effect-harness` 本仓自己怎么运转”。
 
 | 意图 | 先读 | 真源 | 验证 |
 | --- | --- | --- | --- |
-| 理解已批准计划 | `harness/offcial-guide.md` | 官方 guide brief | 不适用 |
+| 理解官方三阶段路线 | `harness/offcial-guide.md` | Effect 官方 Introduction / Coding with LLMs | 不适用 |
+| 理解第一阶段 source access 实现 | `harness/offcial-migrate.md` | `repos/effect.subtree.json`、`harness/source.md`、`harness/effect-routes.md`、provider profile | `pnpm effect:verify`、`pnpm verify` |
 | 查看 Effect 源入口契约 | `harness/source.md` | `repos/effect.subtree.json`、`repos/effect/LLMS.md` | `pnpm source:verify`、`pnpm effect:verify` |
 | 按 agent 意图读取 Effect 源码 | `harness/effect-routes.md` | `repos/effect/LLMS.md`、`repos/effect/packages/**`、`repos/effect/ai-docs/src/**` | `pnpm effect:verify` |
 | 更新 Effect 源入口 | `harness/source.md` | Partita GitHub subtree contract、上游 Effect repo | `pnpm source:update`、`pnpm verify`、subtree trailers |
-| 查看本仓 provider profile | `harness/provider/index.md` | `harness/provider/effect-harness.provider.json` | `pnpm effect:verify` |
+| 验证本仓边界 | `HARNESS.md` | `src/harness/**`、provider profile、source contract | `pnpm effect:verify`、`pnpm verify` |
 
-## 第二层：目标 Harness 层
+## Provider
 
-这一层回答“目标项目接入后应持续得到什么约束”。本仓只声明 profile；实际生成、drift 和维护由
-Prelude 执行。
+这一层回答“Prelude 集成 effect-harness 时应该消费什么”。本仓只声明 provider profile；
+实际生成、drift 和维护由 Prelude 执行。
 
-| 目标项目能力 | 来源 | 由谁维护 | 目标项目是否接收源码 |
+| Prelude 消费内容 | 来源 | 由谁维护 | 目标项目是否接收源码 |
 | --- | --- | --- | --- |
+| provider profile | `harness/provider/index.md`、`harness/provider/effect-harness.provider.json` | effect-harness | 否 |
 | provider record 与 source identity | `harness/provider/effect-harness.provider.json` | Prelude | 否 |
 | Effect package 基线 | provider profile | Prelude | 否 |
 | `tsgo --noEmit` 诊断路径 | provider profile | Prelude | 否 |
@@ -32,7 +45,8 @@ Prelude 执行。
 
 - Partita 负责 GitHub subtree pin 流程；effect-harness 不自建第二套 pin CLI。
 - effect-harness 负责 Effect 源入口实例、路线、基线、provider profile 和本仓验证。
-- Prelude 负责目标项目生命周期、provider record、落地生成、drift、verify 和 maintain。
+- Prelude 负责消费 provider profile，并在目标项目中维护 provider record、落地生成、drift、verify
+  和 maintain。
 - 业务代码和测试代码禁止从 `repos/effect` import。
 - 本仓不再分发 Codex skills 或目标 runtime 资产。
 - `.effect-harness.json`、旧 effect-harness `.codex` 资产、反馈入口、effect-harness

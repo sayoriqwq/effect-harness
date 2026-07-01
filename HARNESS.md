@@ -7,12 +7,13 @@
 
 | 层级 | 目的 | 本仓负责什么 | 不负责什么 |
 | --- | --- | --- | --- |
-| 本仓建设层 | 指导 `effect-harness` 自身继续推进 | 官方 guide、Effect 源入口实例、路线表、provider profile、最小验证器 | 通用 pin 实现、目标项目落地生成 |
-| 目标 harness 层 | 让接入项目持续受到约束 | 通过 provider profile 声明目标项目应接收的基线与配置指针 | 直接写目标 runtime、`.codex`、`.effect-harness.json`、目标 `AGENTS.md` 管理块 |
+| Harness 层 | 指导 `effect-harness` 本仓自己怎么运转 | 官方 guide、第一阶段实现说明、Effect 源入口实例、路线表、最小验证器 | 通用 pin 实现、目标项目落地生成 |
+| Provider 层 | 让 Prelude 知道如何集成 effect-harness | 通过 provider profile 声明目标项目应接收的基线、诊断入口与 source identity | 直接写目标 runtime、`.codex`、`.effect-harness.json`、目标 `AGENTS.md` 管理块 |
 
 ## 真源
 
 - `harness/offcial-guide.md`：仓内 guide 唯一真源。
+- `harness/offcial-migrate.md`：官方第一阶段 source access 的 harness/provider 实现说明。
 - `repos/effect.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 Effect 源入口唯一真源。
 - `repos/effect/LLMS.md`：pinned 上游 Effect LLM guide。
 - `harness/effect-routes.md`：agent 读取 `repos/effect/` 的路线表。
@@ -22,7 +23,7 @@
 
 - Partita 负责通用源入口 pin 流程。
 - effect-harness 负责 Effect 这个具体源入口实例和 provider profile。
-- Prelude 负责目标项目的 provider record、drift、verify 和 maintain。
+- Prelude 负责消费 provider profile，并维护目标项目的 provider record、drift、verify 和 maintain。
 
 ## 已移除表面
 

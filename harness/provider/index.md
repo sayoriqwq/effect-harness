@@ -1,3 +1,16 @@
+---
+audience: [agent, human]
+authors:
+  - codex
+reviewed_by: []
+purpose: 定义 Prelude 集成 effect-harness 时应该消费的 provider profile 边界。
+status: active
+sources:
+  - harness/provider/effect-harness.provider.json
+  - harness/offcial-migrate.md
+updated: 2026-07-01
+---
+
 # Prelude Provider Profile
 
 本目录暴露给 Prelude 使用的最小 provider profile。它只描述 effect-harness 能给目标项目带来的
@@ -9,13 +22,14 @@
 - `repos/effect.subtree.json`
 - `repos/effect/LLMS.md`
 - `harness/offcial-guide.md`
+- `harness/offcial-migrate.md`
 
 ## 两层对应
 
-第一层是本仓建设层：effect-harness 维护 Effect 源入口实例、路线、provider profile 和 Effect
+第一层是 harness 层：effect-harness 维护本仓内部的 Effect 源入口实例、路线、验证和 Effect
 package 基线。
 
-第二层是目标 harness 层：Prelude 读取 provider profile，在目标项目中维护 provider record、
+第二层是 provider 层：Prelude 读取 provider profile，在目标项目中维护 provider record、
 package 基线、`tsconfig.json` language-service plugin 和诊断脚本。
 
 Partita 负责 GitHub subtree pin 语义和 `repos/effect.subtree.json`；effect-harness 不复制这套
@@ -24,14 +38,29 @@ Partita 负责 GitHub subtree pin 语义和 `repos/effect.subtree.json`；effect
 
 ## 目标项目接收面
 
-当前 provider target surfaces 只保留结构化指针：
+当前 provider target surfaces 只保留结构化指针。
+
+Prelude 应该接收：
 
 - `package.json` dependencies and scripts
 - `tsconfig.json` language-service plugin
+- `.prelude/providers/effect-harness/provider.json` provider record
+- provider artifact/source identity
 
-目标项目可以接收 provider record 中的 source identity，但不接收 `repos/effect/` 本体。仍保留旧
-`.codex` runtime files、effect-harness `AGENTS.md` 管理块或 `.effect-harness.json` state 的
-provider records 都是旧状态，应按新 profile 重新生成。
+Prelude 不应该接收：
+
+- `repos/effect/` 本体
+- `repos/effect.subtree.json` 本体
+- `repos/effect/LLMS.md` 本体
+- `.codex` runtime files
+- effect-harness `AGENTS.md` 管理块
+- `.effect-harness.json` state
+- `.codex/effect-feedback` feedback intake
+
+目标项目可以接收 provider record 中的 source identity，但不接收 `repos/effect/` 本体。
+
+仍保留旧 `.codex` runtime files、effect-harness `AGENTS.md` 管理块或 `.effect-harness.json`
+state 的 provider records 都是旧状态，应按新 profile 重新生成。
 
 ## 编辑器策略
 

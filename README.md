@@ -4,27 +4,28 @@
 
 当前设计分成两层：
 
-1. 本仓建设层：指导我们继续维护 `effect-harness` 本身。
-2. 目标 harness 层：由 Prelude 在接入项目中生成和维护，用来持续约束目标项目。
+1. Harness 层：描述 `effect-harness` 本仓自己怎么运转。
+2. Provider 层：描述本仓交给 Prelude 集成 effect-harness 的内容。
 
 通用外部仓库 pin 流程由 Partita 负责；本仓只承载 Effect 这一份源入口实例、Effect 基线、
 读取路线和 Prelude provider profile。
 
-## 本仓建设层
+## Harness 层
 
 这一层只服务 `effect-harness` 自身的维护：
 
 - `harness/offcial-guide.md`：仓内 guide 唯一真源。
+- `harness/offcial-migrate.md`：官方第一阶段 source access 的本仓实现说明。
 - `repos/effect/`：已 pin 的官方 Effect 源码，只供 agent 读取参考。
 - `repos/effect.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 Effect 源入口唯一真源。
 - `harness/effect-routes.md`：agent 读取 `repos/effect/` 的路线表。
-- `harness/provider/effect-harness.provider.json`：提供给 Prelude 的 provider profile，也是 package 基线真源。
 - `src/`：本仓最小验证器，只验证 provider 仓自身边界。
 
-## 目标 Harness 层
+## Provider 层
 
-这一层不是本仓直接散落脚本来维护，而是 Prelude 根据 provider profile 在目标项目中维护：
+这一层不是本仓直接散落脚本来维护目标项目，而是给 Prelude 提供结构化 provider profile：
 
+- provider profile：声明 Prelude 应该消费的 target surfaces。
 - provider record：记录接入的 `effect-harness` profile、artifact 与 source identity。
 - package 基线：维护 `effect`、`@effect/platform-node`、`@effect/tsgo`、
   `@effect/language-service` 等版本约束。
@@ -38,7 +39,8 @@
 
 - Partita：通用外部源入口 pin/status/update/verify。
 - effect-harness：Effect 源入口实例、路线表、baseline、provider profile、本仓验证。
-- Prelude：目标项目生命周期、provider record、目标项目落地生成、drift/verify/maintain。
+- Prelude：消费 provider profile，并维护目标项目生命周期、provider record、目标项目落地生成、
+  drift/verify/maintain。
 
 ## 验证命令
 

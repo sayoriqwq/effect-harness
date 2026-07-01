@@ -3,8 +3,9 @@
 本仓是 Effect v4 beta 的 Prelude provider profile 与源入口路线包，并以 CLI utility package
 发布。这里有两层语境：
 
-- 本仓建设层：维护 `effect-harness` 自身的源入口、路线、基线和 provider profile。
-- 目标 harness 层：由 Prelude 在接入项目中生成和维护，持续约束目标项目。
+- Harness 层：维护 `effect-harness` 本仓自己的源入口、路线、基线和验证。
+- Provider 层：声明 Prelude 集成 effect-harness 时应消费的 provider profile、source identity、
+  package 基线和诊断入口。
 
 在本仓或目标项目写非平凡 Effect 代码前，先读：
 
@@ -12,6 +13,7 @@
 - `README.md`
 - `harness/index.md`
 - `harness/offcial-guide.md`
+- `harness/offcial-migrate.md`
 - `harness/source.md`
 - `harness/effect-routes.md`
 - `repos/effect/LLMS.md`
