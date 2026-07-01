@@ -1,14 +1,12 @@
 {
   "typescript.preferences.autoImportFileExcludePatterns": [
-    "repos/**",
-    "repos/effect/**"
+    "repos/**"
   ],
   "javascript.preferences.autoImportFileExcludePatterns": [
-    "repos/**",
-    "repos/effect/**"
+    "repos/**"
   ],
   "files.exclude": {
-    "repos/**": true
+    "repos/effect/**": true
   },
   "files.watcherExclude": {
     "repos/**": true

@@ -7,7 +7,8 @@ import { verifyTsgoBaseline } from './Tsgo.ts'
 import { requiredFeedbackLoopKeywords, verifyStageSpecs } from './VerifyStage.ts'
 
 const removedProviderPaths = [
-  '.codex/skills',
+  '.codex',
+  '.effect-harness.json',
   'guide',
   'harness/default-capabilities.md',
   'harness/exposure.md',

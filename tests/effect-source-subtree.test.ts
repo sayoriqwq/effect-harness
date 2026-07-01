@@ -6,10 +6,23 @@ import { Effect, FileSystem, Path, Schema, Stream } from 'effect'
 import { ChildProcess, ChildProcessSpawner } from 'effect/unstable/process'
 
 const currentFile = fileURLToPath(import.meta.url)
-const defaultRepositoryUrl = 'https://github.com/Effect-TS/effect-smol'
-const defaultPrefix = 'repos/effect'
-const defaultLlmDocument = 'repos/effect/LLMS.md'
-const defaultRoute = 'harness/effect-routes.md'
+const effectRepositoryUrl = 'https://github.com/Effect-TS/effect-smol'
+const effectPrefix = 'repos/effect'
+const effectLlmDocument = 'repos/effect/LLMS.md'
+const effectRoute = 'harness/effect-routes.md'
+const tsgoRepositoryUrl = 'https://github.com/Effect-TS/tsgo'
+const tsgoPrefix = 'repos/tsgo'
+const tsgoLlmDocument = 'repos/tsgo/README.md'
+const tsgoRoute = 'harness/tsgo-routes.md'
+const defaultTsgoSplit = '9'.repeat(40)
+const packageBaseline = {
+  'effect': '4.0.0-beta.92',
+  '@effect/platform-node': '4.0.0-beta.92',
+  '@effect/vitest': '4.0.0-beta.92',
+  '@effect/tsgo': '0.15.0',
+  '@effect/language-service': '0.86.2',
+  '@typescript/native-preview': '7.0.0-dev.20260630.1',
+} as const
 
 interface CommandResult {
   readonly status: number
@@ -63,8 +76,8 @@ const commit = Effect.fnUntraced(function* (root: string, message: string) {
   yield* git(root, ['commit', '-m', message])
 })
 
-const commitWithTrailer = Effect.fnUntraced(function* (root: string, split: string) {
-  yield* commit(root, `Add source entry\n\ngit-subtree-dir: ${defaultPrefix}\ngit-subtree-split: ${split}`)
+const commitWithTrailer = Effect.fnUntraced(function* (root: string, split: string, prefix = effectPrefix) {
+  yield* commit(root, `Add source entry\n\ngit-subtree-dir: ${prefix}\ngit-subtree-split: ${split}`)
 })
 
 const runSourceVerify = Effect.fnUntraced(function* (root: string) {
@@ -74,28 +87,31 @@ const runSourceVerify = Effect.fnUntraced(function* (root: string) {
   return yield* runCommand(rootPath, process.execPath, [cliPath, 'source-verify', '--harness', root])
 })
 
-function sourceEntryContract(options: {
+interface SourceEntryContractOptions {
+  readonly name: 'effect' | 'tsgo'
   readonly split: string
-  readonly repositoryUrl?: string | undefined
+  readonly repositoryUrl: string
+  readonly prefix: string
+  readonly llmDocument: string
+  readonly route: string
+  readonly filesExclude: string
   readonly branch?: string | undefined
-  readonly prefix?: string | undefined
-  readonly llmDocument?: string | undefined
-}) {
-  const repositoryUrl = options.repositoryUrl ?? defaultRepositoryUrl
+}
+
+function sourceEntryContract(options: SourceEntryContractOptions) {
   const branch = options.branch ?? 'main'
-  const prefix = options.prefix ?? defaultPrefix
-  const llmDocument = options.llmDocument ?? defaultLlmDocument
+  const contractPath = `repos/${options.name}.subtree.json`
 
   return {
     schemaVersion: 1,
-    name: 'effect',
+    name: options.name,
     github: {
-      repository: repositoryUrl,
+      repository: options.repositoryUrl,
       branch,
       ref: options.split,
     },
     local: {
-      prefix,
+      prefix: options.prefix,
     },
     mechanism: 'git-subtree',
     subtree: {
@@ -103,20 +119,20 @@ function sourceEntryContract(options: {
       trailer: `git-subtree-split: ${options.split}`,
     },
     anchor: {
-      llmDocument,
+      llmDocument: options.llmDocument,
     },
     commands: {
-      update: 'partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
-      verify: 'partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
+      update: `partita pin update --contract ${contractPath} --name ${options.name} --prefix ${options.prefix} --dry-run`,
+      verify: `partita pin verify --contract ${contractPath} --name ${options.name} --prefix ${options.prefix}`,
     },
     agent: {
-      route: defaultRoute,
+      route: options.route,
     },
     editorPolicy: {
       autoImportExclude: 'block',
       watcherExclude: 'recommended',
       searchExclude: 'recommended',
-      filesExclude: 'enabled',
+      filesExclude: options.filesExclude,
     },
     ownership: {
       mode: 'provider',
@@ -128,21 +144,92 @@ function sourceEntryContract(options: {
   }
 }
 
-const writeContract = Effect.fnUntraced(function* (root: string, contract: unknown) {
+function effectSourceEntryContract(options: {
+  readonly split: string
+  readonly repositoryUrl?: string | undefined
+  readonly branch?: string | undefined
+  readonly prefix?: string | undefined
+  readonly llmDocument?: string | undefined
+}) {
+  return sourceEntryContract({
+    branch: options.branch,
+    filesExclude: 'enabled',
+    llmDocument: options.llmDocument ?? effectLlmDocument,
+    name: 'effect',
+    prefix: options.prefix ?? effectPrefix,
+    repositoryUrl: options.repositoryUrl ?? effectRepositoryUrl,
+    route: effectRoute,
+    split: options.split,
+  })
+}
+
+function tsgoSourceEntryContract(split: string) {
+  return sourceEntryContract({
+    filesExclude: 'disabled',
+    llmDocument: tsgoLlmDocument,
+    name: 'tsgo',
+    prefix: tsgoPrefix,
+    repositoryUrl: tsgoRepositoryUrl,
+    route: tsgoRoute,
+    split,
+  })
+}
+
+const writeProviderProfile = Effect.fnUntraced(function* (root: string) {
+  const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
+  const profileText = yield* Schema.encodeUnknownEffect(Schema.UnknownFromJsonString)({
+    profiles: {
+      'codex-effect-v4': {
+        packageBaseline,
+      },
+    },
+  })
+  yield* fs.makeDirectory(path.join(root, 'harness/provider'), { recursive: true })
+  yield* fs.writeFileString(path.join(root, 'harness/provider/effect-harness.provider.json'), `${profileText}\n`)
+})
+
+const writeSourceContract = Effect.fnUntraced(function* (
+  root: string,
+  contractPath: string,
+  routePath: string,
+  contract: unknown,
+) {
   const fs = yield* FileSystem.FileSystem
   const path = yield* Path.Path
   const contractText = yield* Schema.encodeUnknownEffect(Schema.UnknownFromJsonString)(contract)
   yield* fs.makeDirectory(path.join(root, 'repos'), { recursive: true })
   yield* fs.makeDirectory(path.join(root, 'harness'), { recursive: true })
-  yield* fs.writeFileString(path.join(root, 'repos/effect.subtree.json'), `${contractText}\n`)
-  yield* fs.writeFileString(path.join(root, defaultRoute), '# Effect routes\n')
+  yield* fs.writeFileString(path.join(root, contractPath), `${contractText}\n`)
+  yield* fs.writeFileString(path.join(root, routePath), '# Source routes\n')
 })
 
-const writePinnedSource = Effect.fnUntraced(function* (root: string, llms = '# Effect\n') {
+const writeEffectContract = Effect.fnUntraced(function* (root: string, contract: unknown) {
+  yield* writeSourceContract(root, 'repos/effect.subtree.json', effectRoute, contract)
+})
+
+const writeTsgoContract = Effect.fnUntraced(function* (root: string, contract: unknown) {
+  yield* writeSourceContract(root, 'repos/tsgo.subtree.json', tsgoRoute, contract)
+})
+
+const writePinnedEffectSource = Effect.fnUntraced(function* (root: string, llms = '# Effect\n') {
   const fs = yield* FileSystem.FileSystem
   const path = yield* Path.Path
-  yield* fs.makeDirectory(path.join(root, defaultPrefix), { recursive: true })
-  yield* fs.writeFileString(path.join(root, defaultLlmDocument), llms)
+  yield* fs.makeDirectory(path.join(root, effectPrefix), { recursive: true })
+  yield* fs.writeFileString(path.join(root, effectLlmDocument), llms)
+})
+
+const writePinnedTsgoSource = Effect.fnUntraced(function* (root: string, readme = '# Tsgo\n') {
+  const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
+  yield* fs.makeDirectory(path.join(root, tsgoPrefix), { recursive: true })
+  yield* fs.writeFileString(path.join(root, tsgoLlmDocument), readme)
+})
+
+const writeValidTsgoSourceEntry = Effect.fnUntraced(function* (root: string, split = defaultTsgoSplit) {
+  yield* writePinnedTsgoSource(root)
+  yield* writeTsgoContract(root, tsgoSourceEntryContract(split))
+  yield* commitWithTrailer(root, split, tsgoPrefix)
 })
 
 function withTempDir<A, E, R>(
@@ -168,9 +255,11 @@ it.layer(NodeServices.layer)((it) => {
     const splitOnOtherBranch = 'b'.repeat(40)
 
     yield* initGit(root)
-    yield* writePinnedSource(root)
-    yield* writeContract(root, sourceEntryContract({ split: splitOnMain }))
+    yield* writeProviderProfile(root)
+    yield* writePinnedEffectSource(root)
+    yield* writeEffectContract(root, effectSourceEntryContract({ split: splitOnMain }))
     yield* commitWithTrailer(root, splitOnMain)
+    yield* writeValidTsgoSourceEntry(root)
 
     yield* git(root, ['switch', '-c', 'other'])
     yield* fs.writeFileString(path.join(root, 'other.txt'), 'other branch only\n')
@@ -183,26 +272,32 @@ it.layer(NodeServices.layer)((it) => {
     assert.match(result.stdout, new RegExp(splitOnMain, 'u'))
   })))
 
-  it.effect('source subtree verifier accepts the single GitHub subtree contract', () => withTempDir(root => Effect.gen(function* () {
-    const split = 'c'.repeat(40)
+  it.effect('source subtree verifier accepts the dual GitHub subtree contracts', () => withTempDir(root => Effect.gen(function* () {
+    const effectSplit = 'c'.repeat(40)
+    const tsgoSplit = '8'.repeat(40)
 
     yield* initGit(root)
-    yield* writePinnedSource(root)
-    yield* writeContract(root, sourceEntryContract({ split }))
-    yield* commitWithTrailer(root, split)
+    yield* writeProviderProfile(root)
+    yield* writePinnedEffectSource(root)
+    yield* writeEffectContract(root, effectSourceEntryContract({ split: effectSplit }))
+    yield* commitWithTrailer(root, effectSplit)
+    yield* writeValidTsgoSourceEntry(root, tsgoSplit)
 
     const result = yield* runSourceVerify(root)
 
     assert.equal(result.status, 0, result.stderr)
-    assert.match(result.stdout, /Source entry verified/u)
+    assert.match(result.stdout, /Source entry verified: repos\/effect/u)
+    assert.match(result.stdout, /Source entry verified: repos\/tsgo/u)
   })))
 
   it.effect('source subtree verifier rejects a missing source directory', () => withTempDir(root => Effect.gen(function* () {
     const split = 'd'.repeat(40)
 
     yield* initGit(root)
-    yield* writeContract(root, sourceEntryContract({ split }))
+    yield* writeProviderProfile(root)
+    yield* writeEffectContract(root, effectSourceEntryContract({ split }))
     yield* commitWithTrailer(root, split)
+    yield* writeValidTsgoSourceEntry(root)
 
     const result = yield* runSourceVerify(root)
 
@@ -216,12 +311,14 @@ it.layer(NodeServices.layer)((it) => {
     const split = 'e'.repeat(40)
 
     yield* initGit(root)
-    yield* writeContract(root, sourceEntryContract({ split }))
-    yield* fs.writeFileString(path.join(root, '.gitmodules'), `[submodule "effect"]\n\tpath = ${defaultPrefix}\n\turl = ${defaultRepositoryUrl}.git\n`)
+    yield* writeProviderProfile(root)
+    yield* writeEffectContract(root, effectSourceEntryContract({ split }))
+    yield* fs.writeFileString(path.join(root, '.gitmodules'), `[submodule "effect"]\n\tpath = ${effectPrefix}\n\turl = ${effectRepositoryUrl}.git\n`)
     yield* git(root, ['add', 'repos/effect.subtree.json', '.gitmodules'])
-    yield* git(root, ['update-index', '--add', '--cacheinfo', `160000,${split},${defaultPrefix}`])
-    yield* git(root, ['commit', '-m', `Add gitlink\n\ngit-subtree-dir: ${defaultPrefix}\ngit-subtree-split: ${split}`])
-    yield* writePinnedSource(root)
+    yield* git(root, ['update-index', '--add', '--cacheinfo', `160000,${split},${effectPrefix}`])
+    yield* git(root, ['commit', '-m', `Add gitlink\n\ngit-subtree-dir: ${effectPrefix}\ngit-subtree-split: ${split}`])
+    yield* writePinnedEffectSource(root)
+    yield* writeValidTsgoSourceEntry(root)
 
     const result = yield* runSourceVerify(root)
 
@@ -233,9 +330,11 @@ it.layer(NodeServices.layer)((it) => {
     const split = 'f'.repeat(40)
 
     yield* initGit(root)
-    yield* writePinnedSource(root)
-    yield* writeContract(root, sourceEntryContract({ split }))
+    yield* writeProviderProfile(root)
+    yield* writePinnedEffectSource(root)
+    yield* writeEffectContract(root, effectSourceEntryContract({ split }))
     yield* commit(root, 'Import pinned source without subtree trailer')
+    yield* writeValidTsgoSourceEntry(root)
 
     const result = yield* runSourceVerify(root)
 
@@ -248,9 +347,11 @@ it.layer(NodeServices.layer)((it) => {
     const trailerSplit = '2'.repeat(40)
 
     yield* initGit(root)
-    yield* writePinnedSource(root)
-    yield* writeContract(root, sourceEntryContract({ split: contractSplit }))
+    yield* writeProviderProfile(root)
+    yield* writePinnedEffectSource(root)
+    yield* writeEffectContract(root, effectSourceEntryContract({ split: contractSplit }))
     yield* commitWithTrailer(root, trailerSplit)
+    yield* writeValidTsgoSourceEntry(root)
 
     const result = yield* runSourceVerify(root)
 
@@ -264,9 +365,11 @@ it.layer(NodeServices.layer)((it) => {
     const split = '3'.repeat(40)
 
     yield* initGit(root)
-    yield* fs.makeDirectory(path.join(root, defaultPrefix), { recursive: true })
-    yield* writeContract(root, sourceEntryContract({ split }))
+    yield* writeProviderProfile(root)
+    yield* fs.makeDirectory(path.join(root, effectPrefix), { recursive: true })
+    yield* writeEffectContract(root, effectSourceEntryContract({ split }))
     yield* commitWithTrailer(root, split)
+    yield* writeValidTsgoSourceEntry(root)
 
     const result = yield* runSourceVerify(root)
 
@@ -280,11 +383,13 @@ it.layer(NodeServices.layer)((it) => {
     const split = '4'.repeat(40)
 
     yield* initGit(root)
-    yield* writePinnedSource(root)
-    yield* writeContract(root, sourceEntryContract({ split }))
+    yield* writeProviderProfile(root)
+    yield* writePinnedEffectSource(root)
+    yield* writeEffectContract(root, effectSourceEntryContract({ split }))
     yield* fs.makeDirectory(path.join(root, 'tests'), { recursive: true })
     yield* fs.writeFileString(path.join(root, 'tests/imports-source.ts'), 'import { Effect } from "../repos/' + 'effect/packages/effect/src/Effect.ts"\n')
     yield* commitWithTrailer(root, split)
+    yield* writeValidTsgoSourceEntry(root)
 
     const result = yield* runSourceVerify(root)
 

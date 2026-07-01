@@ -193,26 +193,6 @@ function assertGitHubSubtreeContract(
   }
 }
 
-const providerProfileExists = Effect.fnUntraced(function* (root: string) {
-  const fs = yield* FileSystem.FileSystem
-  return yield* fs.exists(`${root}/${providerProfilePath}`)
-})
-
-const requiredSourcePins = Effect.fnUntraced(function* (root: string) {
-  const fs = yield* FileSystem.FileSystem
-  if (yield* providerProfileExists(root)) {
-    return expectedSourcePins
-  }
-
-  const existing: Array<ExpectedSourcePin> = []
-  for (const expected of expectedSourcePins) {
-    if (yield* fs.exists(`${root}/${expected.contractPath}`)) {
-      existing.push(expected)
-    }
-  }
-  return existing.length > 0 ? existing : [expectedSourcePins[0]!]
-})
-
 const verifyOneSourcePin = Effect.fnUntraced(function* (
   errors: Array<string>,
   root: string,
@@ -275,16 +255,14 @@ const verifyOneSourcePin = Effect.fnUntraced(function* (
 
 export const verifySourcePin = Effect.fnUntraced(function* (root: string) {
   const errors: Array<string> = []
-  const pins = yield* requiredSourcePins(root)
+  const pins = expectedSourcePins
 
   for (const expected of pins) {
     yield* verifyOneSourcePin(errors, root, expected)
   }
 
-  if (yield* providerProfileExists(root)) {
-    const packageBaseline = yield* readJson(`${root}/${providerProfilePath}`, decodeProviderPackageBaseline)
-    yield* verifyPackageBaseline(errors, root, packageBaseline)
-  }
+  const packageBaseline = yield* readJson(`${root}/${providerProfilePath}`, decodeProviderPackageBaseline)
+  yield* verifyPackageBaseline(errors, root, packageBaseline)
 
   if (errors.length > 0) {
     yield* Console.error('Source subtree verification failed:')

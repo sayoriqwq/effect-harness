@@ -32,7 +32,7 @@ function makeCli(config: CliConfig) {
   }, Effect.fnUntraced(function* ({ harness }) {
     yield* verifyProviderRepository(harness)
   })).pipe(
-    Command.withDescription('Check the Effect source-entry provider repository'),
+    Command.withDescription('Check the Effect harness provider repository'),
   )
 
   const sourceVerify = Command.make('source-verify', {
@@ -40,7 +40,7 @@ function makeCli(config: CliConfig) {
   }, Effect.fnUntraced(function* ({ harness }) {
     yield* verifySourcePin(harness)
   })).pipe(
-    Command.withDescription('Check the pinned official Effect source subtree'),
+    Command.withDescription('Check the pinned official Effect and tsgo source subtrees'),
   )
 
   const verify = Command.make('verify', {
