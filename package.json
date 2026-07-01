@@ -19,7 +19,6 @@
     "effect-harness": "dist/bin/effect-harness.js"
   },
   "files": [
-    ".partita",
     "HARNESS.md",
     "README.md",
     "dist",
@@ -41,9 +40,9 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "prepare": "effect-tsgo patch",
-    "source:status": "node ../partita/dist/bin/partita.js source status --root . --contract .partita/source-entries.json --name effect",
-    "source:update": "node ../partita/dist/bin/partita.js source update --root . --contract .partita/source-entries.json --name effect --dry-run",
-    "source:verify": "node ../partita/dist/bin/partita.js source verify --root . --contract .partita/source-entries.json --name effect",
+    "source:status": "node ../partita/dist/bin/partita.js source status --root . --contract repos/effect.subtree.json --name effect",
+    "source:update": "node ../partita/dist/bin/partita.js source update --root . --contract repos/effect.subtree.json --name effect --dry-run",
+    "source:verify": "node ../partita/dist/bin/partita.js source verify --root . --contract repos/effect.subtree.json --name effect",
     "test": "vitest run tests/*.test.ts",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",

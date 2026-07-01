@@ -13,11 +13,10 @@
 ## 真源
 
 - `harness/offcial-guide.md`：仓内 guide 唯一真源。
-- `.partita/source-entries.json`：Partita 管理的源入口契约实例。
-- `repos/effect.subtree.json`：Effect 源入口与 package 基线 manifest。
+- `repos/effect.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 Effect 源入口唯一真源。
 - `repos/effect/LLMS.md`：pinned 上游 Effect LLM guide。
 - `harness/effect-routes.md`：agent 读取 `repos/effect/` 的路线表。
-- `harness/provider/effect-harness.provider.json`：Prelude provider profile。
+- `harness/provider/effect-harness.provider.json`：Prelude provider profile，也是 package 基线真源。
 
 ## 职责分配
 
@@ -39,5 +38,5 @@ pnpm verify
 ```
 
 `pnpm effect:verify` 只验证 provider 仓自身。`pnpm source:status`、`pnpm source:update`、
-`pnpm source:verify` 借用 Partita source-entry CLI。目标项目由 Prelude provider
+`pnpm source:verify` 借用 Partita GitHub subtree CLI。目标项目由 Prelude provider
 maintain/verify；effect-harness 不直接向目标项目投影 runtime 资产。

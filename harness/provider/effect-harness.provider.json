@@ -9,27 +9,18 @@
   "sourceEntries": {
     "effect-official-source": {
       "id": "effect-official-source",
-      "kind": "provider-internal-source-entry",
+      "kind": "provider-internal-github-subtree",
       "authority": "official",
       "name": "effect",
-      "repository": "https://github.com/Effect-TS/effect-smol.git",
-      "branch": "main",
-      "prefix": "repos/effect",
-      "anchor": {
-        "manifest": "repos/effect.subtree.json",
-        "field": "split",
-        "value": "3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6"
-      },
-      "llmDocument": "repos/effect/LLMS.md",
-      "agentRoute": "harness/effect-routes.md",
-      "materialization": {
-        "mode": "git-subtree",
-        "readOnlyForAgents": true
+      "contract": {
+        "path": "repos/effect.subtree.json",
+        "owner": "partita",
+        "format": "github-subtree"
       },
       "commands": {
-        "status": "partita source status --contract .partita/source-entries.json --name effect",
-        "update": "partita source update --contract .partita/source-entries.json --name effect --dry-run",
-        "verify": "partita source verify --contract .partita/source-entries.json --name effect"
+        "status": "partita source status --contract repos/effect.subtree.json --name effect",
+        "update": "partita source update --contract repos/effect.subtree.json --name effect --dry-run",
+        "verify": "partita source verify --contract repos/effect.subtree.json --name effect"
       },
       "importBoundary": {
         "applicationImportsForbidden": true,
@@ -76,9 +67,9 @@
         ],
         "allowedTargetSourceIdentity": [
           "artifact.sourceIdentity.name",
-          "artifact.sourceIdentity.repository",
-          "artifact.sourceIdentity.branch",
-          "artifact.sourceIdentity.anchor"
+          "artifact.sourceIdentity.contractPath",
+          "artifact.sourceIdentity.github",
+          "artifact.sourceIdentity.subtree"
         ]
       },
       "options": {
@@ -185,7 +176,7 @@
         ],
         "targetDoesNotReceive": [
           "provider repo internal source pin repos/effect",
-          "provider repo internal source manifest repos/effect.subtree.json",
+          "provider repo internal subtree contract repos/effect.subtree.json",
           "provider repo internal Effect LLMS route repos/effect/LLMS.md",
           "effect-harness runtime assets under .codex",
           "effect-harness AGENTS.md managed block",
@@ -230,12 +221,12 @@
       "verification": {
         "status": [
           "provider internal source entry exists",
-          "Partita source-entry contract records source prefix, pin, anchor, route, and editor policy",
+          "Partita GitHub subtree contract records source prefix, pin, anchor, route, and editor policy",
           "provider profile records source identity and package baseline"
         ],
         "verify": [
           "source pin exists as committed git subtree",
-          "provider profile matches source manifest and Partita source-entry contract",
+          "provider profile references the single Partita GitHub subtree contract",
           "tsgo --noEmit is the primary Effect diagnostic path",
           "@effect/language-service floatingEffect is error",
           "provider repository does not import from repos/effect or @effect/cli"

@@ -14,7 +14,6 @@
 - `harness/offcial-guide.md`
 - `harness/source.md`
 - `harness/effect-routes.md`
-- `.partita/source-entries.json`
 - `repos/effect/LLMS.md`
 - `repos/effect.subtree.json`
 

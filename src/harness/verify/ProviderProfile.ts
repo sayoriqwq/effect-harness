@@ -122,20 +122,24 @@ function assertRecordDoesNotContain(
   }
 }
 
+const expectedPackageBaseline: Readonly<Record<string, string>> = {
+  'effect': '4.0.0-beta.90',
+  '@effect/platform-node': '4.0.0-beta.90',
+  '@effect/vitest': '4.0.0-beta.90',
+  '@effect/tsgo': '0.14.6',
+  '@effect/language-service': '0.86.2',
+  '@typescript/native-preview': '7.0.0-dev.20260624.1',
+}
+
 function assertPackageBaseline(
   errors: Array<string>,
-  manifestBaseline: Record<string, unknown> | undefined,
   profileBaseline: Record<string, unknown> | undefined,
 ): void {
-  if (manifestBaseline === undefined || profileBaseline === undefined) {
+  if (profileBaseline === undefined) {
     return
   }
 
-  for (const [name, expected] of Object.entries(manifestBaseline)) {
-    if (typeof expected !== 'string') {
-      errors.push(`repos/effect.subtree.json.packageBaseline.${name} must be a string.`)
-      continue
-    }
+  for (const [name, expected] of Object.entries(expectedPackageBaseline)) {
     const actual = profileBaseline[name]
     if (actual !== expected) {
       errors.push(`provider profile packageBaseline.${name} is ${String(actual ?? 'missing')}; expected ${expected}.`)
@@ -176,8 +180,7 @@ function assertEditorPolicy(errors: Array<string>, options: Record<string, unkno
 
 export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors: Array<string>, harness: string) {
   const providerProfile = yield* readJson(`${harness}/harness/provider/effect-harness.provider.json`, decodeJsonRecord)
-  const sourceManifest = yield* readJson(`${harness}/repos/effect.subtree.json`, decodeJsonRecord)
-  const sourceContract = yield* readJson(`${harness}/.partita/source-entries.json`, decodeJsonRecord)
+  const sourceContract = yield* readJson(`${harness}/repos/effect.subtree.json`, decodeJsonRecord)
 
   const provider = recordField(errors, providerProfile, 'provider', 'provider profile')
   assertStringValue(errors, stringField(errors, provider, 'id', 'provider profile.provider'), 'effect-harness', 'provider profile.provider.id')
@@ -192,20 +195,22 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   const sourceEntry = sourceEntryId === undefined
     ? undefined
     : recordField(errors, sourceEntries, sourceEntryId, 'provider profile.sourceEntries')
-  assertStringValue(errors, stringField(errors, sourceEntry, 'kind', 'provider profile.sourceEntries.effect-official-source'), 'provider-internal-source-entry', 'provider profile.sourceEntries.effect-official-source.kind')
-  assertStringValue(errors, stringField(errors, sourceEntry, 'prefix', 'provider profile.sourceEntries.effect-official-source'), 'repos/effect', 'provider profile.sourceEntries.effect-official-source.prefix')
-  assertStringValue(errors, stringField(errors, sourceEntry, 'llmDocument', 'provider profile.sourceEntries.effect-official-source'), 'repos/effect/LLMS.md', 'provider profile.sourceEntries.effect-official-source.llmDocument')
-  assertStringValue(errors, stringField(errors, sourceEntry, 'agentRoute', 'provider profile.sourceEntries.effect-official-source'), 'harness/effect-routes.md', 'provider profile.sourceEntries.effect-official-source.agentRoute')
+  assertStringValue(errors, stringField(errors, sourceEntry, 'kind', 'provider profile.sourceEntries.effect-official-source'), 'provider-internal-github-subtree', 'provider profile.sourceEntries.effect-official-source.kind')
+  const contract = recordField(errors, sourceEntry, 'contract', 'provider profile.sourceEntries.effect-official-source')
+  assertStringValue(errors, stringField(errors, contract, 'path', 'provider profile.sourceEntries.effect-official-source.contract'), 'repos/effect.subtree.json', 'provider profile.sourceEntries.effect-official-source.contract.path')
+  assertStringValue(errors, stringField(errors, contract, 'owner', 'provider profile.sourceEntries.effect-official-source.contract'), 'partita', 'provider profile.sourceEntries.effect-official-source.contract.owner')
+  assertStringValue(errors, stringField(errors, contract, 'format', 'provider profile.sourceEntries.effect-official-source.contract'), 'github-subtree', 'provider profile.sourceEntries.effect-official-source.contract.format')
   const commands = recordField(errors, sourceEntry, 'commands', 'provider profile.sourceEntries.effect-official-source')
-  assertStringValue(errors, stringField(errors, commands, 'status', 'provider profile.sourceEntries.effect-official-source.commands'), 'partita source status --contract .partita/source-entries.json --name effect', 'provider profile.sourceEntries.effect-official-source.commands.status')
-  assertStringValue(errors, stringField(errors, commands, 'update', 'provider profile.sourceEntries.effect-official-source.commands'), 'partita source update --contract .partita/source-entries.json --name effect --dry-run', 'provider profile.sourceEntries.effect-official-source.commands.update')
-  assertStringValue(errors, stringField(errors, commands, 'verify', 'provider profile.sourceEntries.effect-official-source.commands'), 'partita source verify --contract .partita/source-entries.json --name effect', 'provider profile.sourceEntries.effect-official-source.commands.verify')
-
-  const anchor = recordField(errors, sourceEntry, 'anchor', 'provider profile.sourceEntries.effect-official-source')
-  assertStringValue(errors, stringField(errors, anchor, 'manifest', 'provider profile.sourceEntries.effect-official-source.anchor'), 'repos/effect.subtree.json', 'provider profile.sourceEntries.effect-official-source.anchor.manifest')
-  assertStringValue(errors, stringField(errors, anchor, 'field', 'provider profile.sourceEntries.effect-official-source.anchor'), 'split', 'provider profile.sourceEntries.effect-official-source.anchor.field')
-  assertStringValue(errors, stringField(errors, anchor, 'value', 'provider profile.sourceEntries.effect-official-source.anchor'), stringField(errors, sourceManifest, 'split', 'repos/effect.subtree.json') ?? '', 'provider profile.sourceEntries.effect-official-source.anchor.value')
-  assertPartitaSourceContract(errors, sourceContract, sourceManifest)
+  assertStringValue(errors, stringField(errors, commands, 'status', 'provider profile.sourceEntries.effect-official-source.commands'), 'partita source status --contract repos/effect.subtree.json --name effect', 'provider profile.sourceEntries.effect-official-source.commands.status')
+  assertStringValue(errors, stringField(errors, commands, 'update', 'provider profile.sourceEntries.effect-official-source.commands'), 'partita source update --contract repos/effect.subtree.json --name effect --dry-run', 'provider profile.sourceEntries.effect-official-source.commands.update')
+  assertStringValue(errors, stringField(errors, commands, 'verify', 'provider profile.sourceEntries.effect-official-source.commands'), 'partita source verify --contract repos/effect.subtree.json --name effect', 'provider profile.sourceEntries.effect-official-source.commands.verify')
+  assertRecordDoesNotContain(errors, sourceEntry, 'repository', 'provider profile.sourceEntries.effect-official-source')
+  assertRecordDoesNotContain(errors, sourceEntry, 'branch', 'provider profile.sourceEntries.effect-official-source')
+  assertRecordDoesNotContain(errors, sourceEntry, 'prefix', 'provider profile.sourceEntries.effect-official-source')
+  assertRecordDoesNotContain(errors, sourceEntry, 'anchor', 'provider profile.sourceEntries.effect-official-source')
+  assertRecordDoesNotContain(errors, sourceEntry, 'llmDocument', 'provider profile.sourceEntries.effect-official-source')
+  assertRecordDoesNotContain(errors, sourceEntry, 'agentRoute', 'provider profile.sourceEntries.effect-official-source')
+  assertPartitaSubtreeContract(errors, sourceContract)
 
   const providerRecord = recordField(errors, providerProfile, 'providerRecord', 'provider profile')
   const sourceDelivery = recordField(errors, providerRecord, 'sourceDelivery', 'provider profile.providerRecord')
@@ -221,7 +226,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertRecordDoesNotContain(errors, options, 'runtime', 'provider profile.profiles.codex-effect-v4.options')
   assertEditorPolicy(errors, options)
 
-  assertPackageBaseline(errors, recordField(errors, sourceManifest, 'packageBaseline', 'repos/effect.subtree.json'), recordField(errors, profile, 'packageBaseline', 'provider profile.profiles.codex-effect-v4'))
+  assertPackageBaseline(errors, recordField(errors, profile, 'packageBaseline', 'provider profile.profiles.codex-effect-v4'))
 
   const managedSurfaces = recordField(errors, profile, 'managedSurfaces', 'provider profile.profiles.codex-effect-v4')
   const targetReceives = arrayField(errors, managedSurfaces, 'targetReceives', 'provider profile.profiles.codex-effect-v4.managedSurfaces')
@@ -239,35 +244,37 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertRecordDoesNotContain(errors, contributions, 'codexAssets', 'provider profile.profiles.codex-effect-v4.contributions')
 })
 
-function assertPartitaSourceContract(
-  errors: Array<string>,
-  sourceContract: Record<string, unknown>,
-  sourceManifest: Record<string, unknown>,
-): void {
-  const sources = arrayField(errors, sourceContract, 'sources', '.partita/source-entries.json')
-  const effectSource = sources?.find(source => isRecord(source) && source.name === 'effect')
-  if (!isRecord(effectSource)) {
-    errors.push('.partita/source-entries.json must include source entry named effect.')
-    return
-  }
+function assertPartitaSubtreeContract(errors: Array<string>, sourceContract: Record<string, unknown>): void {
+  assertStringValue(errors, stringField(errors, sourceContract, 'name', 'repos/effect.subtree.json'), 'effect', 'repos/effect.subtree.json.name')
+  assertStringValue(errors, stringField(errors, sourceContract, 'kind', 'repos/effect.subtree.json'), 'github-subtree', 'repos/effect.subtree.json.kind')
 
-  const upstream = recordField(errors, effectSource, 'upstream', '.partita/source-entries.json source effect')
-  const local = recordField(errors, effectSource, 'local', '.partita/source-entries.json source effect')
-  const anchor = recordField(errors, effectSource, 'anchor', '.partita/source-entries.json source effect')
-  const agent = recordField(errors, effectSource, 'agent', '.partita/source-entries.json source effect')
-  const boundaries = recordField(errors, effectSource, 'boundaries', '.partita/source-entries.json source effect')
-  const ownership = recordField(errors, effectSource, 'ownership', '.partita/source-entries.json source effect')
-  const pin = recordField(errors, effectSource, 'pin', '.partita/source-entries.json source effect')
+  const github = recordField(errors, sourceContract, 'github', 'repos/effect.subtree.json')
+  const local = recordField(errors, sourceContract, 'local', 'repos/effect.subtree.json')
+  const subtree = recordField(errors, sourceContract, 'subtree', 'repos/effect.subtree.json')
+  const anchor = recordField(errors, sourceContract, 'anchor', 'repos/effect.subtree.json')
+  const agent = recordField(errors, sourceContract, 'agent', 'repos/effect.subtree.json')
+  const commands = recordField(errors, sourceContract, 'commands', 'repos/effect.subtree.json')
+  const editorPolicy = recordField(errors, sourceContract, 'editorPolicy', 'repos/effect.subtree.json')
+  const boundaries = recordField(errors, sourceContract, 'boundaries', 'repos/effect.subtree.json')
+  const ownership = recordField(errors, sourceContract, 'ownership', 'repos/effect.subtree.json')
 
-  const split = stringField(errors, sourceManifest, 'split', 'repos/effect.subtree.json')
-  assertStringValue(errors, stringField(errors, upstream, 'repository', '.partita/source-entries.json source effect.upstream'), stringField(errors, sourceManifest, 'repository', 'repos/effect.subtree.json') ?? '', '.partita/source-entries.json source effect.upstream.repository')
-  assertStringValue(errors, stringField(errors, upstream, 'branch', '.partita/source-entries.json source effect.upstream'), stringField(errors, sourceManifest, 'branch', 'repos/effect.subtree.json') ?? '', '.partita/source-entries.json source effect.upstream.branch')
-  assertStringValue(errors, stringField(errors, upstream, 'ref', '.partita/source-entries.json source effect.upstream'), split ?? '', '.partita/source-entries.json source effect.upstream.ref')
-  assertStringValue(errors, stringField(errors, local, 'prefix', '.partita/source-entries.json source effect.local'), 'repos/effect', '.partita/source-entries.json source effect.local.prefix')
-  assertStringValue(errors, stringField(errors, anchor, 'llmDocument', '.partita/source-entries.json source effect.anchor'), 'repos/effect/LLMS.md', '.partita/source-entries.json source effect.anchor.llmDocument')
-  assertStringValue(errors, stringField(errors, agent, 'route', '.partita/source-entries.json source effect.agent'), 'harness/effect-routes.md', '.partita/source-entries.json source effect.agent.route')
-  assertStringValue(errors, stringField(errors, ownership, 'mode', '.partita/source-entries.json source effect.ownership'), 'provider', '.partita/source-entries.json source effect.ownership.mode')
-  assertBooleanValue(errors, booleanField(errors, boundaries, 'readOnly', '.partita/source-entries.json source effect.boundaries'), true, '.partita/source-entries.json source effect.boundaries.readOnly')
-  assertBooleanValue(errors, booleanField(errors, boundaries, 'importBlock', '.partita/source-entries.json source effect.boundaries'), true, '.partita/source-entries.json source effect.boundaries.importBlock')
-  assertStringValue(errors, stringField(errors, pin, 'ref', '.partita/source-entries.json source effect.pin'), split ?? '', '.partita/source-entries.json source effect.pin.ref')
+  const split = stringField(errors, subtree, 'split', 'repos/effect.subtree.json.subtree')
+  assertStringValue(errors, stringField(errors, github, 'repository', 'repos/effect.subtree.json.github'), 'Effect-TS/effect-smol', 'repos/effect.subtree.json.github.repository')
+  assertStringValue(errors, stringField(errors, github, 'url', 'repos/effect.subtree.json.github'), 'https://github.com/Effect-TS/effect-smol.git', 'repos/effect.subtree.json.github.url')
+  assertStringValue(errors, stringField(errors, github, 'branch', 'repos/effect.subtree.json.github'), 'main', 'repos/effect.subtree.json.github.branch')
+  assertStringValue(errors, stringField(errors, github, 'ref', 'repos/effect.subtree.json.github'), split ?? '', 'repos/effect.subtree.json.github.ref')
+  assertStringValue(errors, stringField(errors, local, 'prefix', 'repos/effect.subtree.json.local'), 'repos/effect', 'repos/effect.subtree.json.local.prefix')
+  assertStringValue(errors, stringField(errors, subtree, 'trailer', 'repos/effect.subtree.json.subtree'), `git-subtree-split: ${split ?? ''}`, 'repos/effect.subtree.json.subtree.trailer')
+  assertStringValue(errors, stringField(errors, anchor, 'llmDocument', 'repos/effect.subtree.json.anchor'), 'repos/effect/LLMS.md', 'repos/effect.subtree.json.anchor.llmDocument')
+  assertStringValue(errors, stringField(errors, agent, 'route', 'repos/effect.subtree.json.agent'), 'harness/effect-routes.md', 'repos/effect.subtree.json.agent.route')
+  assertStringValue(errors, stringField(errors, commands, 'status', 'repos/effect.subtree.json.commands'), 'partita source status --contract repos/effect.subtree.json --name effect', 'repos/effect.subtree.json.commands.status')
+  assertStringValue(errors, stringField(errors, commands, 'update', 'repos/effect.subtree.json.commands'), 'partita source update --contract repos/effect.subtree.json --name effect --dry-run', 'repos/effect.subtree.json.commands.update')
+  assertStringValue(errors, stringField(errors, commands, 'verify', 'repos/effect.subtree.json.commands'), 'partita source verify --contract repos/effect.subtree.json --name effect', 'repos/effect.subtree.json.commands.verify')
+  assertStringValue(errors, stringField(errors, editorPolicy, 'autoImportExclude', 'repos/effect.subtree.json.editorPolicy'), 'block', 'repos/effect.subtree.json.editorPolicy.autoImportExclude')
+  assertStringValue(errors, stringField(errors, editorPolicy, 'watcherExclude', 'repos/effect.subtree.json.editorPolicy'), 'recommended', 'repos/effect.subtree.json.editorPolicy.watcherExclude')
+  assertStringValue(errors, stringField(errors, editorPolicy, 'searchExclude', 'repos/effect.subtree.json.editorPolicy'), 'recommended', 'repos/effect.subtree.json.editorPolicy.searchExclude')
+  assertStringValue(errors, stringField(errors, editorPolicy, 'filesExclude', 'repos/effect.subtree.json.editorPolicy'), 'enabled', 'repos/effect.subtree.json.editorPolicy.filesExclude')
+  assertStringValue(errors, stringField(errors, ownership, 'mode', 'repos/effect.subtree.json.ownership'), 'provider', 'repos/effect.subtree.json.ownership.mode')
+  assertBooleanValue(errors, booleanField(errors, boundaries, 'readOnly', 'repos/effect.subtree.json.boundaries'), true, 'repos/effect.subtree.json.boundaries.readOnly')
+  assertBooleanValue(errors, booleanField(errors, boundaries, 'importBlock', 'repos/effect.subtree.json.boundaries'), true, 'repos/effect.subtree.json.boundaries.importBlock')
 }

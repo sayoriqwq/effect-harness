@@ -15,11 +15,10 @@
 这一层只服务 `effect-harness` 自身的维护：
 
 - `harness/offcial-guide.md`：仓内 guide 唯一真源。
-- `.partita/source-entries.json`：Partita 管理的通用源入口契约实例。
 - `repos/effect/`：已 pin 的官方 Effect 源码，只供 agent 读取参考。
-- `repos/effect.subtree.json`：Effect 源入口 manifest 与 package 基线。
+- `repos/effect.subtree.json`：Partita 管理的 GitHub subtree pin 契约，是 Effect 源入口唯一真源。
 - `harness/effect-routes.md`：agent 读取 `repos/effect/` 的路线表。
-- `harness/provider/effect-harness.provider.json`：提供给 Prelude 的 provider profile。
+- `harness/provider/effect-harness.provider.json`：提供给 Prelude 的 provider profile，也是 package 基线真源。
 - `src/`：本仓最小验证器，只验证 provider 仓自身边界。
 
 ## 目标 Harness 层
@@ -32,9 +31,8 @@
 - `tsconfig.json` 指针：维护 `@effect/language-service` 插件和 `floatingEffect: error`。
 - 诊断路径：目标项目以 `tsgo --noEmit` 作为主要 Effect 诊断路径。
 
-目标项目不接收 `repos/effect/`、`.partita/source-entries.json`、`repos/effect.subtree.json`、
-旧 `.codex/skills`、目标 runtime 模板、反馈入口、`.effect-harness.json` 或 effect-harness
-管理的 `AGENTS.md` 管理块。
+目标项目不接收 `repos/effect/`、`repos/effect.subtree.json`、旧 `.codex/skills`、目标 runtime
+模板、反馈入口、`.effect-harness.json` 或 effect-harness 管理的 `AGENTS.md` 管理块。
 
 ## 职责边界
 
@@ -50,8 +48,8 @@ pnpm effect:verify
 pnpm verify
 ```
 
-`pnpm effect:verify` 只验证本 provider 仓自身：源入口 pin、Partita 源入口契约、provider
-profile 和 import 边界。
+`pnpm effect:verify` 只验证本 provider 仓自身：源入口 pin、Partita GitHub subtree 契约、
+provider profile 和 import 边界。
 
 更新 Effect 源入口前先读 [harness/source.md](./harness/source.md)。agent 需要读取 pinned
 Effect 源码时先读 [harness/effect-routes.md](./harness/effect-routes.md)。

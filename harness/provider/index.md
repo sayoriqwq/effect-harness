@@ -18,7 +18,7 @@ package 基线。
 第二层是目标 harness 层：Prelude 读取 provider profile，在目标项目中维护 provider record、
 package 基线、`tsconfig.json` language-service plugin 和诊断脚本。
 
-Partita 负责通用源入口 pin 语义和 `.partita/source-entries.json`；effect-harness 不复制这套
+Partita 负责 GitHub subtree pin 语义和 `repos/effect.subtree.json`；effect-harness 不复制这套
 能力。Prelude 负责目标项目生命周期；effect-harness 不投影 Codex runtime 资产、反馈入口、目标
 `AGENTS.md` blocks 或 `.effect-harness.json` state。
 

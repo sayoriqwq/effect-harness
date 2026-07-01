@@ -8,9 +8,11 @@ import * as Effect from 'effect/Effect'
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const cliPath = join(repoRoot, 'bin/effect-harness.ts')
-const defaultRepository = 'https://example.invalid/effect-smol.git'
+const defaultRepository = 'Effect-TS/effect-smol'
+const defaultRepositoryUrl = 'https://github.com/Effect-TS/effect-smol.git'
 const defaultPrefix = 'repos/effect'
 const defaultLlmDocument = 'repos/effect/LLMS.md'
+const defaultRoute = 'harness/effect-routes.md'
 
 function tempDir() {
   return mkdtempSync(join(tmpdir(), 'effect-harness-subtree-'))
@@ -50,35 +52,69 @@ function runSourceVerify(root: string) {
   )
 }
 
-function sourceEntryManifest(options: {
+function sourceEntryContract(options: {
   readonly split: string
   readonly repository?: string | undefined
+  readonly repositoryUrl?: string | undefined
   readonly branch?: string | undefined
   readonly prefix?: string | undefined
   readonly llmDocument?: string | undefined
-  readonly packageBaseline?: Record<string, string> | undefined
 }) {
   const repository = options.repository ?? defaultRepository
+  const repositoryUrl = options.repositoryUrl ?? defaultRepositoryUrl
   const branch = options.branch ?? 'main'
   const prefix = options.prefix ?? defaultPrefix
   const llmDocument = options.llmDocument ?? defaultLlmDocument
 
   return {
+    schemaVersion: 1,
     name: 'effect',
-    kind: 'source-entry',
-    mechanism: 'git-subtree',
-    repository,
-    branch,
-    prefix,
-    split: options.split,
-    llmDocument,
-    packageBaseline: options.packageBaseline ?? {},
+    kind: 'github-subtree',
+    github: {
+      repository,
+      url: repositoryUrl,
+      branch,
+      ref: options.split,
+    },
+    local: {
+      prefix,
+    },
+    subtree: {
+      split: options.split,
+      trailer: `git-subtree-split: ${options.split}`,
+    },
+    anchor: {
+      llmDocument,
+    },
+    agent: {
+      route: defaultRoute,
+    },
+    commands: {
+      status: 'partita source status --contract repos/effect.subtree.json --name effect',
+      update: 'partita source update --contract repos/effect.subtree.json --name effect --dry-run',
+      verify: 'partita source verify --contract repos/effect.subtree.json --name effect',
+    },
+    editorPolicy: {
+      autoImportExclude: 'block',
+      watcherExclude: 'recommended',
+      searchExclude: 'recommended',
+      filesExclude: 'enabled',
+    },
+    ownership: {
+      mode: 'provider',
+    },
+    boundaries: {
+      readOnly: true,
+      importBlock: true,
+    },
   }
 }
 
-function writeManifest(root: string, manifest: unknown) {
+function writeContract(root: string, contract: unknown) {
   mkdirSync(join(root, 'repos'), { recursive: true })
-  writeFileSync(join(root, 'repos/effect.subtree.json'), `${JSON.stringify(manifest, null, 2)}\n`)
+  mkdirSync(join(root, 'harness'), { recursive: true })
+  writeFileSync(join(root, 'repos/effect.subtree.json'), `${JSON.stringify(contract, null, 2)}\n`)
+  writeFileSync(join(root, defaultRoute), '# Effect routes\n')
 }
 
 function writePinnedSource(root: string, llms = '# Effect\n') {
@@ -94,7 +130,7 @@ it.effect('source subtree verifier reads the split from the current HEAD history
   try {
     initGit(root)
     writePinnedSource(root)
-    writeManifest(root, sourceEntryManifest({ split: splitOnMain }))
+    writeContract(root, sourceEntryContract({ split: splitOnMain }))
     commitWithTrailer(root, splitOnMain)
 
     git(root, ['switch', '-c', 'other'])
@@ -112,14 +148,14 @@ it.effect('source subtree verifier reads the split from the current HEAD history
   }
 }))
 
-it.effect('source subtree verifier accepts a minimal effect manifest without generic pin contract', () => Effect.sync(() => {
+it.effect('source subtree verifier accepts the single GitHub subtree contract', () => Effect.sync(() => {
   const root = tempDir()
   const split = 'c'.repeat(40)
 
   try {
     initGit(root)
     writePinnedSource(root)
-    writeManifest(root, sourceEntryManifest({ split }))
+    writeContract(root, sourceEntryContract({ split }))
     commitWithTrailer(root, split)
 
     const result = runSourceVerify(root)
@@ -138,7 +174,7 @@ it.effect('source subtree verifier rejects a missing source directory', () => Ef
 
   try {
     initGit(root)
-    writeManifest(root, sourceEntryManifest({ split }))
+    writeContract(root, sourceEntryContract({ split }))
     commitWithTrailer(root, split)
 
     const result = runSourceVerify(root)
@@ -157,8 +193,8 @@ it.effect('source subtree verifier rejects a gitlink submodule source entry', ()
 
   try {
     initGit(root)
-    writeManifest(root, sourceEntryManifest({ split }))
-    writeFileSync(join(root, '.gitmodules'), `[submodule "effect"]\n\tpath = ${defaultPrefix}\n\turl = ${defaultRepository}\n`)
+    writeContract(root, sourceEntryContract({ split }))
+    writeFileSync(join(root, '.gitmodules'), `[submodule "effect"]\n\tpath = ${defaultPrefix}\n\turl = ${defaultRepositoryUrl}\n`)
     git(root, ['add', 'repos/effect.subtree.json', '.gitmodules'])
     git(root, ['update-index', '--add', '--cacheinfo', `160000,${split},${defaultPrefix}`])
     git(root, ['commit', '-m', `Add gitlink\n\ngit-subtree-dir: ${defaultPrefix}\ngit-subtree-split: ${split}`])
@@ -174,35 +210,35 @@ it.effect('source subtree verifier rejects a gitlink submodule source entry', ()
   }
 }))
 
-it.effect('source subtree verifier rejects a manifest pin when history has no subtree trailer', () => Effect.sync(() => {
+it.effect('source subtree verifier rejects a contract pin when history has no subtree trailer', () => Effect.sync(() => {
   const root = tempDir()
   const split = 'f'.repeat(40)
 
   try {
     initGit(root)
     writePinnedSource(root)
-    writeManifest(root, sourceEntryManifest({ split }))
+    writeContract(root, sourceEntryContract({ split }))
     commit(root, 'Import pinned source without subtree trailer')
 
     const result = runSourceVerify(root)
 
     assert.notEqual(result.status, 0, result.stdout)
-    assert.match(result.stderr, /Missing git subtree split for repos\/effect; manifest-only source pins are not accepted/u)
+    assert.match(result.stderr, /Missing git subtree split for repos\/effect; contract-only source pins are not accepted/u)
   }
   finally {
     rmSync(root, { recursive: true, force: true })
   }
 }))
 
-it.effect('source subtree verifier rejects a manifest split that does not match the subtree trailer', () => Effect.sync(() => {
+it.effect('source subtree verifier rejects a contract split that does not match the subtree trailer', () => Effect.sync(() => {
   const root = tempDir()
-  const manifestSplit = '1'.repeat(40)
+  const contractSplit = '1'.repeat(40)
   const trailerSplit = '2'.repeat(40)
 
   try {
     initGit(root)
     writePinnedSource(root)
-    writeManifest(root, sourceEntryManifest({ split: manifestSplit }))
+    writeContract(root, sourceEntryContract({ split: contractSplit }))
     commitWithTrailer(root, trailerSplit)
 
     const result = runSourceVerify(root)
@@ -222,7 +258,7 @@ it.effect('source subtree verifier rejects a missing LLMS anchor document', () =
   try {
     initGit(root)
     mkdirSync(join(root, defaultPrefix), { recursive: true })
-    writeManifest(root, sourceEntryManifest({ split }))
+    writeContract(root, sourceEntryContract({ split }))
     commitWithTrailer(root, split)
 
     const result = runSourceVerify(root)
@@ -242,7 +278,7 @@ it.effect('source subtree verifier rejects application imports from the source p
   try {
     initGit(root)
     writePinnedSource(root)
-    writeManifest(root, sourceEntryManifest({ split }))
+    writeContract(root, sourceEntryContract({ split }))
     mkdirSync(join(root, 'tests'), { recursive: true })
     writeFileSync(join(root, 'tests/imports-source.ts'), 'import { Effect } from "../repos/' + 'effect/packages/effect/src/Effect.ts"\n')
     commitWithTrailer(root, split)

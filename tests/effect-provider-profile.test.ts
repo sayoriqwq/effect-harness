@@ -19,7 +19,7 @@ function record(value: unknown): Record<string, unknown> {
 
 it.effect('provider profile exposes Effect source pin as provider-internal source entry', () => Effect.sync(() => {
   const profile = readJson(join(repoRoot, 'harness/provider/effect-harness.provider.json'))
-  const sourceManifest = readJson(join(repoRoot, 'repos/effect.subtree.json'))
+  const sourceContract = readJson(join(repoRoot, 'repos/effect.subtree.json'))
   const providerRecord = record(profile.providerRecord)
   const requiredFields = providerRecord.requiredFields as ReadonlyArray<unknown>
   assert.ok(requiredFields.includes('artifact.sourceIdentity'))
@@ -30,19 +30,25 @@ it.effect('provider profile exposes Effect source pin as provider-internal sourc
 
   const sourceEntries = record(profile.sourceEntries)
   const sourceEntry = record(sourceEntries['effect-official-source'])
-  const anchor = record(sourceEntry.anchor)
-  assert.equal(sourceEntry.kind, 'provider-internal-source-entry')
-  assert.equal(sourceEntry.prefix, 'repos/effect')
-  assert.equal(sourceEntry.agentRoute, 'harness/effect-routes.md')
-  assert.equal(anchor.manifest, 'repos/effect.subtree.json')
-  assert.equal(anchor.field, 'split')
-  assert.equal(anchor.value, sourceManifest.split)
+  const contract = record(sourceEntry.contract)
+  const subtree = record(sourceContract.subtree)
+  assert.equal(sourceEntry.kind, 'provider-internal-github-subtree')
+  assert.equal(contract.path, 'repos/effect.subtree.json')
+  assert.equal(contract.owner, 'partita')
+  assert.equal(contract.format, 'github-subtree')
+  assert.equal(subtree.split, '3475ee6c2bda6b05c6d7a12ce30c8bb840b5b1a6')
+  assert.equal('repository' in sourceEntry, false)
+  assert.equal('branch' in sourceEntry, false)
+  assert.equal('prefix' in sourceEntry, false)
+  assert.equal('anchor' in sourceEntry, false)
+  assert.equal('llmDocument' in sourceEntry, false)
+  assert.equal('agentRoute' in sourceEntry, false)
 
   const sourceBoundary = record(codexProfile.sourceBoundary)
   assert.equal(sourceBoundary.providerRepoInternal, true)
   assert.equal(sourceBoundary.targetDelivery, 'identity-only')
   assert.ok((sourceBoundary.targetMustNotReceive as ReadonlyArray<unknown>).includes('repos/effect'))
-  assert.ok((sourceBoundary.allowedTargetSourceIdentity as ReadonlyArray<unknown>).includes('artifact.sourceIdentity.anchor'))
+  assert.ok((sourceBoundary.allowedTargetSourceIdentity as ReadonlyArray<unknown>).includes('artifact.sourceIdentity.contractPath'))
   assert.equal('officialSource' in codexProfile, false)
 }))
 
@@ -61,6 +67,7 @@ it.effect('provider profile declares target managed surfaces and editor policy o
 
   const targetDoesNotReceive = managedSurfaces.targetDoesNotReceive as ReadonlyArray<string>
   assert.ok(targetDoesNotReceive.includes('provider repo internal source pin repos/effect'))
+  assert.ok(targetDoesNotReceive.includes('provider repo internal subtree contract repos/effect.subtree.json'))
   assert.ok(targetDoesNotReceive.includes('effect-harness runtime assets under .codex'))
   assert.ok(targetDoesNotReceive.includes('.effect-harness.json standalone manifest'))
 
