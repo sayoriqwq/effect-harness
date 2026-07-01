@@ -18,7 +18,7 @@ Partita 负责。本仓只维护已经 pin 进来的 Effect 源入口实例，�
 | --- | --- | --- | --- | --- |
 | 判断当前源入口 pin 和 package 基线 | `repos/effect.subtree.json`、`harness/provider/effect-harness.provider.json` | `pnpm-workspace.yaml` | 基线审计、provider drift 判断 | 本文档不声明最新状态；需要更新时走 Partita GitHub subtree 流程 |
 | 理解本仓如何接入 Effect source | `harness/source.md` | `harness/provider/index.md`、`harness/offcial-guide.md` | source-entry 维护、更新计划 | 这里是 Effect 实例，不是 Partita 通用 pin |
-| 开始写非平凡 Effect 代码 | `repos/effect/LLMS.md` | `repos/effect/ai-docs/src/index.md`、`repos/effect/.patterns/effect.md` | 代码方案、重构方案 | 先按上游 guide 建模，再查具体 API |
+| 开始写 Effect 程序逻辑 | `repos/effect/LLMS.md` | `repos/effect/ai-docs/src/index.md`、`repos/effect/.patterns/effect.md` | 代码方案、重构方案 | 先按上游 guide 建模，再查具体 API |
 | 查公开 API surface | `repos/effect/packages/effect/package.json` | `repos/effect/packages/effect/src/index.ts`、对应 `src/<Module>.ts` | import 建议、API 使用 | 不要建议 import `internal/*` 或 `*/index` 禁止项 |
 | 查核心 Effect 写法 | `repos/effect/ai-docs/src/01_effect/01_basics/` | `repos/effect/packages/effect/src/Effect.ts`、`repos/effect/packages/effect/test/Effect.test.ts` | `Effect.gen`、`Effect.fn` 代码 | 失败/中断的 terminal effect 使用 `return yield*` |
 | 设计服务和 Layer | `repos/effect/ai-docs/src/01_effect/02_services/` | `repos/effect/packages/effect/src/Context.ts`、`Layer.ts`、`LayerMap.ts` | service contract、Layer 组合 | 当前 baseline 使用 `Context.Service`，不要新增 `Context.Tag` 服务定义 |

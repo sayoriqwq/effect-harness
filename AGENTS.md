@@ -7,7 +7,8 @@
 - Provider 层：声明 Prelude 集成 effect-harness 时应消费的 provider profile、source identity、
   package 基线和诊断入口。
 
-在本仓或目标项目写非平凡 Effect 代码前，先读：
+在本仓写 Effect 程序逻辑，或修改 source route、tsgo policy、provider profile、verify
+pipeline、harness 边界前，先读：
 
 - `HARNESS.md`
 - `README.md`

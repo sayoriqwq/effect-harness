@@ -68,7 +68,7 @@ Prelude 负责目标项目 lifecycle、provider record、drift、verify 和 main
 `repos/effect.subtree.json` 记录上游 repo、branch/ref、local prefix、split、anchor、agent route、
 editor policy、ownership 和 read-only/import block。
 
-`repos/effect/LLMS.md` 是 agent 写非平凡 Effect 代码前的 LLM anchor。
+`repos/effect/LLMS.md` 是 agent 写 Effect 程序逻辑前的 LLM anchor。
 
 `harness/effect-routes.md` 按 agent 意图组织读取路线，覆盖 API surface、tests、ai-docs、CLI、
 Node runtime、services、Schema、HTTP、AI、SQL、Cluster/RPC/Workflow 等路径。

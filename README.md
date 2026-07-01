@@ -58,7 +58,8 @@ pnpm verify
 完成态只认 `pnpm verify`。该命令由 Effect pipeline 组织，按 `source-pins`、
 `harness-contract`、`tsgo-diagnostics`、`tests`、`lint`、`knip` 顺序 fail-fast 执行。
 
-写非平凡 Effect 代码或修改 harness 约束前，先读
+写 Effect 程序逻辑，或修改 source route、tsgo policy、provider profile、verify pipeline、
+harness 边界前，先读
 [harness/feedback-loop.md](./harness/feedback-loop.md)。更新 source entries 前先读
 [harness/source.md](./harness/source.md)。agent 需要读取 pinned Effect 源码时先读
 [harness/effect-routes.md](./harness/effect-routes.md)。agent 需要调整 strict tsgo policy 或读取

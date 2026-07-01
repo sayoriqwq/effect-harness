@@ -39,7 +39,8 @@ pnpm verify
 
 ## Loop
 
-Codex 在本仓写非平凡 Effect 代码或修改 harness 约束时，MUST 按以下闭环执行：
+Codex 在本仓写 Effect 程序逻辑，或修改 source route、tsgo policy、provider profile、
+verify pipeline、harness 边界时，MUST 按以下闭环执行：
 
 1. 明确任务意图和涉及模块。
 2. 从 `harness/index.md` 找到对应路线。
