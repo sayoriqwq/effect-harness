@@ -74,10 +74,20 @@ const packedTarball = Effect.fnUntraced(function* (directory: string) {
   return path.join(directory, tarballs[0]!)
 })
 
+const packageVersion = Effect.fnUntraced(function* (root: string) {
+  const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
+  const packageText = yield* fs.readFileString(path.join(root, 'package.json'))
+  const packageJson = record(yield* Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(packageText))
+  assert.equal(typeof packageJson.version, 'string')
+  return packageJson.version
+})
+
 it.layer(NodeServices.layer)((it) => {
   it.effect('provider discovery exposes a Prelude-readable provider envelope', () => Effect.gen(function* () {
     const root = yield* repoRoot()
     const discovery: ProviderDiscovery = yield* discoverProvider(root)
+    const expectedPackageVersion = yield* packageVersion(root)
 
     assert.equal(discovery.schemaVersion, 1)
     assert.equal(discovery.artifactRoot, root)
@@ -93,7 +103,7 @@ it.layer(NodeServices.layer)((it) => {
     assert.equal(discovery.discovery.targetLifecycleOwner, 'prelude')
 
     assert.equal(discovery.packageLocator.packageName, '@sayoriqwq/effect-harness')
-    assert.equal(discovery.packageLocator.packageVersion, '0.0.0')
+    assert.equal(discovery.packageLocator.packageVersion, expectedPackageVersion)
     assert.equal(discovery.packageLocator.binName, 'effect-harness')
     assert.equal(discovery.packageLocator.binPath, 'dist/bin/effect-harness.js')
     assert.equal(discovery.packageLocator.discoveryCommand, 'npx --yes @sayoriqwq/effect-harness provider-discover')
