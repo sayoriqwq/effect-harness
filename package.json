@@ -8,7 +8,7 @@
     "registry": "https://registry.npmjs.org/"
   },
   "packageManager": "pnpm@10.33.2",
-  "description": "Effect v4 beta Prelude provider profile and source route package.",
+  "description": "Effect v4 beta provider profile and source route package.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -40,9 +40,9 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "prepare": "effect-tsgo patch",
-    "source:status": "npx --yes @sayoriqwq/partita@0.1.0 pin status --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect && npx --yes @sayoriqwq/partita@0.1.0 pin status --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo",
-    "source:update": "npx --yes @sayoriqwq/partita@0.1.0 pin update --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run && npx --yes @sayoriqwq/partita@0.1.0 pin update --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run",
-    "source:verify": "npx --yes @sayoriqwq/partita@0.1.0 pin verify --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect && npx --yes @sayoriqwq/partita@0.1.0 pin verify --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo",
+    "source:status": "npx --yes @sayoriqwq/partita pin status --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect && npx --yes @sayoriqwq/partita pin status --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo",
+    "source:update": "npx --yes @sayoriqwq/partita pin update --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run && npx --yes @sayoriqwq/partita pin update --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run",
+    "source:verify": "npx --yes @sayoriqwq/partita pin verify --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect && npx --yes @sayoriqwq/partita pin verify --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo",
     "test": "vitest run tests/*.test.ts",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",

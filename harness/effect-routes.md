@@ -11,6 +11,8 @@ Partita 负责。本仓只维护已经 pin 进来的 Effect 源入口实例，�
 - `repos/effect/LLMS.md` 是上游 LLM guide，总是优先于零散猜测和 `node_modules`。
 - GitHub subtree status/update/verify 借用 Partita CLI：`pnpm source:status`、
   `pnpm source:update`、`pnpm source:verify`。
+- Partita package CLI 已发布为 `@sayoriqwq/partita@0.1.0`；本仓 `source:*` scripts 通过
+  `npx --yes @sayoriqwq/partita pin ...` 执行，不依赖兄弟目录。
 
 ## 路线表
 

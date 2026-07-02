@@ -29,8 +29,8 @@ const expectedSourcePins: ReadonlyArray<ExpectedSourcePin> = [
     prefix: 'repos/effect',
     anchor: 'repos/effect/LLMS.md',
     route: 'harness/effect-routes.md',
-    updateCommand: 'partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
-    verifyCommand: 'partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
+    updateCommand: 'npx --yes @sayoriqwq/partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
+    verifyCommand: 'npx --yes @sayoriqwq/partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
     filesExclude: 'enabled',
   },
   {
@@ -40,8 +40,8 @@ const expectedSourcePins: ReadonlyArray<ExpectedSourcePin> = [
     prefix: 'repos/tsgo',
     anchor: 'repos/tsgo/README.md',
     route: 'harness/tsgo-routes.md',
-    updateCommand: 'partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run',
-    verifyCommand: 'partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo',
+    updateCommand: 'npx --yes @sayoriqwq/partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run',
+    verifyCommand: 'npx --yes @sayoriqwq/partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo',
     filesExclude: 'disabled',
   },
 ]

@@ -122,8 +122,8 @@ function sourceEntryContract(options: SourceEntryContractOptions) {
       llmDocument: options.llmDocument,
     },
     commands: {
-      update: `partita pin update --contract ${contractPath} --name ${options.name} --prefix ${options.prefix} --dry-run`,
-      verify: `partita pin verify --contract ${contractPath} --name ${options.name} --prefix ${options.prefix}`,
+      update: `npx --yes @sayoriqwq/partita pin update --contract ${contractPath} --name ${options.name} --prefix ${options.prefix} --dry-run`,
+      verify: `npx --yes @sayoriqwq/partita pin verify --contract ${contractPath} --name ${options.name} --prefix ${options.prefix}`,
     },
     agent: {
       route: options.route,

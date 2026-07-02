@@ -27,6 +27,9 @@ updated: 2026-07-01
 当前 pin 的 `Effect-TS/tsgo` commit 是 `43ed476270fb3cf78fe7afac2086d67340ca0486`，
 对应 `@effect/tsgo@0.15.0` package baseline。
 
+Partita package CLI 已发布为 `@sayoriqwq/partita@0.1.0`；本仓 `source:*` scripts 通过
+`npx --yes @sayoriqwq/partita pin ...` 执行，不依赖兄弟目录。
+
 ## Routes
 
 | Agent 意图 | 先读 | 深入核对 | 适用输出 | 注意 |

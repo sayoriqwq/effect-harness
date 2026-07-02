@@ -12,6 +12,7 @@ node_modules
 .turbo
 dist
 dist-ssr
+fixture/
 *.local
 
 # Editor directories and files
