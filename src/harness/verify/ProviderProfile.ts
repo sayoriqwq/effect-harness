@@ -9,6 +9,7 @@ import {
   strictDiagnosticGate,
   strictDiagnosticSeverity,
 } from './TsgoPolicy.ts'
+import { verifyStageSpecs } from './VerifyStage.ts'
 
 function decodeJsonRecord(value: unknown, source: string): Effect.Effect<Record<string, unknown>, HarnessError> {
   return isRecord(value)
@@ -239,6 +240,13 @@ const expectedPackageGroups = {
   },
 } as const satisfies Readonly<Record<string, ExpectedPackageGroup>>
 
+const expectedLintCommand = 'pnpm lint --max-warnings 0'
+const expectedLintScript = 'eslint'
+const expectedTestCommand = 'pnpm test'
+const expectedTestScript = 'vitest run tests/*.test.ts'
+const expectedVerifyCommand = 'pnpm verify'
+const expectedVerifyScript = 'node bin/effect-harness.ts verify --harness .'
+
 function assertPackageBaseline(
   errors: Array<string>,
   profileBaseline: Record<string, unknown> | undefined,
@@ -338,6 +346,123 @@ function assertEditorPolicyContribution(
 
   assertSourceEntryEditorPolicy(errors, effectContract, 'effect-official-source', 'enabled')
   assertSourceEntryEditorPolicy(errors, tsgoContract, 'tsgo-official-source', 'disabled')
+}
+
+function assertEslintConfigContains(errors: Array<string>, eslintText: string, marker: string): void {
+  if (!eslintText.includes(marker)) {
+    errors.push(`eslint.config.mjs must contain ${marker}.`)
+  }
+}
+
+function assertLintGuardrailsContribution(
+  errors: Array<string>,
+  contributions: Record<string, unknown> | undefined,
+  packageManifest: Record<string, unknown>,
+  eslintText: string,
+): void {
+  const lintGuardrails = recordField(errors, contributions, 'lintGuardrails', 'provider profile.profiles.codex-effect-v4.contributions')
+  assertStringValue(errors, stringField(errors, lintGuardrails, 'mode', 'provider profile lintGuardrails contribution'), 'command-policy', 'provider profile lintGuardrails.mode')
+  assertStringValue(errors, stringField(errors, lintGuardrails, 'stage', 'provider profile lintGuardrails contribution'), 'lint', 'provider profile lintGuardrails.stage')
+  assertStringValue(errors, stringField(errors, lintGuardrails, 'command', 'provider profile lintGuardrails contribution'), expectedLintCommand, 'provider profile lintGuardrails.command')
+  assertArrayContainsString(errors, arrayField(errors, lintGuardrails, 'configFiles', 'provider profile lintGuardrails contribution'), 'eslint.config.mjs', 'provider profile lintGuardrails.configFiles')
+
+  const scripts = recordField(errors, packageManifest, 'scripts', 'package.json')
+  assertStringValue(errors, stringField(errors, scripts, 'lint', 'package.json.scripts'), expectedLintScript, 'package.json.scripts.lint')
+
+  const layers = recordField(errors, lintGuardrails, 'layers', 'provider profile lintGuardrails contribution')
+  const owns = arrayField(errors, layers, 'owns', 'provider profile lintGuardrails.layers')
+  assertArrayContainsString(errors, owns, 'repository import boundary', 'provider profile lintGuardrails.layers.owns')
+  assertArrayContainsString(errors, owns, 'Effect v4 CLI import boundary', 'provider profile lintGuardrails.layers.owns')
+  assertArrayContainsString(errors, owns, 'Effect test entry', 'provider profile lintGuardrails.layers.owns')
+  assertArrayContainsString(errors, owns, 'syntax-level Effect guardrails', 'provider profile lintGuardrails.layers.owns')
+  const doesNotOwn = arrayField(errors, layers, 'doesNotOwn', 'provider profile lintGuardrails.layers')
+  assertArrayContainsString(errors, doesNotOwn, 'Effect semantic diagnostics', 'provider profile lintGuardrails.layers.doesNotOwn')
+  assertArrayContainsString(errors, doesNotOwn, 'tsgo rule severity map', 'provider profile lintGuardrails.layers.doesNotOwn')
+
+  const rules = recordField(errors, lintGuardrails, 'rules', 'provider profile lintGuardrails contribution')
+  const restrictedImports = arrayField(errors, rules, 'restrictedImports', 'provider profile lintGuardrails.rules')
+  for (const source of ['node:test', 'vitest', '@effect/cli', '@effect/cli/*', 'repos/effect/**', 'repos/tsgo/**']) {
+    assertArrayContainsString(errors, restrictedImports, source, 'provider profile lintGuardrails.rules.restrictedImports')
+    const eslintMarker = source.endsWith('/**')
+      ? source.slice(0, -3)
+      : source.endsWith('/*')
+        ? source.slice(0, -2)
+        : source
+    assertEslintConfigContains(errors, eslintText, eslintMarker)
+  }
+
+  const restrictedSyntax = arrayField(errors, rules, 'restrictedSyntax', 'provider profile lintGuardrails.rules')
+  for (const syntax of ['Context.Tag', 'Effect.catchAllCause', 'Effect.ignore', 'Effect.serviceOption', '{ disableValidation: true }', 'plain it() in tests']) {
+    assertArrayContainsString(errors, restrictedSyntax, syntax, 'provider profile lintGuardrails.rules.restrictedSyntax')
+  }
+  for (const marker of [
+    'MemberExpression[object.name="Context"][property.name="Tag"]',
+    'catchAllCause|ignore|serviceOption',
+    'disableValidation',
+    'CallExpression[callee.name="it"]',
+  ]) {
+    assertEslintConfigContains(errors, eslintText, marker)
+  }
+}
+
+function assertTestPolicyContribution(
+  errors: Array<string>,
+  contributions: Record<string, unknown> | undefined,
+  packageManifest: Record<string, unknown>,
+): void {
+  const testPolicy = recordField(errors, contributions, 'testPolicy', 'provider profile.profiles.codex-effect-v4.contributions')
+  assertStringValue(errors, stringField(errors, testPolicy, 'mode', 'provider profile testPolicy contribution'), 'command-policy', 'provider profile testPolicy.mode')
+  assertStringValue(errors, stringField(errors, testPolicy, 'stage', 'provider profile testPolicy contribution'), 'tests', 'provider profile testPolicy.stage')
+  assertStringValue(errors, stringField(errors, testPolicy, 'command', 'provider profile testPolicy contribution'), expectedTestCommand, 'provider profile testPolicy.command')
+  assertStringValue(errors, stringField(errors, testPolicy, 'packageScript', 'provider profile testPolicy contribution'), expectedTestScript, 'provider profile testPolicy.packageScript')
+  assertStringValue(errors, stringField(errors, testPolicy, 'framework', 'provider profile testPolicy contribution'), '@effect/vitest', 'provider profile testPolicy.framework')
+  assertArrayContainsString(errors, arrayField(errors, testPolicy, 'expectedEntries', 'provider profile testPolicy contribution'), 'tests/*.test.ts', 'provider profile testPolicy.expectedEntries')
+  assertArrayContainsString(errors, arrayField(errors, testPolicy, 'effectEntrypoints', 'provider profile testPolicy contribution'), 'it.effect', 'provider profile testPolicy.effectEntrypoints')
+  assertArrayContainsString(errors, arrayField(errors, testPolicy, 'effectEntrypoints', 'provider profile testPolicy contribution'), 'it.live', 'provider profile testPolicy.effectEntrypoints')
+  assertArrayContainsString(errors, arrayField(errors, testPolicy, 'effectEntrypoints', 'provider profile testPolicy contribution'), 'layer', 'provider profile testPolicy.effectEntrypoints')
+  assertArrayContainsString(errors, arrayField(errors, testPolicy, 'disallowedImports', 'provider profile testPolicy contribution'), 'node:test', 'provider profile testPolicy.disallowedImports')
+  assertArrayContainsString(errors, arrayField(errors, testPolicy, 'disallowedImports', 'provider profile testPolicy contribution'), 'vitest', 'provider profile testPolicy.disallowedImports')
+
+  const scripts = recordField(errors, packageManifest, 'scripts', 'package.json')
+  assertStringValue(errors, stringField(errors, scripts, 'test', 'package.json.scripts'), expectedTestScript, 'package.json.scripts.test')
+}
+
+function stageRecordByTag(
+  stages: ReadonlyArray<unknown> | undefined,
+  tag: string,
+): Record<string, unknown> | undefined {
+  return stages?.find(stage => isRecord(stage) && stage.tag === tag) as Record<string, unknown> | undefined
+}
+
+function assertVerificationPolicyContribution(
+  errors: Array<string>,
+  contributions: Record<string, unknown> | undefined,
+  packageManifest: Record<string, unknown>,
+): void {
+  const verificationPolicy = recordField(errors, contributions, 'verificationPolicy', 'provider profile.profiles.codex-effect-v4.contributions')
+  assertStringValue(errors, stringField(errors, verificationPolicy, 'mode', 'provider profile verificationPolicy contribution'), 'pipeline-policy', 'provider profile verificationPolicy.mode')
+  assertStringValue(errors, stringField(errors, verificationPolicy, 'completionGate', 'provider profile verificationPolicy contribution'), expectedVerifyCommand, 'provider profile verificationPolicy.completionGate')
+  assertStringValue(errors, stringField(errors, verificationPolicy, 'packageScript', 'provider profile verificationPolicy contribution'), expectedVerifyScript, 'provider profile verificationPolicy.packageScript')
+  assertStringValue(errors, stringField(errors, verificationPolicy, 'lifecycleOwner', 'provider profile verificationPolicy contribution'), 'prelude', 'provider profile verificationPolicy.lifecycleOwner')
+
+  const scripts = recordField(errors, packageManifest, 'scripts', 'package.json')
+  assertStringValue(errors, stringField(errors, scripts, 'verify', 'package.json.scripts'), expectedVerifyScript, 'package.json.scripts.verify')
+
+  const localCommands = recordField(errors, verificationPolicy, 'localCommands', 'provider profile verificationPolicy contribution')
+  assertArrayContainsString(errors, arrayField(errors, localCommands, 'diagnostics', 'provider profile verificationPolicy.localCommands'), 'pnpm typecheck', 'provider profile verificationPolicy.localCommands.diagnostics')
+  assertArrayContainsString(errors, arrayField(errors, localCommands, 'tests', 'provider profile verificationPolicy.localCommands'), expectedTestCommand, 'provider profile verificationPolicy.localCommands.tests')
+  assertArrayContainsString(errors, arrayField(errors, localCommands, 'lint', 'provider profile verificationPolicy.localCommands'), expectedLintCommand, 'provider profile verificationPolicy.localCommands.lint')
+  assertArrayContainsString(errors, arrayField(errors, localCommands, 'completion', 'provider profile verificationPolicy.localCommands'), expectedVerifyCommand, 'provider profile verificationPolicy.localCommands.completion')
+
+  const stages = arrayField(errors, verificationPolicy, 'stages', 'provider profile verificationPolicy contribution')
+  for (const spec of verifyStageSpecs) {
+    const stage = stageRecordByTag(stages, spec.tag)
+    if (stage === undefined) {
+      errors.push(`provider profile verificationPolicy.stages must include ${spec.tag}.`)
+      continue
+    }
+    assertStringValue(errors, stringField(errors, stage, 'summary', `provider profile verificationPolicy.stages[${spec.tag}]`), spec.summary, `provider profile verificationPolicy.stages[${spec.tag}].summary`)
+  }
 }
 
 function assertPackageGroup(
@@ -500,6 +625,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   const tsgoContract = yield* readJson(`${harness}/repos/tsgo.subtree.json`, decodeJsonRecord)
   const packageManifest = yield* readJson(`${harness}/package.json`, decodeJsonRecord)
   const vscodeSettings = yield* readJson(`${harness}/.vscode/settings.json`, decodeJsonRecord)
+  const eslintText = yield* fs.readFileString(`${harness}/eslint.config.mjs`)
   const workspaceText = yield* fs.readFileString(`${harness}/pnpm-workspace.yaml`)
 
   const provider = recordField(errors, providerProfile, 'provider', 'provider profile')
@@ -575,6 +701,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertArrayContainsString(errors, targetReceives, 'provider-managed docs bundle at .prelude/providers/effect-harness/docs', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayContainsString(errors, targetReceives, 'provider-managed snippets at .prelude/providers/effect-harness/snippets', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayContainsString(errors, targetReceives, 'editor policy structured pointer for target editor settings', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
+  assertArrayContainsString(errors, targetReceives, 'lint, test, and verification policy records', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayDoesNotContainText(errors, targetReceives, 'runtime assets', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayDoesNotContainText(errors, targetReceives, 'AGENTS.md managed block', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayDoesNotContainText(errors, targetReceives, 'feedback', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
@@ -589,6 +716,9 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertPackageJsonContribution(errors, contributions, packageManifest, workspaceText)
   assertTsconfigContributionMetadata(errors, contributions)
   assertEditorPolicyContribution(errors, contributions, effectContract, tsgoContract, vscodeSettings)
+  assertLintGuardrailsContribution(errors, contributions, packageManifest, eslintText)
+  assertTestPolicyContribution(errors, contributions, packageManifest)
+  assertVerificationPolicyContribution(errors, contributions, packageManifest)
 
   yield* assertManagedFileBundle(
     errors,
@@ -615,6 +745,11 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
         id: 'package-config',
         sourcePath: 'provider/docs/package-config.md',
         targetPath: 'package-config.md',
+      },
+      {
+        id: 'quality-policy',
+        sourcePath: 'provider/docs/quality-policy.md',
+        targetPath: 'quality-policy.md',
       },
       {
         id: 'source-identity',

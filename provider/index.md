@@ -81,6 +81,9 @@ provider 当前暴露以下能力：
 | Strict language-service policy | `contributions.tsconfig.compilerOptions.plugins[]` | `tsconfig.json` plugin |
 | Strict tsgo execution policy | `contributions.tsconfig.tsgo` | `tsconfig.json` projection and package scripts |
 | Editor policy | `contributions.editorPolicy` | editor settings projection |
+| Lint guardrails | `contributions.lintGuardrails` | repository boundary and syntax-level guardrails |
+| Test policy | `contributions.testPolicy` | `@effect/vitest` baseline and test entry |
+| Verification policy | `contributions.verificationPolicy` | completion gate and verify stages |
 | Provider identity record | `providerRecord` | `.prelude/providers/effect-harness/provider.json` |
 | Source identity | `sourceEntries`、`sourceBoundary` | provider record artifact identity only |
 | Target docs bundle | `contributions.documentationBundle` | `.prelude/providers/effect-harness/docs/**` |
@@ -98,6 +101,7 @@ Target 应该接收：
 - `package.json` dependencies and scripts
 - `tsconfig.json` strict language-service plugin
 - editor settings projection
+- lint/test/verification policy records
 - `.prelude/providers/effect-harness/provider.json` provider record
 - `.prelude/providers/effect-harness/docs/**` docs bundle
 - `.prelude/providers/effect-harness/snippets/**` snippets
@@ -155,3 +159,13 @@ profile 把 `harness/tsgo.md` 的 strict policy 投影为 `tsgoPolicy` 和
 
 `includeSuggestionsInTsc` 固定为 `true`；`ignoreEffectSuggestionsInTscExitCode`、
 `ignoreEffectWarningsInTscExitCode` 和 `ignoreEffectErrorsInTscExitCode` 固定为 `false`。
+
+## Quality policy
+
+`contributions.lintGuardrails` 负责 repository boundary、Effect v4 CLI import boundary、test entry 和
+syntax-level guardrails。它不负责 Effect semantic diagnostics。
+
+`contributions.testPolicy` 记录 `@effect/vitest` baseline 和 expected test entry。
+
+`contributions.verificationPolicy` 记录 `pnpm verify` completion gate、local diagnostic commands 和
+stage semantics。Prelude 仍负责 target materialization、drift 和 maintain lifecycle。

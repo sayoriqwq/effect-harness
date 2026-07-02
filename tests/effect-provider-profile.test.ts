@@ -11,6 +11,7 @@ import {
   strictDiagnosticGate,
   strictDiagnosticSeverity,
 } from '../src/harness/verify/TsgoPolicy.ts'
+import { verifyStageSpecs } from '../src/harness/verify/VerifyStage.ts'
 
 const currentFile = fileURLToPath(import.meta.url)
 
@@ -226,6 +227,7 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok(targetReceives.some(surface => surface.includes('provider record')))
     assert.ok(targetReceives.some(surface => surface.includes('package.json')))
     assert.ok(targetReceives.some(surface => surface.includes('tsconfig.json')))
+    assert.ok(targetReceives.some(surface => surface.includes('lint, test, and verification policy')))
     assert.ok(targetReceives.some(surface => surface.includes('docs bundle')))
     assert.ok(targetReceives.some(surface => surface.includes('snippets')))
     assert.equal(targetReceives.some(surface => surface.includes('AGENTS.md managed block')), false)
@@ -253,6 +255,7 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/diagnostics.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/editor-policy.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/package-config.md'))
+    assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/quality-policy.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/source-identity.md'))
 
     const snippets = record(contributions.snippets)
@@ -304,5 +307,52 @@ it.layer(NodeServices.layer)((it) => {
     assert.equal(record(vscodeSettings['search.exclude'])['repos/**'], true)
     assert.equal(record(vscodeSettings['files.exclude'])['repos/effect/**'], true)
     assert.equal('repos/tsgo/**' in record(vscodeSettings['files.exclude']), false)
+  }))
+
+  it.effect('provider profile declares lint test and verification policy contributions', () => Effect.gen(function* () {
+    const profile = record(yield* readJson('provider/effect-harness.provider.json'))
+    const packageJson = record(yield* readJson('package.json'))
+    const codexProfile = record(record(profile.profiles)['codex-effect-v4'])
+    const contributions = record(codexProfile.contributions)
+    const scripts = record(packageJson.scripts)
+
+    const lintGuardrails = record(contributions.lintGuardrails)
+    assert.equal(lintGuardrails.mode, 'command-policy')
+    assert.equal(lintGuardrails.stage, 'lint')
+    assert.equal(lintGuardrails.command, 'pnpm lint --max-warnings 0')
+    assert.equal(scripts.lint, 'eslint')
+    assert.ok((record(lintGuardrails.layers).owns as ReadonlyArray<unknown>).includes('repository import boundary'))
+    assert.ok((record(lintGuardrails.layers).owns as ReadonlyArray<unknown>).includes('Effect test entry'))
+    assert.ok((record(lintGuardrails.layers).doesNotOwn as ReadonlyArray<unknown>).includes('Effect semantic diagnostics'))
+    assert.ok((lintGuardrails.configFiles as ReadonlyArray<unknown>).includes('eslint.config.mjs'))
+    assert.ok((record(lintGuardrails.rules).restrictedImports as ReadonlyArray<unknown>).includes('@effect/cli'))
+    assert.ok((record(lintGuardrails.rules).restrictedImports as ReadonlyArray<unknown>).includes('repos/effect/**'))
+    assert.ok((record(lintGuardrails.rules).restrictedSyntax as ReadonlyArray<unknown>).includes('Context.Tag'))
+    assert.ok((record(lintGuardrails.rules).restrictedSyntax as ReadonlyArray<unknown>).includes('{ disableValidation: true }'))
+
+    const testPolicy = record(contributions.testPolicy)
+    assert.equal(testPolicy.mode, 'command-policy')
+    assert.equal(testPolicy.stage, 'tests')
+    assert.equal(testPolicy.command, 'pnpm test')
+    assert.equal(testPolicy.framework, '@effect/vitest')
+    assert.equal(scripts.test, 'vitest run tests/*.test.ts')
+    assert.ok((testPolicy.expectedEntries as ReadonlyArray<unknown>).includes('tests/*.test.ts'))
+    assert.ok((testPolicy.effectEntrypoints as ReadonlyArray<unknown>).includes('it.effect'))
+    assert.ok((testPolicy.effectEntrypoints as ReadonlyArray<unknown>).includes('it.live'))
+    assert.ok((testPolicy.disallowedImports as ReadonlyArray<unknown>).includes('node:test'))
+    assert.ok((testPolicy.disallowedImports as ReadonlyArray<unknown>).includes('vitest'))
+
+    const verificationPolicy = record(contributions.verificationPolicy)
+    assert.equal(verificationPolicy.mode, 'pipeline-policy')
+    assert.equal(verificationPolicy.completionGate, 'pnpm verify')
+    assert.equal(verificationPolicy.packageScript, 'node bin/effect-harness.ts verify --harness .')
+    assert.equal(scripts.verify, verificationPolicy.packageScript)
+    assert.deepStrictEqual(
+      (verificationPolicy.stages as ReadonlyArray<unknown>).map(stage => record(stage).tag),
+      verifyStageSpecs.map(stage => stage.tag),
+    )
+    assert.ok((record(verificationPolicy.localCommands).diagnostics as ReadonlyArray<unknown>).includes('pnpm typecheck'))
+    assert.ok((record(verificationPolicy.localCommands).completion as ReadonlyArray<unknown>).includes('pnpm verify'))
+    assert.equal(verificationPolicy.lifecycleOwner, 'prelude')
   }))
 })
