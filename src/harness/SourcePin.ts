@@ -19,7 +19,7 @@ interface ExpectedSourcePin {
   readonly filesExclude: string
 }
 
-const providerProfilePath = 'harness/provider/effect-harness.provider.json'
+const providerProfilePath = 'provider/effect-harness.provider.json'
 
 const expectedSourcePins: ReadonlyArray<ExpectedSourcePin> = [
   {

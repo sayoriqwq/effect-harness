@@ -1,4 +1,4 @@
-import { Effect } from 'effect'
+import { Effect, FileSystem } from 'effect'
 import { readJson } from '../../platform/Json.ts'
 import { HarnessError } from '../Errors.ts'
 import { isRecord } from './JsonFields.ts'
@@ -122,6 +122,73 @@ function assertRecordDoesNotContain(
   }
 }
 
+interface ExpectedManagedFile {
+  readonly id: string
+  readonly sourcePath: string
+  readonly targetPath: string
+}
+
+const expectedSelfMaterializationForbiddenSurfaces = [
+  '.prelude',
+  '.prelude/providers',
+  '.prelude/providers/effect-harness',
+  '.prelude/providers/effect-harness/provider.json',
+  '.prelude/providers/effect-harness/docs',
+  '.prelude/providers/effect-harness/snippets',
+] as const
+
+function fileRecordById(
+  files: ReadonlyArray<unknown> | undefined,
+  id: string,
+): Record<string, unknown> | undefined {
+  return files?.find(file => isRecord(file) && file.id === id) as Record<string, unknown> | undefined
+}
+
+const assertManagedFileContribution = Effect.fnUntraced(function* (
+  errors: Array<string>,
+  harness: string,
+  files: ReadonlyArray<unknown> | undefined,
+  expected: ExpectedManagedFile,
+  source: string,
+) {
+  const file = fileRecordById(files, expected.id)
+  if (file === undefined) {
+    errors.push(`${source}.files must include ${expected.id}.`)
+    return
+  }
+
+  assertStringValue(errors, stringField(errors, file, 'sourcePath', `${source}.files[${expected.id}]`), expected.sourcePath, `${source}.files[${expected.id}].sourcePath`)
+  assertStringValue(errors, stringField(errors, file, 'targetPath', `${source}.files[${expected.id}]`), expected.targetPath, `${source}.files[${expected.id}].targetPath`)
+  assertStringValue(errors, stringField(errors, file, 'contentType', `${source}.files[${expected.id}]`), 'text/markdown', `${source}.files[${expected.id}].contentType`)
+  assertBooleanValue(errors, booleanField(errors, file, 'managed', `${source}.files[${expected.id}]`), true, `${source}.files[${expected.id}].managed`)
+
+  const fs = yield* FileSystem.FileSystem
+  if (!(yield* fs.exists(`${harness}/${expected.sourcePath}`))) {
+    errors.push(`${source}.files[${expected.id}].sourcePath does not exist: ${expected.sourcePath}.`)
+  }
+})
+
+const assertManagedFileBundle = Effect.fnUntraced(function* (
+  errors: Array<string>,
+  harness: string,
+  bundle: Record<string, unknown> | undefined,
+  expectedBasePath: string,
+  expectedFiles: ReadonlyArray<ExpectedManagedFile>,
+  source: string,
+) {
+  if (bundle === undefined) {
+    return
+  }
+
+  assertStringValue(errors, stringField(errors, bundle, 'mode', source), 'managed-files', `${source}.mode`)
+  assertStringValue(errors, stringField(errors, bundle, 'targetBasePath', source), expectedBasePath, `${source}.targetBasePath`)
+
+  const files = arrayField(errors, bundle, 'files', source)
+  for (const expected of expectedFiles) {
+    yield* assertManagedFileContribution(errors, harness, files, expected, source)
+  }
+})
+
 const expectedPackageBaseline: Readonly<Record<string, string>> = {
   'effect': '4.0.0-beta.92',
   '@effect/platform-node': '4.0.0-beta.92',
@@ -178,14 +245,41 @@ function assertEditorPolicy(errors: Array<string>, options: Record<string, unkno
   assertBooleanValue(errors, booleanField(errors, filesExclude, 'requiresExplicitOptIn', 'profile.options.editorPolicy.filesExclude'), true, 'profile.options.editorPolicy.filesExclude.requiresExplicitOptIn')
 }
 
+function assertDeliveryModes(errors: Array<string>, providerProfile: Record<string, unknown>): void {
+  const deliveryModes = recordField(errors, providerProfile, 'deliveryModes', 'provider profile')
+  const internalHarness = recordField(errors, deliveryModes, 'internalHarness', 'provider profile.deliveryModes')
+  const artifactReference = recordField(errors, deliveryModes, 'providerArtifactReference', 'provider profile.deliveryModes')
+  const exportedHarness = recordField(errors, deliveryModes, 'exportedHarness', 'provider profile.deliveryModes')
+
+  assertStringValue(errors, stringField(errors, internalHarness, 'mode', 'provider profile.deliveryModes.internalHarness'), 'internal-harness', 'provider profile.deliveryModes.internalHarness.mode')
+  assertStringValue(errors, stringField(errors, artifactReference, 'mode', 'provider profile.deliveryModes.providerArtifactReference'), 'provider-artifact-reference', 'provider profile.deliveryModes.providerArtifactReference.mode')
+  assertStringValue(errors, stringField(errors, exportedHarness, 'mode', 'provider profile.deliveryModes.exportedHarness'), 'exported-harness', 'provider profile.deliveryModes.exportedHarness.mode')
+}
+
+function assertSelfConformanceContract(errors: Array<string>, providerProfile: Record<string, unknown>): void {
+  const selfConformance = recordField(errors, providerProfile, 'selfConformance', 'provider profile')
+  assertStringValue(errors, stringField(errors, selfConformance, 'mode', 'provider profile.selfConformance'), 'provider-repository', 'provider profile.selfConformance.mode')
+  assertStringValue(errors, stringField(errors, selfConformance, 'conformsTo', 'provider profile.selfConformance'), 'exported-harness', 'provider profile.selfConformance.conformsTo')
+  assertStringValue(errors, stringField(errors, selfConformance, 'completionGate', 'provider profile.selfConformance'), 'pnpm verify', 'provider profile.selfConformance.completionGate')
+  assertBooleanValue(errors, booleanField(errors, selfConformance, 'selfMaterialization', 'provider profile.selfConformance'), false, 'provider profile.selfConformance.selfMaterialization')
+  assertStringValue(errors, stringField(errors, selfConformance, 'lifecycleOwner', 'provider profile.selfConformance'), 'prelude', 'provider profile.selfConformance.lifecycleOwner')
+
+  const forbiddenSurfaces = arrayField(errors, selfConformance, 'forbiddenProviderRepositorySurfaces', 'provider profile.selfConformance')
+  for (const surface of expectedSelfMaterializationForbiddenSurfaces) {
+    assertArrayContainsString(errors, forbiddenSurfaces, surface, 'provider profile.selfConformance.forbiddenProviderRepositorySurfaces')
+  }
+}
+
 export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors: Array<string>, harness: string) {
-  const providerProfile = yield* readJson(`${harness}/harness/provider/effect-harness.provider.json`, decodeJsonRecord)
+  const providerProfile = yield* readJson(`${harness}/provider/effect-harness.provider.json`, decodeJsonRecord)
   const effectContract = yield* readJson(`${harness}/repos/effect.subtree.json`, decodeJsonRecord)
   const tsgoContract = yield* readJson(`${harness}/repos/tsgo.subtree.json`, decodeJsonRecord)
 
   const provider = recordField(errors, providerProfile, 'provider', 'provider profile')
   assertStringValue(errors, stringField(errors, provider, 'id', 'provider profile.provider'), 'effect-harness', 'provider profile.provider.id')
   assertStringValue(errors, stringField(errors, provider, 'defaultProfile', 'provider profile.provider'), 'codex-effect-v4', 'provider profile.provider.defaultProfile')
+  assertDeliveryModes(errors, providerProfile)
+  assertSelfConformanceContract(errors, providerProfile)
 
   const sourceEntries = recordField(errors, providerProfile, 'sourceEntries', 'provider profile')
   const profiles = recordField(errors, providerProfile, 'profiles', 'provider profile')
@@ -233,6 +327,8 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertStringValue(errors, stringField(errors, sourceDelivery, 'mode', 'provider profile.providerRecord.sourceDelivery'), 'artifact-identity-only', 'provider profile.providerRecord.sourceDelivery.mode')
   assertArrayContainsString(errors, arrayField(errors, providerRecord, 'requiredFields', 'provider profile.providerRecord'), 'artifact.sourceIdentity', 'provider profile.providerRecord.requiredFields')
   assertArrayContainsString(errors, arrayField(errors, providerRecord, 'requiredFields', 'provider profile.providerRecord'), 'artifact.sourceIdentities', 'provider profile.providerRecord.requiredFields')
+  assertArrayContainsString(errors, arrayField(errors, providerRecord, 'requiredFields', 'provider profile.providerRecord'), 'surfaces.documentationBundle', 'provider profile.providerRecord.requiredFields')
+  assertArrayContainsString(errors, arrayField(errors, providerRecord, 'requiredFields', 'provider profile.providerRecord'), 'surfaces.snippets', 'provider profile.providerRecord.requiredFields')
 
   const sourceBoundary = recordField(errors, profile, 'sourceBoundary', 'provider profile.profiles.codex-effect-v4')
   assertBooleanValue(errors, booleanField(errors, sourceBoundary, 'providerRepoInternal', 'provider profile.profiles.codex-effect-v4.sourceBoundary'), true, 'provider profile.profiles.codex-effect-v4.sourceBoundary.providerRepoInternal')
@@ -249,6 +345,8 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   const managedSurfaces = recordField(errors, profile, 'managedSurfaces', 'provider profile.profiles.codex-effect-v4')
   const targetReceives = arrayField(errors, managedSurfaces, 'targetReceives', 'provider profile.profiles.codex-effect-v4.managedSurfaces')
   assertArrayContainsString(errors, targetReceives, 'provider record at .prelude/providers/effect-harness/provider.json', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
+  assertArrayContainsString(errors, targetReceives, 'provider-managed docs bundle at .prelude/providers/effect-harness/docs', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
+  assertArrayContainsString(errors, targetReceives, 'provider-managed snippets at .prelude/providers/effect-harness/snippets', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayDoesNotContainText(errors, targetReceives, 'runtime assets', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayDoesNotContainText(errors, targetReceives, 'AGENTS.md managed block', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayDoesNotContainText(errors, targetReceives, 'feedback', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
@@ -260,6 +358,45 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertRecordDoesNotContain(errors, contributions, 'runtimeAssets', 'provider profile.profiles.codex-effect-v4.contributions')
   assertRecordDoesNotContain(errors, contributions, 'agentsBlock', 'provider profile.profiles.codex-effect-v4.contributions')
   assertRecordDoesNotContain(errors, contributions, 'codexAssets', 'provider profile.profiles.codex-effect-v4.contributions')
+
+  yield* assertManagedFileBundle(
+    errors,
+    harness,
+    recordField(errors, contributions, 'documentationBundle', 'provider profile.profiles.codex-effect-v4.contributions'),
+    '.prelude/providers/effect-harness/docs',
+    [
+      {
+        id: 'effect-code',
+        sourcePath: 'provider/docs/effect-code.md',
+        targetPath: 'effect-code.md',
+      },
+      {
+        id: 'diagnostics',
+        sourcePath: 'provider/docs/diagnostics.md',
+        targetPath: 'diagnostics.md',
+      },
+      {
+        id: 'source-identity',
+        sourcePath: 'provider/docs/source-identity.md',
+        targetPath: 'source-identity.md',
+      },
+    ],
+    'provider profile.profiles.codex-effect-v4.contributions.documentationBundle',
+  )
+  yield* assertManagedFileBundle(
+    errors,
+    harness,
+    recordField(errors, contributions, 'snippets', 'provider profile.profiles.codex-effect-v4.contributions'),
+    '.prelude/providers/effect-harness/snippets',
+    [
+      {
+        id: 'agents-effect-harness',
+        sourcePath: 'provider/snippets/agents.md',
+        targetPath: 'agents.md',
+      },
+    ],
+    'provider profile.profiles.codex-effect-v4.contributions.snippets',
+  )
 })
 
 interface ExpectedProviderSourceEntry {

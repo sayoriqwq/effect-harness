@@ -1,7 +1,9 @@
 import { fileURLToPath } from 'node:url'
 import * as NodeServices from '@effect/platform-node/NodeServices'
 import { assert, it } from '@effect/vitest'
-import { Effect, FileSystem, Path, Schema } from 'effect'
+import { Effect, FileSystem, Path, Result, Schema } from 'effect'
+import { errorMessage } from '../src/harness/Errors.ts'
+import { verifyHarnessContract } from '../src/harness/verify/ProviderRepository.ts'
 
 const currentFile = fileURLToPath(import.meta.url)
 
@@ -31,15 +33,66 @@ function languageServicePlugin(plugins: ReadonlyArray<unknown>): Record<string, 
   return record(plugin)
 }
 
+function withTemporaryRepositoryDirectory<A, E, R>(
+  relativePath: string,
+  run: () => Effect.Effect<A, E, R>,
+) {
+  return Effect.gen(function* () {
+    const fs = yield* FileSystem.FileSystem
+    const path = yield* Path.Path
+    const root = yield* repoRoot()
+    const absolutePath = path.join(root, relativePath)
+    assert.equal(yield* fs.exists(absolutePath), false)
+    yield* Effect.acquireRelease(
+      fs.makeDirectory(absolutePath, { recursive: true }),
+      () => fs.remove(absolutePath, { force: true, recursive: true }).pipe(
+        Effect.catch(() => Effect.void),
+      ),
+    )
+    return yield* run()
+  }).pipe(Effect.scoped)
+}
+
 it.layer(NodeServices.layer)((it) => {
+  it.effect('provider profile names self-conformance delivery modes', () => Effect.gen(function* () {
+    const profile = record(yield* readJson('provider/effect-harness.provider.json'))
+    const deliveryModes = record(profile.deliveryModes)
+
+    assert.equal(record(deliveryModes.internalHarness).mode, 'internal-harness')
+    assert.equal(record(deliveryModes.providerArtifactReference).mode, 'provider-artifact-reference')
+    assert.equal(record(deliveryModes.exportedHarness).mode, 'exported-harness')
+
+    const selfConformance = record(profile.selfConformance)
+    assert.equal(selfConformance.mode, 'provider-repository')
+    assert.equal(selfConformance.conformsTo, 'exported-harness')
+    assert.equal(selfConformance.completionGate, 'pnpm verify')
+    assert.equal(selfConformance.selfMaterialization, false)
+    const forbiddenSurfaces = selfConformance.forbiddenProviderRepositorySurfaces as ReadonlyArray<unknown>
+    assert.ok(forbiddenSurfaces.includes('.prelude'))
+    assert.ok(forbiddenSurfaces.includes('.prelude/providers/effect-harness'))
+    assert.ok(forbiddenSurfaces.includes('.prelude/providers/effect-harness/provider.json'))
+  }))
+
+  it.effect('self-conformance rejects materialized Prelude target surfaces in the provider repository', () => withTemporaryRepositoryDirectory('.prelude', () => Effect.gen(function* () {
+    const root = yield* repoRoot()
+    const result = yield* Effect.result(verifyHarnessContract(root))
+
+    assert.equal(Result.isFailure(result), true)
+    if (Result.isFailure(result)) {
+      assert.match(errorMessage(result.failure), /\.prelude/u)
+    }
+  })))
+
   it.effect('provider profile exposes provider-internal source entries', () => Effect.gen(function* () {
-    const profile = record(yield* readJson('harness/provider/effect-harness.provider.json'))
+    const profile = record(yield* readJson('provider/effect-harness.provider.json'))
     const effectContract = record(yield* readJson('repos/effect.subtree.json'))
     const tsgoContract = record(yield* readJson('repos/tsgo.subtree.json'))
     const providerRecord = record(profile.providerRecord)
     const requiredFields = providerRecord.requiredFields as ReadonlyArray<unknown>
     assert.ok(requiredFields.includes('artifact.sourceIdentity'))
     assert.ok(requiredFields.includes('artifact.sourceIdentities'))
+    assert.ok(requiredFields.includes('surfaces.documentationBundle'))
+    assert.ok(requiredFields.includes('surfaces.snippets'))
 
     const profiles = record(profile.profiles)
     const codexProfile = record(profiles['codex-effect-v4'])
@@ -75,7 +128,7 @@ it.layer(NodeServices.layer)((it) => {
   }))
 
   it.effect('provider profile and repository tsconfig use strict tsgo policy', () => Effect.gen(function* () {
-    const profile = record(yield* readJson('harness/provider/effect-harness.provider.json'))
+    const profile = record(yield* readJson('provider/effect-harness.provider.json'))
     const tsconfig = record(yield* readJson('tsconfig.json'))
     const codexProfile = record(record(profile.profiles)['codex-effect-v4'])
     const packageBaseline = record(codexProfile.packageBaseline)
@@ -117,7 +170,7 @@ it.layer(NodeServices.layer)((it) => {
   }))
 
   it.effect('provider profile declares target managed surfaces and editor policy options', () => Effect.gen(function* () {
-    const profile = record(yield* readJson('harness/provider/effect-harness.provider.json'))
+    const profile = record(yield* readJson('provider/effect-harness.provider.json'))
     const codexProfile = record(record(profile.profiles)['codex-effect-v4'])
 
     const managedSurfaces = record(codexProfile.managedSurfaces)
@@ -125,6 +178,8 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok(targetReceives.some(surface => surface.includes('provider record')))
     assert.ok(targetReceives.some(surface => surface.includes('package.json')))
     assert.ok(targetReceives.some(surface => surface.includes('tsconfig.json')))
+    assert.ok(targetReceives.some(surface => surface.includes('docs bundle')))
+    assert.ok(targetReceives.some(surface => surface.includes('snippets')))
     assert.equal(targetReceives.some(surface => surface.includes('AGENTS.md managed block')), false)
     assert.equal(targetReceives.some(surface => surface.includes('runtime assets')), false)
     assert.equal(targetReceives.some(surface => surface.includes('feedback')), false)
@@ -141,6 +196,20 @@ it.layer(NodeServices.layer)((it) => {
     assert.equal('codexAssets' in contributions, false)
     assert.equal('runtimeAssets' in contributions, false)
     assert.equal('agentsBlock' in contributions, false)
+
+    const documentationBundle = record(contributions.documentationBundle)
+    assert.equal(documentationBundle.mode, 'managed-files')
+    assert.equal(documentationBundle.targetBasePath, '.prelude/providers/effect-harness/docs')
+    const documentationFiles = documentationBundle.files as ReadonlyArray<unknown>
+    assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/effect-code.md'))
+    assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/diagnostics.md'))
+    assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/source-identity.md'))
+
+    const snippets = record(contributions.snippets)
+    assert.equal(snippets.mode, 'managed-files')
+    assert.equal(snippets.targetBasePath, '.prelude/providers/effect-harness/snippets')
+    const snippetFiles = snippets.files as ReadonlyArray<unknown>
+    assert.ok(snippetFiles.some(file => record(file).sourcePath === 'provider/snippets/agents.md'))
 
     const editorPolicy = record(record(codexProfile.options).editorPolicy)
     const autoImportExclude = record(editorPolicy.autoImportExclude)

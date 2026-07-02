@@ -185,8 +185,8 @@ const writeProviderProfile = Effect.fnUntraced(function* (root: string) {
       },
     },
   })
-  yield* fs.makeDirectory(path.join(root, 'harness/provider'), { recursive: true })
-  yield* fs.writeFileString(path.join(root, 'harness/provider/effect-harness.provider.json'), `${profileText}\n`)
+  yield* fs.makeDirectory(path.join(root, 'provider'), { recursive: true })
+  yield* fs.writeFileString(path.join(root, 'provider/effect-harness.provider.json'), `${profileText}\n`)
 })
 
 const writeSourceContract = Effect.fnUntraced(function* (

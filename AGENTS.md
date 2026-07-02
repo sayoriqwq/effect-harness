@@ -1,11 +1,11 @@
 # Agent 启动规则
 
-本仓是 Effect v4 beta 的 Prelude provider profile 与源入口路线包，并以 CLI utility package
-发布。这里有两层语境：
+本仓是 Effect v4 beta 的 provider profile、源入口路线包与 target-facing 模板包，并以 CLI
+utility package 发布。这里有两层语境：
 
 - Harness 层：维护 `effect-harness` 本仓自己的源入口、路线、基线和验证。
-- Provider 层：声明 Prelude 集成 effect-harness 时应消费的 provider profile、source identity、
-  package 基线和诊断入口。
+- Provider 层：声明任意 target 接入 effect-harness 时应消费的 provider profile、source identity、
+  package 基线、诊断入口、docs bundle 和 snippets。
 
 在本仓写 Effect 程序逻辑，或修改 source route、tsgo policy、provider profile、verify
 pipeline、harness 边界前，先读：
@@ -14,12 +14,16 @@ pipeline、harness 边界前，先读：
 - `README.md`
 - `harness/index.md`
 - `harness/feedback-loop.md`
+- `harness/code.md`
 - `harness/offcial-guide.md`
 - `harness/offcial-migrate.md`
 - `harness/source.md`
 - `harness/effect-routes.md`
 - `harness/tsgo.md`
 - `harness/tsgo-routes.md`
+- `provider/index.md`
+- `provider/effect-harness.provider.json`
+- `provider/docs/index.md`
 - `repos/effect/LLMS.md`
 - `repos/effect.subtree.json`
 - `repos/tsgo/README.md`
@@ -51,8 +55,12 @@ pipeline、harness 边界前，先读：
 - 不恢复仓内 `.codex/skills`、目标 runtime 模板、反馈入口、
   `.effect-harness.json` 或 effect-harness 管理的 `AGENTS.md` blocks。
 - Partita 负责通用源入口 pin 流程；本仓只负责 Effect/tsgo 源入口实例、路线、基线、strict
-  tsgo policy 和 provider profile。
-- Prelude 负责目标项目生命周期；本仓不直接实现目标项目 maintain 系统。
+  tsgo policy、provider profile、docs bundle 和 snippets。
+- Provider docs bundle 和 snippets 是 contributions，必须受 `provider/effect-harness.provider.json`
+  管理。
+- 本仓采用 self-conformance，只验证自身符合 provider contract；禁止生成 `.prelude/**` 或
+  `.prelude/providers/effect-harness/**` target lifecycle surface。
+- Prelude 负责 target lifecycle；本仓不直接实现目标项目 maintain 系统。
 
 验证：
 

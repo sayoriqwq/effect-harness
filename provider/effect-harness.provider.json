@@ -6,6 +6,55 @@
     "providerVersion": "0.1.0",
     "defaultProfile": "codex-effect-v4"
   },
+  "deliveryModes": {
+    "internalHarness": {
+      "mode": "internal-harness",
+      "description": "Provider repository content used only to maintain effect-harness itself. It is checked by self-conformance but is not target materialized.",
+      "examples": [
+        "harness/**",
+        "src/harness/**",
+        "tests/**"
+      ]
+    },
+    "providerArtifactReference": {
+      "mode": "provider-artifact-reference",
+      "description": "Reference content carried by the provider artifact for audit and agent source access. Targets record identity but do not maintain these files locally.",
+      "examples": [
+        "repos/effect/**",
+        "repos/tsgo/**",
+        "repos/effect.subtree.json",
+        "repos/tsgo.subtree.json",
+        "harness/effect-routes.md",
+        "harness/tsgo-routes.md"
+      ]
+    },
+    "exportedHarness": {
+      "mode": "exported-harness",
+      "description": "Target-facing provider contribution that Prelude may materialize and maintain in a target repository.",
+      "examples": [
+        "provider record",
+        "package.json contribution",
+        "tsconfig.json contribution",
+        "provider-managed docs bundle",
+        "provider-managed snippets"
+      ]
+    }
+  },
+  "selfConformance": {
+    "mode": "provider-repository",
+    "conformsTo": "exported-harness",
+    "completionGate": "pnpm verify",
+    "selfMaterialization": false,
+    "forbiddenProviderRepositorySurfaces": [
+      ".prelude",
+      ".prelude/providers",
+      ".prelude/providers/effect-harness",
+      ".prelude/providers/effect-harness/provider.json",
+      ".prelude/providers/effect-harness/docs",
+      ".prelude/providers/effect-harness/snippets"
+    ],
+    "lifecycleOwner": "prelude"
+  },
   "sourceEntries": {
     "effect-official-source": {
       "id": "effect-official-source",
@@ -61,6 +110,8 @@
       "projectedContext",
       "options",
       "surfaces",
+      "surfaces.documentationBundle",
+      "surfaces.snippets",
       "verificationRecordId"
     ],
     "manifestLookup": {
@@ -198,7 +249,9 @@
         "targetReceives": [
           "provider record at .prelude/providers/effect-harness/provider.json",
           "package.json dependency and devDependency structured pointers",
-          "tsconfig.json @effect/language-service plugin structured pointer"
+          "tsconfig.json @effect/language-service plugin structured pointer",
+          "provider-managed docs bundle at .prelude/providers/effect-harness/docs",
+          "provider-managed snippets at .prelude/providers/effect-harness/snippets"
         ],
         "targetDoesNotReceive": [
           "provider repo internal source pin repos/effect",
@@ -363,19 +416,61 @@
               }
             ]
           }
+        },
+        "documentationBundle": {
+          "mode": "managed-files",
+          "targetBasePath": ".prelude/providers/effect-harness/docs",
+          "files": [
+            {
+              "id": "effect-code",
+              "sourcePath": "provider/docs/effect-code.md",
+              "targetPath": "effect-code.md",
+              "contentType": "text/markdown",
+              "managed": true
+            },
+            {
+              "id": "diagnostics",
+              "sourcePath": "provider/docs/diagnostics.md",
+              "targetPath": "diagnostics.md",
+              "contentType": "text/markdown",
+              "managed": true
+            },
+            {
+              "id": "source-identity",
+              "sourcePath": "provider/docs/source-identity.md",
+              "targetPath": "source-identity.md",
+              "contentType": "text/markdown",
+              "managed": true
+            }
+          ]
+        },
+        "snippets": {
+          "mode": "managed-files",
+          "targetBasePath": ".prelude/providers/effect-harness/snippets",
+          "files": [
+            {
+              "id": "agents-effect-harness",
+              "sourcePath": "provider/snippets/agents.md",
+              "targetPath": "agents.md",
+              "contentType": "text/markdown",
+              "managed": true,
+              "targetUsage": "manual-copy-or-include-only"
+            }
+          ]
         }
       },
       "verification": {
         "status": [
           "provider internal Effect and tsgo source entries exist",
           "Partita GitHub subtree contracts record source prefix, pin, anchor, route, and editor policy",
-          "provider profile records source identities, package baseline, and strict tsgo policy"
+          "provider profile records source identities, package baseline, strict tsgo policy, docs bundle, and snippets"
         ],
         "verify": [
           "source pins exist as committed Git tree entries with subtree trailers",
           "provider profile references the Partita GitHub subtree contracts",
           "tsgo --noEmit is the primary Effect diagnostic path",
           "@effect/language-service uses the strict v4 diagnostic rule map",
+          "provider docs bundle and snippets are declared as managed contributions",
           "provider repository does not import from repos/effect, repos/tsgo, or @effect/cli"
         ]
       },

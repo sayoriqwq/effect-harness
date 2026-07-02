@@ -10,7 +10,7 @@ sources:
   - repos/tsgo.subtree.json
   - harness/effect-routes.md
   - harness/tsgo-routes.md
-  - harness/provider/effect-harness.provider.json
+  - provider/effect-harness.provider.json
 updated: 2026-07-01
 ---
 

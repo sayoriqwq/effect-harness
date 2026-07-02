@@ -1,7 +1,9 @@
 import { Console, Effect, FileSystem } from 'effect'
+import { readJson } from '../../platform/Json.ts'
 import { HarnessError } from '../Errors.ts'
 import { verifyGuardrails } from '../Guardrails.ts'
 import { verifySourcePin } from '../SourcePin.ts'
+import { isRecord } from './JsonFields.ts'
 import { verifyProviderProfileContract } from './ProviderProfile.ts'
 import { verifyTsgoBaseline } from './Tsgo.ts'
 import { requiredFeedbackLoopKeywords, verifyStageSpecs } from './VerifyStage.ts'
@@ -14,15 +16,58 @@ const removedProviderPaths = [
   'harness/exposure.md',
   'harness/feedback',
   'harness/official-inventory.md',
+  'harness/provider',
   'harness/runtime',
   'harness/target-agent-contract.md',
 ] as const
+
+function decodeJsonRecord(value: unknown, source: string): Effect.Effect<Record<string, unknown>, HarnessError> {
+  return isRecord(value)
+    ? Effect.succeed(value)
+    : Effect.fail(new HarnessError({ message: `${source} must be a JSON object` }))
+}
+
+const readForbiddenSelfMaterializationSurfaces = Effect.fnUntraced(function* (errors: Array<string>, harness: string) {
+  const providerProfile = yield* readJson(`${harness}/provider/effect-harness.provider.json`, decodeJsonRecord)
+  const selfConformance = providerProfile.selfConformance
+  if (!isRecord(selfConformance)) {
+    errors.push('provider profile.selfConformance must be an object.')
+    return []
+  }
+
+  const forbiddenSurfaces = selfConformance.forbiddenProviderRepositorySurfaces
+  if (!Array.isArray(forbiddenSurfaces)) {
+    errors.push('provider profile.selfConformance.forbiddenProviderRepositorySurfaces must be an array.')
+    return []
+  }
+
+  const strings: Array<string> = []
+  for (const surface of forbiddenSurfaces) {
+    if (typeof surface === 'string') {
+      strings.push(surface)
+    }
+    else {
+      errors.push('provider profile.selfConformance.forbiddenProviderRepositorySurfaces must contain only strings.')
+    }
+  }
+  return strings
+})
 
 const assertNoLegacyProviderState = Effect.fnUntraced(function* (errors: Array<string>, harness: string) {
   const fs = yield* FileSystem.FileSystem
   for (const path of removedProviderPaths) {
     if (yield* fs.exists(`${harness}/${path}`)) {
       errors.push(`${path} does not belong to the current provider baseline.`)
+    }
+  }
+})
+
+const assertNoSelfMaterializedTargetState = Effect.fnUntraced(function* (errors: Array<string>, harness: string) {
+  const fs = yield* FileSystem.FileSystem
+  const forbiddenSurfaces = yield* readForbiddenSelfMaterializationSurfaces(errors, harness)
+  for (const surface of forbiddenSurfaces) {
+    if (yield* fs.exists(`${harness}/${surface}`)) {
+      errors.push(`${surface} is a Prelude target surface; effect-harness self-conformance must not materialize target lifecycle state.`)
     }
   }
 })
@@ -78,6 +123,7 @@ export const verifyHarnessContract = Effect.fnUntraced(function* (harness: strin
   yield* verifyProviderProfileContract(errors, harness)
   yield* verifyTsgoBaseline(errors, harness)
   yield* assertNoLegacyProviderState(errors, harness)
+  yield* assertNoSelfMaterializedTargetState(errors, harness)
   yield* assertFeedbackLoopDocument(errors, harness)
   yield* verifyGuardrails({
     root: harness,

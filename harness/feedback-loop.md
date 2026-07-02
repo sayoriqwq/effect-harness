@@ -21,7 +21,7 @@ sources:
   - https://developers.openai.com/codex/learn/best-practices
   - https://developers.openai.com/codex/prompting
   - https://developers.openai.com/codex/guides/agents-md
-updated: 2026-07-01
+updated: 2026-07-02
 ---
 
 # Feedback Loop
@@ -38,6 +38,9 @@ pnpm verify
 
 `pnpm verify` 是唯一完成命令。`source:verify`、`effect:verify`、`typecheck`、`test`、`lint`
 和 `knip` 只作为局部排错入口，不作为完成态替代命令。
+
+`pnpm verify` 同时是 self-conformance gate。它证明 provider repository 符合自己的 exported
+harness contract，但不生成 `.prelude/**` 或 Prelude target lifecycle state。
 
 ## ROUTE_TABLE
 
@@ -100,6 +103,8 @@ stage 真源是 `src/harness/verify/VerifyStage.ts`。本节只是 agent-readabl
 常见修复方向：
 
 - provider profile 必须保留当前 package baseline、source identities 和 strict tsgo policy。
+- provider repository 必须保持 self-conformance，不得 materialize `.prelude/**` 或 target
+  provider namespace。
 - legacy surfaces 不能恢复。
 - 应用代码和测试代码不能 import `repos/effect` 或 `repos/tsgo`。
 - CLI 必须使用 `effect/unstable/cli`，不能恢复 `@effect/cli`。
@@ -148,4 +153,4 @@ imports 或 package fields，而不是为了 silence knip 添加无意义引用�
 - `pnpm verify` 通过。
 - 失败过的 stage 已按对应 route 修复。
 - 没有新增 suppress、override、legacy surface 或 `repos/**` import。
-- diff 已 review，确认没有把第二阶段扩展成 Prelude target 集成或 repo skill/hook/rules 建设。
+- diff 已 review，确认没有把第二阶段扩展成 Prelude target lifecycle 实现或 repo skill/hook/rules 建设。

@@ -12,7 +12,7 @@ sources:
   - repos/tsgo/_packages/tsgo/src/setup/changes.ts
   - repos/tsgo/etscore/options.go
   - repos/tsgo/internal/rulerunner/diagnostics.go
-  - harness/provider/effect-harness.provider.json
+  - provider/effect-harness.provider.json
   - tsconfig.json
 updated: 2026-07-01
 ---

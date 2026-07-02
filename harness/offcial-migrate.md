@@ -11,7 +11,9 @@ sources:
   - harness/effect-routes.md
   - harness/tsgo.md
   - harness/tsgo-routes.md
-  - harness/provider/effect-harness.provider.json
+  - provider/effect-harness.provider.json
+  - provider/docs/index.md
+  - provider/snippets/agents.md
   - repos/effect.subtree.json
   - repos/tsgo.subtree.json
   - repos/effect/LLMS.md
@@ -19,7 +21,7 @@ sources:
   - https://effect.website/blog/the-one-weird-git-trick-that-makes-coding-agents-more-effect-ive/
   - https://github.com/mikearnaldi/accountability
   - https://github.com/Effect-TS/tsgo
-updated: 2026-07-01
+updated: 2026-07-02
 ---
 
 # Official Migrate
@@ -55,6 +57,8 @@ Provider 层把这些事实投影为 Prelude 可消费的 profile：
 - `effect-tsgo patch`
 - `tsgo --noEmit`
 - strict `@effect/language-service` plugin policy
+- target-facing docs bundle
+- target-facing snippets
 - target 不接收 provider-internal source trees 的边界
 
 Prelude 负责目标项目 lifecycle、provider record、drift、verify 和 maintain。
@@ -84,7 +88,8 @@ Node runtime、services、Schema、HTTP、AI、SQL、Cluster/RPC/Workflow 等路
 
 ## Stage 2
 
-第二阶段当前聚焦 `effect-harness` 本仓 harness，不处理 Prelude target 集成。
+第二阶段当前聚焦 `effect-harness` 本仓 harness 和 provider contract，不实现 Prelude target
+lifecycle。
 
 本仓把 Codex feedback loop 固定为：
 
@@ -166,7 +171,7 @@ strict policy 要求 `tsgo --noEmit` 达到 0 error、0 warning、0 suggestion�
 
 ## Provider
 
-`harness/provider/effect-harness.provider.json` 暴露两个 provider-internal source entries：
+`provider/effect-harness.provider.json` 暴露两个 provider-internal source entries：
 
 - `effect-official-source`
 - `tsgo-official-source`
@@ -174,12 +179,17 @@ strict policy 要求 `tsgo --noEmit` 达到 0 error、0 warning、0 suggestion�
 provider profile 对目标项目的交付是 identity-only。目标项目接收 provider record 中的 source
 identity，不接收 `repos/effect/`、`repos/tsgo/` 或 subtree contract 本体。
 
-Provider target surfaces 保持最小：
+Provider target surfaces 保持受管且最小：
 
 - `.prelude/providers/effect-harness/provider.json`
 - `package.json` dependencies/devDependencies/script pointers
 - `tsconfig.json` language-service plugin projection
+- `.prelude/providers/effect-harness/docs/**`
+- `.prelude/providers/effect-harness/snippets/**`
 - provider artifact/source identities
+
+docs bundle 和 snippets 是 provider contributions。Prelude 本仓作为 target 时，也应该接收同一组
+managed surfaces。
 
 Provider 明确不交付：
 

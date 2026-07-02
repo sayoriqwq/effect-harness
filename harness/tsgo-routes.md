@@ -31,7 +31,7 @@ updated: 2026-07-01
 
 | Agent 意图 | 先读 | 深入核对 | 适用输出 | 注意 |
 | --- | --- | --- | --- | --- |
-| 判断 tsgo pin 和 package baseline | `repos/tsgo.subtree.json`、`harness/provider/effect-harness.provider.json` | `repos/tsgo/package.json`、`repos/tsgo/_packages/tsgo/package.json` | source identity、provider drift 判断 | commit 必须绑定当前 `@effect/tsgo` package version |
+| 判断 tsgo pin 和 package baseline | `repos/tsgo.subtree.json`、`provider/effect-harness.provider.json` | `repos/tsgo/package.json`、`repos/tsgo/_packages/tsgo/package.json` | source identity、provider drift 判断 | commit 必须绑定当前 `@effect/tsgo` package version |
 | 理解 tsgo 在本仓的策略 | `harness/tsgo.md` | `tsconfig.json`、`src/harness/verify/TsgoPolicy.ts` | ADR、policy、verifier 修复 | policy 变化先改 ADR，再改 projection |
 | 理解官方 wrapper 和安装流程 | `repos/tsgo/README.md` | `repos/tsgo/_packages/tsgo/src/cli.ts` | setup/patch 解释、用户指令 | `effect-tsgo patch` 不是 typecheck binary |
 | 查 CLI 命令入口 | `repos/tsgo/_packages/tsgo/src/cli.ts` | `repos/tsgo/_packages/tsgo/src/setup/index.ts` | `setup`、`patch`、`unpatch`、`get-exe-path` 判断 | provider 只投影 `prepare` 和 `typecheck` 指针 |
