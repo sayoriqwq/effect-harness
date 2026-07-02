@@ -4,6 +4,13 @@ import { assert, it } from '@effect/vitest'
 import { Effect, FileSystem, Path, Result, Schema } from 'effect'
 import { errorMessage } from '../src/harness/Errors.ts'
 import { verifyHarnessContract } from '../src/harness/verify/ProviderRepository.ts'
+import {
+  expectedPackageBaseline,
+  expectedPrepareCommand,
+  expectedTypecheckCommand,
+  strictDiagnosticGate,
+  strictDiagnosticSeverity,
+} from '../src/harness/verify/TsgoPolicy.ts'
 
 const currentFile = fileURLToPath(import.meta.url)
 
@@ -31,6 +38,10 @@ function languageServicePlugin(plugins: ReadonlyArray<unknown>): Record<string, 
   const plugin = plugins.find(value => record(value).name === '@effect/language-service')
   assert.notEqual(plugin, undefined)
   return record(plugin)
+}
+
+function baselinePackages(names: ReadonlyArray<keyof typeof expectedPackageBaseline>): Record<string, string> {
+  return Object.fromEntries(names.map(name => [name, expectedPackageBaseline[name]]))
 }
 
 function withTemporaryRepositoryDirectory<A, E, R>(
@@ -132,23 +143,20 @@ it.layer(NodeServices.layer)((it) => {
     const tsconfig = record(yield* readJson('tsconfig.json'))
     const codexProfile = record(record(profile.profiles)['codex-effect-v4'])
     const packageBaseline = record(codexProfile.packageBaseline)
-    assert.equal(packageBaseline.effect, '4.0.0-beta.92')
-    assert.equal(packageBaseline['@effect/platform-node'], '4.0.0-beta.92')
-    assert.equal(packageBaseline['@effect/vitest'], '4.0.0-beta.92')
-    assert.equal(packageBaseline['@effect/tsgo'], '0.15.0')
-    assert.equal(packageBaseline['@effect/language-service'], '0.86.2')
-    assert.equal(packageBaseline['@typescript/native-preview'], '7.0.0-dev.20260630.1')
+    for (const [name, version] of Object.entries(expectedPackageBaseline)) {
+      assert.equal(packageBaseline[name], version)
+    }
 
     const tsgoPolicy = record(codexProfile.tsgoPolicy)
     assert.equal(tsgoPolicy.mode, 'strict-v4')
     assert.equal(tsgoPolicy.sourceEntry, 'tsgo-official-source')
-    assert.equal(record(tsgoPolicy.ruleMapSource).ruleCount, 76)
+    assert.equal(record(tsgoPolicy.ruleMapSource).ruleCount, Object.keys(strictDiagnosticSeverity).length)
 
     const contributions = record(codexProfile.contributions)
     const packageJson = record(contributions.packageJson)
     const scripts = record(packageJson.scripts)
-    assert.equal(record(scripts.prepare).defaultCommand, 'effect-tsgo patch')
-    assert.equal(record(scripts.typecheck).defaultCommand, 'tsgo --noEmit')
+    assert.equal(record(scripts.prepare).defaultCommand, expectedPrepareCommand)
+    assert.equal(record(scripts.typecheck).defaultCommand, expectedTypecheckCommand)
 
     const providerTsconfig = record(contributions.tsconfig)
     const providerCompilerOptions = record(providerTsconfig.compilerOptions)
@@ -167,6 +175,46 @@ it.layer(NodeServices.layer)((it) => {
     const compilerOptions = record(tsconfig.compilerOptions)
     const plugin = languageServicePlugin(compilerOptions.plugins as ReadonlyArray<unknown>)
     assert.deepStrictEqual(plugin, providerPlugin)
+  }))
+
+  it.effect('provider profile declares package manifest and TypeScript contribution roles', () => Effect.gen(function* () {
+    const profile = record(yield* readJson('provider/effect-harness.provider.json'))
+    const codexProfile = record(record(profile.profiles)['codex-effect-v4'])
+    const contributions = record(codexProfile.contributions)
+
+    const packageJson = record(contributions.packageJson)
+    assert.equal(packageJson.mode, 'structured-merge')
+    assert.equal(packageJson.targetPath, 'package.json')
+    assert.equal(packageJson.selfConformanceSpecifier, 'catalog:')
+    assert.equal('dependencies' in packageJson, false)
+    assert.equal('devDependencies' in packageJson, false)
+    const dependencyGroups = record(packageJson.dependencyGroups)
+    assert.deepStrictEqual(record(record(dependencyGroups.runtime).packages), baselinePackages(['effect', '@effect/platform-node']))
+    assert.equal(record(dependencyGroups.runtime).field, 'dependencies')
+    assert.deepStrictEqual(record(record(dependencyGroups.testing).packages), baselinePackages(['@effect/vitest']))
+    assert.equal(record(dependencyGroups.testing).field, 'devDependencies')
+    assert.deepStrictEqual(record(record(dependencyGroups.diagnostics).packages), baselinePackages(['@effect/tsgo', '@effect/language-service']))
+    assert.equal(record(dependencyGroups.diagnostics).field, 'devDependencies')
+    assert.deepStrictEqual(record(record(dependencyGroups.nativeBackend).packages), baselinePackages(['@typescript/native-preview']))
+    assert.equal(record(dependencyGroups.nativeBackend).field, 'devDependencies')
+
+    const tsconfigContribution = record(contributions.tsconfig)
+    assert.equal(tsconfigContribution.mode, 'structured-merge')
+    assert.equal(tsconfigContribution.targetPath, 'tsconfig.json')
+    const tsgo = record(tsconfigContribution.tsgo)
+    assert.equal(tsgo.diagnosticCommand, expectedTypecheckCommand)
+    assert.deepStrictEqual(record(tsgo.diagnosticGate), strictDiagnosticGate)
+    assert.deepStrictEqual(record(tsgo.nativeBackend), {
+      package: '@typescript/native-preview',
+      setupCommand: expectedPrepareCommand,
+      version: expectedPackageBaseline['@typescript/native-preview'],
+    })
+    assert.deepStrictEqual(record(tsgo.ruleMapSource), {
+      metadata: 'repos/tsgo/_packages/tsgo/src/metadata.json',
+      policy: 'harness/tsgo.md',
+      ruleCount: Object.keys(strictDiagnosticSeverity).length,
+      supportedEffect: 'v4',
+    })
   }))
 
   it.effect('provider profile declares target managed surfaces and editor policy options', () => Effect.gen(function* () {
@@ -203,6 +251,7 @@ it.layer(NodeServices.layer)((it) => {
     const documentationFiles = documentationBundle.files as ReadonlyArray<unknown>
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/effect-code.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/diagnostics.md'))
+    assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/package-config.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/source-identity.md'))
 
     const snippets = record(contributions.snippets)

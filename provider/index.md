@@ -72,10 +72,14 @@ provider 当前暴露以下能力：
 
 | Capability | Contribution | Target surface |
 | --- | --- | --- |
-| Effect v4 package baseline | `contributions.packageJson` | `package.json` dependencies/devDependencies |
+| Effect v4 package baseline | `contributions.packageJson.dependencyGroups.runtime` | `package.json` dependencies |
+| Effect testing baseline | `contributions.packageJson.dependencyGroups.testing` | `package.json` devDependencies |
+| Effect diagnostics packages | `contributions.packageJson.dependencyGroups.diagnostics` | `package.json` devDependencies |
+| Native tsgo backend package | `contributions.packageJson.dependencyGroups.nativeBackend` | `package.json` devDependencies |
 | Effect diagnostics | `contributions.packageJson.scripts.typecheck` | `tsgo --noEmit` |
 | Native tsgo backend setup | `contributions.packageJson.scripts.prepare` | `effect-tsgo patch` |
-| Strict language-service policy | `contributions.tsconfig` | `tsconfig.json` plugin |
+| Strict language-service policy | `contributions.tsconfig.compilerOptions.plugins[]` | `tsconfig.json` plugin |
+| Strict tsgo execution policy | `contributions.tsconfig.tsgo` | `tsconfig.json` projection and package scripts |
 | Provider identity record | `providerRecord` | `.prelude/providers/effect-harness/provider.json` |
 | Source identity | `sourceEntries`、`sourceBoundary` | provider record artifact identity only |
 | Target docs bundle | `contributions.documentationBundle` | `.prelude/providers/effect-harness/docs/**` |

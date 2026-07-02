@@ -7,8 +7,6 @@ import { readTsgoStrictRuleMap } from './TsgoMetadata.ts'
 import {
   expectedEffectTsgoVersion,
   expectedPackageBaseline,
-  expectedPrepareCommand,
-  expectedTypecheckCommand,
   requiredTsgoPolicyKeywords,
   strictDiagnosticGate,
   strictDiagnosticSeverity,
@@ -51,23 +49,6 @@ function arrayField(
   const value = record[key]
   if (!Array.isArray(value)) {
     errors.push(`${source}.${key} must be an array.`)
-    return undefined
-  }
-  return value
-}
-
-function stringRecordField(
-  errors: Array<string>,
-  record: Record<string, unknown> | undefined,
-  key: string,
-  source: string,
-): Record<string, unknown> | undefined {
-  if (record === undefined) {
-    return undefined
-  }
-  const value = record[key]
-  if (!isRecord(value)) {
-    errors.push(`${source}.${key} must be an object.`)
     return undefined
   }
   return value
@@ -152,22 +133,6 @@ function assertTsconfig(errors: Array<string>, tsconfig: Record<string, unknown>
   )
 }
 
-function assertPackageBaseline(
-  errors: Array<string>,
-  profileBaseline: Record<string, unknown> | undefined,
-): void {
-  if (profileBaseline === undefined) {
-    return
-  }
-
-  for (const [name, expected] of Object.entries(expectedPackageBaseline)) {
-    const actual = profileBaseline[name]
-    if (actual !== expected) {
-      errors.push(`provider profile packageBaseline.${name} is ${String(actual ?? 'missing')}; expected ${expected}.`)
-    }
-  }
-}
-
 function assertProviderTsgoPolicy(errors: Array<string>, codexProfile: Record<string, unknown> | undefined): void {
   const tsgoPolicy = recordField(errors, codexProfile, 'tsgoPolicy', 'provider profile.profiles.codex-effect-v4')
   assertStringValue(errors, tsgoPolicy?.mode, 'strict-v4', 'provider profile tsgoPolicy.mode')
@@ -209,12 +174,6 @@ function assertProviderTsgoContribution(errors: Array<string>, profile: Record<s
   const profiles = recordField(errors, profile, 'profiles', 'provider profile')
   const codexProfile = recordField(errors, profiles, 'codex-effect-v4', 'provider profile.profiles')
   const contributions = recordField(errors, codexProfile, 'contributions', 'provider profile.profiles.codex-effect-v4')
-  const packageJson = recordField(errors, contributions, 'packageJson', 'provider profile.profiles.codex-effect-v4.contributions')
-  const scripts = recordField(errors, packageJson, 'scripts', 'provider profile.profiles.codex-effect-v4.contributions.packageJson')
-  const prepare = recordField(errors, scripts, 'prepare', 'provider profile.profiles.codex-effect-v4.contributions.packageJson.scripts')
-  const typecheck = recordField(errors, scripts, 'typecheck', 'provider profile.profiles.codex-effect-v4.contributions.packageJson.scripts')
-  assertStringValue(errors, prepare?.defaultCommand, expectedPrepareCommand, 'provider profile contributions packageJson.scripts.prepare.defaultCommand')
-  assertStringValue(errors, typecheck?.defaultCommand, expectedTypecheckCommand, 'provider profile contributions packageJson.scripts.typecheck.defaultCommand')
 
   const tsconfig = recordField(errors, contributions, 'tsconfig', 'provider profile.profiles.codex-effect-v4.contributions')
   const compilerOptions = recordField(errors, tsconfig, 'compilerOptions', 'provider profile contributions tsconfig')
@@ -225,13 +184,6 @@ function assertProviderTsgoContribution(errors: Array<string>, profile: Record<s
     'provider profile contributions tsconfig.compilerOptions.plugins[@effect/language-service]',
   )
   assertProviderTsgoPolicy(errors, codexProfile)
-  assertPackageBaseline(errors, recordField(errors, codexProfile, 'packageBaseline', 'provider profile.profiles.codex-effect-v4'))
-}
-
-function assertPackageTypecheckScript(errors: Array<string>, packageJson: Record<string, unknown>): void {
-  const scripts = stringRecordField(errors, packageJson, 'scripts', 'package.json')
-  assertStringValue(errors, scripts?.prepare, expectedPrepareCommand, 'package.json.scripts.prepare')
-  assertStringValue(errors, scripts?.typecheck, expectedTypecheckCommand, 'package.json.scripts.typecheck')
 }
 
 function assertStrictRuleMap(errors: Array<string>, metadataRuleMap: Readonly<Record<string, string>>): void {
@@ -279,13 +231,11 @@ export const verifyTsgoBaseline = Effect.fnUntraced(function* (errors: Array<str
   const fs = yield* FileSystem.FileSystem
   const tsconfig = yield* readJson(`${harness}/tsconfig.json`, decodeJsonRecord)
   const providerProfile = yield* readJson(`${harness}/provider/effect-harness.provider.json`, decodeJsonRecord)
-  const packageJson = yield* readJson(`${harness}/package.json`, decodeJsonRecord)
   const tsgoPolicyText = yield* fs.readFileString(`${harness}/harness/tsgo.md`)
   const metadataRuleMap = yield* readTsgoStrictRuleMap(harness)
 
   assertTsconfig(errors, tsconfig, 'tsconfig.json')
   assertProviderTsgoContribution(errors, providerProfile)
-  assertPackageTypecheckScript(errors, packageJson)
   assertStrictRuleMap(errors, metadataRuleMap)
   assertTsgoPolicyDocument(errors, tsgoPolicyText)
   yield* assertNoEffectDiagnosticSuppressions(errors, harness)

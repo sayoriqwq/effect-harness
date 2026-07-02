@@ -268,15 +268,36 @@
       },
       "contributions": {
         "packageJson": {
-          "dependencies": {
-            "effect": "4.0.0-beta.92",
-            "@effect/platform-node": "4.0.0-beta.92"
-          },
-          "devDependencies": {
-            "@effect/vitest": "4.0.0-beta.92",
-            "@effect/tsgo": "0.15.0",
-            "@effect/language-service": "0.86.2",
-            "@typescript/native-preview": "7.0.0-dev.20260630.1"
+          "mode": "structured-merge",
+          "targetPath": "package.json",
+          "selfConformanceSpecifier": "catalog:",
+          "dependencyGroups": {
+            "runtime": {
+              "field": "dependencies",
+              "packages": {
+                "effect": "4.0.0-beta.92",
+                "@effect/platform-node": "4.0.0-beta.92"
+              }
+            },
+            "testing": {
+              "field": "devDependencies",
+              "packages": {
+                "@effect/vitest": "4.0.0-beta.92"
+              }
+            },
+            "diagnostics": {
+              "field": "devDependencies",
+              "packages": {
+                "@effect/tsgo": "0.15.0",
+                "@effect/language-service": "0.86.2"
+              }
+            },
+            "nativeBackend": {
+              "field": "devDependencies",
+              "packages": {
+                "@typescript/native-preview": "7.0.0-dev.20260630.1"
+              }
+            }
           },
           "scripts": {
             "prepare": {
@@ -290,6 +311,28 @@
           }
         },
         "tsconfig": {
+          "mode": "structured-merge",
+          "targetPath": "tsconfig.json",
+          "tsgo": {
+            "diagnosticCommand": "tsgo --noEmit",
+            "nativeBackend": {
+              "package": "@typescript/native-preview",
+              "version": "7.0.0-dev.20260630.1",
+              "setupCommand": "effect-tsgo patch"
+            },
+            "diagnosticGate": {
+              "includeSuggestionsInTsc": true,
+              "ignoreEffectSuggestionsInTscExitCode": false,
+              "ignoreEffectWarningsInTscExitCode": false,
+              "ignoreEffectErrorsInTscExitCode": false
+            },
+            "ruleMapSource": {
+              "metadata": "repos/tsgo/_packages/tsgo/src/metadata.json",
+              "policy": "harness/tsgo.md",
+              "supportedEffect": "v4",
+              "ruleCount": 76
+            }
+          },
           "compilerOptions": {
             "plugins": [
               {
@@ -432,6 +475,13 @@
               "id": "diagnostics",
               "sourcePath": "provider/docs/diagnostics.md",
               "targetPath": "diagnostics.md",
+              "contentType": "text/markdown",
+              "managed": true
+            },
+            {
+              "id": "package-config",
+              "sourcePath": "provider/docs/package-config.md",
+              "targetPath": "package-config.md",
               "contentType": "text/markdown",
               "managed": true
             },

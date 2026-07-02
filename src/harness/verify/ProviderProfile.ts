@@ -2,6 +2,13 @@ import { Effect, FileSystem } from 'effect'
 import { readJson } from '../../platform/Json.ts'
 import { HarnessError } from '../Errors.ts'
 import { isRecord } from './JsonFields.ts'
+import {
+  expectedPackageBaseline,
+  expectedPrepareCommand,
+  expectedTypecheckCommand,
+  strictDiagnosticGate,
+  strictDiagnosticSeverity,
+} from './TsgoPolicy.ts'
 
 function decodeJsonRecord(value: unknown, source: string): Effect.Effect<Record<string, unknown>, HarnessError> {
   return isRecord(value)
@@ -122,6 +129,22 @@ function assertRecordDoesNotContain(
   }
 }
 
+function stableJson(value: unknown): string {
+  if (Array.isArray(value)) {
+    return `[${value.map(stableJson).join(',')}]`
+  }
+  if (isRecord(value)) {
+    return `{${Object.keys(value).sort().map(key => `${JSON.stringify(key)}:${stableJson(value[key])}`).join(',')}}`
+  }
+  return JSON.stringify(value)
+}
+
+function assertJsonValue(errors: Array<string>, actual: unknown, expected: unknown, source: string): void {
+  if (stableJson(actual) !== stableJson(expected)) {
+    errors.push(`${source} does not match the expected provider contract value.`)
+  }
+}
+
 interface ExpectedManagedFile {
   readonly id: string
   readonly sourcePath: string
@@ -189,14 +212,32 @@ const assertManagedFileBundle = Effect.fnUntraced(function* (
   }
 })
 
-const expectedPackageBaseline: Readonly<Record<string, string>> = {
-  'effect': '4.0.0-beta.92',
-  '@effect/platform-node': '4.0.0-beta.92',
-  '@effect/vitest': '4.0.0-beta.92',
-  '@effect/tsgo': '0.15.0',
-  '@effect/language-service': '0.86.2',
-  '@typescript/native-preview': '7.0.0-dev.20260630.1',
+type PackageName = keyof typeof expectedPackageBaseline
+type PackageField = 'dependencies' | 'devDependencies'
+
+interface ExpectedPackageGroup {
+  readonly field: PackageField
+  readonly packageNames: ReadonlyArray<PackageName>
 }
+
+const expectedPackageGroups = {
+  runtime: {
+    field: 'dependencies',
+    packageNames: ['effect', '@effect/platform-node'],
+  },
+  testing: {
+    field: 'devDependencies',
+    packageNames: ['@effect/vitest'],
+  },
+  diagnostics: {
+    field: 'devDependencies',
+    packageNames: ['@effect/tsgo', '@effect/language-service'],
+  },
+  nativeBackend: {
+    field: 'devDependencies',
+    packageNames: ['@typescript/native-preview'],
+  },
+} as const satisfies Readonly<Record<string, ExpectedPackageGroup>>
 
 function assertPackageBaseline(
   errors: Array<string>,
@@ -245,6 +286,134 @@ function assertEditorPolicy(errors: Array<string>, options: Record<string, unkno
   assertBooleanValue(errors, booleanField(errors, filesExclude, 'requiresExplicitOptIn', 'profile.options.editorPolicy.filesExclude'), true, 'profile.options.editorPolicy.filesExclude.requiresExplicitOptIn')
 }
 
+function assertPackageGroup(
+  errors: Array<string>,
+  dependencyGroups: Record<string, unknown> | undefined,
+  groupName: string,
+  expected: ExpectedPackageGroup,
+): void {
+  const group = recordField(errors, dependencyGroups, groupName, 'provider profile packageJson.dependencyGroups')
+  assertStringValue(errors, stringField(errors, group, 'field', `provider profile packageJson.dependencyGroups.${groupName}`), expected.field, `provider profile packageJson.dependencyGroups.${groupName}.field`)
+  const packages = recordField(errors, group, 'packages', `provider profile packageJson.dependencyGroups.${groupName}`)
+  if (packages === undefined) {
+    return
+  }
+
+  const expectedNames = new Set<string>(expected.packageNames)
+  for (const name of Object.keys(packages)) {
+    if (!expectedNames.has(name)) {
+      errors.push(`provider profile packageJson.dependencyGroups.${groupName}.packages must not include ${name}.`)
+    }
+  }
+
+  for (const name of expected.packageNames) {
+    assertStringValue(
+      errors,
+      stringField(errors, packages, name, `provider profile packageJson.dependencyGroups.${groupName}.packages`),
+      expectedPackageBaseline[name],
+      `provider profile packageJson.dependencyGroups.${groupName}.packages.${name}`,
+    )
+  }
+}
+
+function assertWorkspaceCatalogEntry(
+  errors: Array<string>,
+  workspaceText: string,
+  name: PackageName,
+): void {
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`)
+  const escapedVersion = expectedPackageBaseline[name].replace(/[.*+?^${}()|[\]\\]/gu, String.raw`\$&`)
+  const pattern = new RegExp(`(?:^|\\n)\\s*['"]?${escapedName}['"]?:\\s*${escapedVersion}(?:\\n|$)`, 'u')
+  if (!pattern.test(workspaceText)) {
+    errors.push(`pnpm-workspace.yaml catalog must pin ${name} to ${expectedPackageBaseline[name]}.`)
+  }
+}
+
+function assertPackageGroupSelfConformance(
+  errors: Array<string>,
+  dependencyGroups: Record<string, unknown> | undefined,
+  packageManifest: Record<string, unknown>,
+  workspaceText: string,
+  groupName: keyof typeof expectedPackageGroups,
+  selfConformanceSpecifier: string,
+): void {
+  const expected = expectedPackageGroups[groupName]
+  assertPackageGroup(errors, dependencyGroups, groupName, expected)
+
+  const packageSection = recordField(errors, packageManifest, expected.field, 'package.json')
+  for (const name of expected.packageNames) {
+    assertStringValue(
+      errors,
+      stringField(errors, packageSection, name, `package.json.${expected.field}`),
+      selfConformanceSpecifier,
+      `package.json.${expected.field}.${name}`,
+    )
+    assertWorkspaceCatalogEntry(errors, workspaceText, name)
+  }
+}
+
+function assertPackageScriptsContribution(
+  errors: Array<string>,
+  packageContribution: Record<string, unknown> | undefined,
+  packageManifest: Record<string, unknown>,
+): void {
+  const contributionScripts = recordField(errors, packageContribution, 'scripts', 'provider profile packageJson contribution')
+  const prepare = recordField(errors, contributionScripts, 'prepare', 'provider profile packageJson.scripts')
+  const typecheck = recordField(errors, contributionScripts, 'typecheck', 'provider profile packageJson.scripts')
+  assertStringValue(errors, stringField(errors, prepare, 'defaultCommand', 'provider profile packageJson.scripts.prepare'), expectedPrepareCommand, 'provider profile packageJson.scripts.prepare.defaultCommand')
+  assertStringValue(errors, stringField(errors, typecheck, 'defaultCommand', 'provider profile packageJson.scripts.typecheck'), expectedTypecheckCommand, 'provider profile packageJson.scripts.typecheck.defaultCommand')
+
+  const manifestScripts = recordField(errors, packageManifest, 'scripts', 'package.json')
+  assertStringValue(errors, stringField(errors, manifestScripts, 'prepare', 'package.json.scripts'), expectedPrepareCommand, 'package.json.scripts.prepare')
+  assertStringValue(errors, stringField(errors, manifestScripts, 'typecheck', 'package.json.scripts'), expectedTypecheckCommand, 'package.json.scripts.typecheck')
+}
+
+function assertPackageJsonContribution(
+  errors: Array<string>,
+  contributions: Record<string, unknown> | undefined,
+  packageManifest: Record<string, unknown>,
+  workspaceText: string,
+): void {
+  const packageJson = recordField(errors, contributions, 'packageJson', 'provider profile.profiles.codex-effect-v4.contributions')
+  assertStringValue(errors, stringField(errors, packageJson, 'mode', 'provider profile packageJson contribution'), 'structured-merge', 'provider profile packageJson.mode')
+  assertStringValue(errors, stringField(errors, packageJson, 'targetPath', 'provider profile packageJson contribution'), 'package.json', 'provider profile packageJson.targetPath')
+  const selfConformanceSpecifier = stringField(errors, packageJson, 'selfConformanceSpecifier', 'provider profile packageJson contribution')
+  assertStringValue(errors, selfConformanceSpecifier, 'catalog:', 'provider profile packageJson.selfConformanceSpecifier')
+  assertRecordDoesNotContain(errors, packageJson, 'dependencies', 'provider profile packageJson contribution')
+  assertRecordDoesNotContain(errors, packageJson, 'devDependencies', 'provider profile packageJson contribution')
+
+  const dependencyGroups = recordField(errors, packageJson, 'dependencyGroups', 'provider profile packageJson contribution')
+  assertPackageGroupSelfConformance(errors, dependencyGroups, packageManifest, workspaceText, 'runtime', selfConformanceSpecifier ?? '')
+  assertPackageGroupSelfConformance(errors, dependencyGroups, packageManifest, workspaceText, 'testing', selfConformanceSpecifier ?? '')
+  assertPackageGroupSelfConformance(errors, dependencyGroups, packageManifest, workspaceText, 'diagnostics', selfConformanceSpecifier ?? '')
+  assertPackageGroupSelfConformance(errors, dependencyGroups, packageManifest, workspaceText, 'nativeBackend', selfConformanceSpecifier ?? '')
+  assertPackageScriptsContribution(errors, packageJson, packageManifest)
+}
+
+function assertTsconfigContributionMetadata(errors: Array<string>, contributions: Record<string, unknown> | undefined): void {
+  const tsconfig = recordField(errors, contributions, 'tsconfig', 'provider profile.profiles.codex-effect-v4.contributions')
+  assertStringValue(errors, stringField(errors, tsconfig, 'mode', 'provider profile tsconfig contribution'), 'structured-merge', 'provider profile tsconfig.mode')
+  assertStringValue(errors, stringField(errors, tsconfig, 'targetPath', 'provider profile tsconfig contribution'), 'tsconfig.json', 'provider profile tsconfig.targetPath')
+
+  const tsgo = recordField(errors, tsconfig, 'tsgo', 'provider profile tsconfig contribution')
+  assertStringValue(errors, stringField(errors, tsgo, 'diagnosticCommand', 'provider profile tsconfig.tsgo'), expectedTypecheckCommand, 'provider profile tsconfig.tsgo.diagnosticCommand')
+
+  const nativeBackend = recordField(errors, tsgo, 'nativeBackend', 'provider profile tsconfig.tsgo')
+  assertStringValue(errors, stringField(errors, nativeBackend, 'package', 'provider profile tsconfig.tsgo.nativeBackend'), '@typescript/native-preview', 'provider profile tsconfig.tsgo.nativeBackend.package')
+  assertStringValue(errors, stringField(errors, nativeBackend, 'version', 'provider profile tsconfig.tsgo.nativeBackend'), expectedPackageBaseline['@typescript/native-preview'], 'provider profile tsconfig.tsgo.nativeBackend.version')
+  assertStringValue(errors, stringField(errors, nativeBackend, 'setupCommand', 'provider profile tsconfig.tsgo.nativeBackend'), expectedPrepareCommand, 'provider profile tsconfig.tsgo.nativeBackend.setupCommand')
+
+  assertJsonValue(errors, recordField(errors, tsgo, 'diagnosticGate', 'provider profile tsconfig.tsgo'), strictDiagnosticGate, 'provider profile tsconfig.tsgo.diagnosticGate')
+
+  const ruleMapSource = recordField(errors, tsgo, 'ruleMapSource', 'provider profile tsconfig.tsgo')
+  assertStringValue(errors, stringField(errors, ruleMapSource, 'metadata', 'provider profile tsconfig.tsgo.ruleMapSource'), 'repos/tsgo/_packages/tsgo/src/metadata.json', 'provider profile tsconfig.tsgo.ruleMapSource.metadata')
+  assertStringValue(errors, stringField(errors, ruleMapSource, 'policy', 'provider profile tsconfig.tsgo.ruleMapSource'), 'harness/tsgo.md', 'provider profile tsconfig.tsgo.ruleMapSource.policy')
+  assertStringValue(errors, stringField(errors, ruleMapSource, 'supportedEffect', 'provider profile tsconfig.tsgo.ruleMapSource'), 'v4', 'provider profile tsconfig.tsgo.ruleMapSource.supportedEffect')
+  if (ruleMapSource?.ruleCount !== Object.keys(strictDiagnosticSeverity).length) {
+    errors.push(`provider profile tsconfig.tsgo.ruleMapSource.ruleCount is ${String(ruleMapSource?.ruleCount ?? 'missing')}; expected ${Object.keys(strictDiagnosticSeverity).length}.`)
+  }
+}
+
 function assertDeliveryModes(errors: Array<string>, providerProfile: Record<string, unknown>): void {
   const deliveryModes = recordField(errors, providerProfile, 'deliveryModes', 'provider profile')
   const internalHarness = recordField(errors, deliveryModes, 'internalHarness', 'provider profile.deliveryModes')
@@ -271,9 +440,12 @@ function assertSelfConformanceContract(errors: Array<string>, providerProfile: R
 }
 
 export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors: Array<string>, harness: string) {
+  const fs = yield* FileSystem.FileSystem
   const providerProfile = yield* readJson(`${harness}/provider/effect-harness.provider.json`, decodeJsonRecord)
   const effectContract = yield* readJson(`${harness}/repos/effect.subtree.json`, decodeJsonRecord)
   const tsgoContract = yield* readJson(`${harness}/repos/tsgo.subtree.json`, decodeJsonRecord)
+  const packageManifest = yield* readJson(`${harness}/package.json`, decodeJsonRecord)
+  const workspaceText = yield* fs.readFileString(`${harness}/pnpm-workspace.yaml`)
 
   const provider = recordField(errors, providerProfile, 'provider', 'provider profile')
   assertStringValue(errors, stringField(errors, provider, 'id', 'provider profile.provider'), 'effect-harness', 'provider profile.provider.id')
@@ -358,6 +530,8 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertRecordDoesNotContain(errors, contributions, 'runtimeAssets', 'provider profile.profiles.codex-effect-v4.contributions')
   assertRecordDoesNotContain(errors, contributions, 'agentsBlock', 'provider profile.profiles.codex-effect-v4.contributions')
   assertRecordDoesNotContain(errors, contributions, 'codexAssets', 'provider profile.profiles.codex-effect-v4.contributions')
+  assertPackageJsonContribution(errors, contributions, packageManifest, workspaceText)
+  assertTsconfigContributionMetadata(errors, contributions)
 
   yield* assertManagedFileBundle(
     errors,
@@ -374,6 +548,11 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
         id: 'diagnostics',
         sourcePath: 'provider/docs/diagnostics.md',
         targetPath: 'diagnostics.md',
+      },
+      {
+        id: 'package-config',
+        sourcePath: 'provider/docs/package-config.md',
+        targetPath: 'package-config.md',
       },
       {
         id: 'source-identity',
