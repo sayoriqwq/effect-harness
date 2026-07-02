@@ -1,7 +1,8 @@
 import process from 'node:process'
-import { Effect, Path } from 'effect'
+import { Console, Effect, Path, Schema } from 'effect'
 import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
+import { discoverProvider } from '../harness/ProviderDiscovery.ts'
 import { verifySourcePin } from '../harness/SourcePin.ts'
 import { verifyPipeline } from '../harness/verify/Pipeline.ts'
 import { verifyProviderRepository } from '../harness/verify/ProviderRepository.ts'
@@ -35,6 +36,16 @@ function makeCli(config: CliConfig) {
     Command.withDescription('Check the Effect harness provider repository'),
   )
 
+  const providerDiscover = Command.make('provider-discover', {
+    harness,
+  }, Effect.fnUntraced(function* ({ harness }) {
+    const discovery = yield* discoverProvider(harness)
+    const discoveryText = yield* Schema.encodeUnknownEffect(Schema.UnknownFromJsonString)(discovery)
+    yield* Console.log(discoveryText)
+  })).pipe(
+    Command.withDescription('Print the machine-readable provider discovery envelope'),
+  )
+
   const sourceVerify = Command.make('source-verify', {
     harness,
   }, Effect.fnUntraced(function* ({ harness }) {
@@ -53,7 +64,7 @@ function makeCli(config: CliConfig) {
 
   return Command.make('effect-harness').pipe(
     Command.withDescription('Effect v4 beta provider CLI'),
-    Command.withSubcommands([verify, providerVerify, sourceVerify]),
+    Command.withSubcommands([verify, providerVerify, providerDiscover, sourceVerify]),
   )
 }
 

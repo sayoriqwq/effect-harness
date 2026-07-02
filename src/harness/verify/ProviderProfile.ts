@@ -859,6 +859,12 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
         targetPath: 'managed-surfaces.md',
       },
       {
+        id: 'discovery',
+        requiredKeywords: ['Provider Discovery', 'provider-discover', 'Prelude', 'target-managed surfaces', 'artifact-only', 'internal harness'],
+        sourcePath: 'provider/docs/discovery.md',
+        targetPath: 'discovery.md',
+      },
+      {
         id: 'package-config',
         requiredKeywords: ['Package', 'effect-tsgo patch', 'tsgo --noEmit', 'tsconfig.json'],
         sourcePath: 'provider/docs/package-config.md',

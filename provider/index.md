@@ -7,6 +7,7 @@ purpose: 定义 effect-harness provider 对任意 target 暴露的能力、受�
 status: active
 sources:
   - provider/effect-harness.provider.json
+  - provider/docs/discovery.md
   - provider/docs/index.md
   - provider/snippets/agents.md
   - harness/offcial-migrate.md
@@ -84,6 +85,7 @@ provider 当前暴露以下能力：
 | Lint guardrails | `contributions.lintGuardrails` | repository boundary and syntax-level guardrails |
 | Test policy | `contributions.testPolicy` | `@effect/vitest` baseline and test entry |
 | Verification policy | `contributions.verificationPolicy` | completion gate and verify stages |
+| Provider discovery | `provider-discover` | package artifact locator and machine-readable provider envelope |
 | Provider identity record | `providerRecord` | `.prelude/providers/effect-harness/provider.json` |
 | Source identity | `sourceEntries`、`sourceBoundary` | provider record artifact identity only |
 | Target docs bundle | `contributions.documentationBundle` | `.prelude/providers/effect-harness/docs/**` |
@@ -137,6 +139,18 @@ maintain 规则处理。
 
 `provider/snippets/**` 是受管 snippet source。snippet 可以被用户或 target-local policy 引用，
 但 effect-harness 不直接管理目标 `AGENTS.md` block。
+
+## Discovery
+
+Prelude SHOULD 通过 `npx --yes @sayoriqwq/effect-harness provider-discover` 读取 provider discovery
+envelope。
+
+discovery envelope 暴露 provider identity、artifact root、package locator、target-managed surfaces、
+artifact-only references、source identity 和 internal harness surfaces。
+
+Prelude MUST NOT 把 `provider/effect-harness.provider.json` 复制进 Prelude 源码并手写保持同步。
+
+Prelude MUST NOT 把 artifact-only references 当作 target-managed files 投递。
 
 ## 编辑器策略
 

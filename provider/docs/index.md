@@ -9,6 +9,7 @@ sources:
   - provider/effect-harness.provider.json
   - provider/docs/effect-code.md
   - provider/docs/diagnostics.md
+  - provider/docs/discovery.md
   - provider/docs/editor-policy.md
   - provider/docs/managed-surfaces.md
   - provider/docs/package-config.md
@@ -28,6 +29,7 @@ updated: 2026-07-02
 | --- | --- | --- |
 | `provider/docs/effect-code.md` | `.prelude/providers/effect-harness/docs/effect-code.md` | 说明 target 内 Effect 代码的编码基线。 |
 | `provider/docs/diagnostics.md` | `.prelude/providers/effect-harness/docs/diagnostics.md` | 说明 target 内 strict tsgo diagnostic gate。 |
+| `provider/docs/discovery.md` | `.prelude/providers/effect-harness/docs/discovery.md` | 说明 Prelude 如何通过 provider discovery 消费 package artifact。 |
 | `provider/docs/editor-policy.md` | `.prelude/providers/effect-harness/docs/editor-policy.md` | 说明 target 内 editor policy 的 hard、recommended 和 preference 层级。 |
 | `provider/docs/managed-surfaces.md` | `.prelude/providers/effect-harness/docs/managed-surfaces.md` | 说明 target 内受管 surface、artifact-only reference 和 feedback loop 边界。 |
 | `provider/docs/package-config.md` | `.prelude/providers/effect-harness/docs/package-config.md` | 说明 target 内 package baseline、script baseline 和 `tsconfig.json` projection。 |

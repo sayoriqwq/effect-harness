@@ -276,6 +276,7 @@ it.layer(NodeServices.layer)((it) => {
     const documentationFiles = documentationBundle.files as ReadonlyArray<unknown>
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/effect-code.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/diagnostics.md'))
+    assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/discovery.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/editor-policy.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/managed-surfaces.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/package-config.md'))

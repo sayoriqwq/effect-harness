@@ -692,6 +692,13 @@
               "managed": true
             },
             {
+              "id": "discovery",
+              "sourcePath": "provider/docs/discovery.md",
+              "targetPath": "discovery.md",
+              "contentType": "text/markdown",
+              "managed": true
+            },
+            {
               "id": "package-config",
               "sourcePath": "provider/docs/package-config.md",
               "targetPath": "package-config.md",

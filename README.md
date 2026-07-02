@@ -41,6 +41,7 @@ strict tsgo policy、读取路线、provider profile、docs bundle 和 snippets�
   docs bundle、snippets、source identity 和 self-conformance。
 - provider profile：声明 target 应该接收的 managed surfaces。
 - provider record：记录接入的 `effect-harness` profile、artifact 与 source identity。
+- provider discovery：通过 `effect-harness provider-discover` 输出 machine-readable provider envelope。
 - package 基线：维护 `effect`、`@effect/platform-node`、`@effect/tsgo`、
   `@effect/language-service` 等版本约束。
 - `tsconfig.json` 指针：维护 strict `@effect/language-service` 插件。
