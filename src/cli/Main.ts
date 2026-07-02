@@ -3,9 +3,6 @@ import { Console, Effect, Path, Schema } from 'effect'
 import * as Command from 'effect/unstable/cli/Command'
 import * as Flag from 'effect/unstable/cli/Flag'
 import { discoverProvider } from '../harness/ProviderDiscovery.ts'
-import { verifySourcePin } from '../harness/SourcePin.ts'
-import { verifyPipeline } from '../harness/verify/Pipeline.ts'
-import { verifyProviderRepository } from '../harness/verify/ProviderRepository.ts'
 
 export interface CliConfig {
   readonly harnessRoot: string
@@ -31,6 +28,7 @@ function makeCli(config: CliConfig) {
   const providerVerify = Command.make('provider-verify', {
     harness,
   }, Effect.fnUntraced(function* ({ harness }) {
+    const { verifyProviderRepository } = yield* Effect.promise(() => import('../harness/verify/ProviderRepository.ts'))
     yield* verifyProviderRepository(harness)
   })).pipe(
     Command.withDescription('Check the Effect harness provider repository'),
@@ -49,6 +47,7 @@ function makeCli(config: CliConfig) {
   const sourceVerify = Command.make('source-verify', {
     harness,
   }, Effect.fnUntraced(function* ({ harness }) {
+    const { verifySourcePin } = yield* Effect.promise(() => import('../harness/SourcePin.ts'))
     yield* verifySourcePin(harness)
   })).pipe(
     Command.withDescription('Check the pinned official Effect and tsgo source subtrees'),
@@ -57,6 +56,7 @@ function makeCli(config: CliConfig) {
   const verify = Command.make('verify', {
     harness,
   }, Effect.fnUntraced(function* ({ harness }) {
+    const { verifyPipeline } = yield* Effect.promise(() => import('../harness/verify/Pipeline.ts'))
     yield* verifyPipeline(harness)
   })).pipe(
     Command.withDescription('Run the full Effect harness verification pipeline'),

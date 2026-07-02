@@ -50,7 +50,8 @@
   },
   "dependencies": {
     "@effect/platform-node": "catalog:",
-    "effect": "catalog:"
+    "effect": "catalog:",
+    "typescript": "catalog:"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
@@ -61,7 +62,6 @@
     "@typescript/native-preview": "catalog:",
     "eslint": "catalog:",
     "knip": "catalog:",
-    "typescript": "catalog:",
     "vitest": "catalog:"
   }
 }

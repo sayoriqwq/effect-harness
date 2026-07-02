@@ -2,7 +2,8 @@ import type { ProviderDiscovery } from '../src/harness/ProviderDiscovery.ts'
 import { fileURLToPath } from 'node:url'
 import * as NodeServices from '@effect/platform-node/NodeServices'
 import { assert, it } from '@effect/vitest'
-import { Effect, Path } from 'effect'
+import { Effect, FileSystem, Path, Schema, Stream } from 'effect'
+import { ChildProcess, ChildProcessSpawner } from 'effect/unstable/process'
 import { discoverProvider } from '../src/harness/ProviderDiscovery.ts'
 
 const currentFile = fileURLToPath(import.meta.url)
@@ -18,6 +19,60 @@ function record(value: unknown): Record<string, unknown> {
   assert.equal(Array.isArray(value), false)
   return value as Record<string, unknown>
 }
+
+interface CommandResult {
+  readonly status: number
+  readonly stdout: string
+  readonly stderr: string
+}
+
+const runCommand = Effect.fnUntraced(function* (
+  cwd: string,
+  command: string,
+  args: ReadonlyArray<string>,
+) {
+  const spawner = yield* ChildProcessSpawner.ChildProcessSpawner
+  return yield* Effect.scoped(Effect.gen(function* () {
+    const handle = yield* spawner.spawn(ChildProcess.make(command, args, {
+      cwd,
+      extendEnv: true,
+    }))
+    const [stdout, stderr, exitCode] = yield* Effect.all([
+      Stream.mkString(Stream.decodeText(handle.stdout)),
+      Stream.mkString(Stream.decodeText(handle.stderr)),
+      handle.exitCode,
+    ])
+    return {
+      status: Number(exitCode),
+      stderr,
+      stdout,
+    } satisfies CommandResult
+  }))
+})
+
+function withTempDir<A, E, R>(
+  run: (directory: string) => Effect.Effect<A, E, R>,
+) {
+  return Effect.gen(function* () {
+    const fs = yield* FileSystem.FileSystem
+    const directory = yield* Effect.acquireRelease(
+      fs.makeTempDirectory({ prefix: 'effect-harness-provider-discovery-' }),
+      tempDirectory => fs.remove(tempDirectory, { force: true, recursive: true }).pipe(
+        Effect.catch(() => Effect.void),
+      ),
+    )
+    return yield* run(directory)
+  }).pipe(Effect.scoped)
+}
+
+const packedTarball = Effect.fnUntraced(function* (directory: string) {
+  const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
+  const entries = yield* fs.readDirectory(directory)
+  const tarballs = entries.filter(entry => entry.endsWith('.tgz'))
+  assert.equal(tarballs.length, 1)
+  return path.join(directory, tarballs[0]!)
+})
 
 it.layer(NodeServices.layer)((it) => {
   it.effect('provider discovery exposes a Prelude-readable provider envelope', () => Effect.gen(function* () {
@@ -74,4 +129,29 @@ it.layer(NodeServices.layer)((it) => {
     assert.equal(discovery.sourceIdentities.sourceBoundary.targetDelivery, 'identity-only')
     assert.ok(discovery.sourceIdentities.sourceBoundary.targetMustNotReceive.includes('repos/tsgo'))
   }))
+
+  it.effect('packed package provider-discover runs in a clean npx install', () => withTempDir(directory => Effect.gen(function* () {
+    const root = yield* repoRoot()
+    const pack = yield* runCommand(root, 'pnpm', ['pack', '--pack-destination', directory])
+    assert.equal(pack.status, 0, pack.stderr)
+
+    const tarball = yield* packedTarball(directory)
+    const discoveryResult = yield* runCommand(directory, 'npx', [
+      '--yes',
+      '--package',
+      tarball,
+      'effect-harness',
+      'provider-discover',
+    ])
+
+    assert.equal(discoveryResult.status, 0, discoveryResult.stderr)
+    assert.equal(discoveryResult.stderr.includes('Cannot find package'), false)
+
+    const discovery = record(
+      yield* Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(discoveryResult.stdout.trim()),
+    )
+    assert.equal(record(discovery.provider).id, 'effect-harness')
+    assert.equal(record(discovery.packageLocator).packageName, '@sayoriqwq/effect-harness')
+    assert.equal(record(discovery.discovery).mode, 'provider-discovery')
+  })), 60_000)
 })
