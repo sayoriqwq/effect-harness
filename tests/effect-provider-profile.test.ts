@@ -254,6 +254,7 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/effect-code.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/diagnostics.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/editor-policy.md'))
+    assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/managed-surfaces.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/package-config.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/quality-policy.md'))
     assert.ok(documentationFiles.some(file => record(file).sourcePath === 'provider/docs/source-identity.md'))
@@ -262,7 +263,8 @@ it.layer(NodeServices.layer)((it) => {
     assert.equal(snippets.mode, 'managed-files')
     assert.equal(snippets.targetBasePath, '.prelude/providers/effect-harness/snippets')
     const snippetFiles = snippets.files as ReadonlyArray<unknown>
-    assert.ok(snippetFiles.some(file => record(file).sourcePath === 'provider/snippets/agents.md'))
+    const agentsSnippet = record(snippetFiles.find(file => record(file).sourcePath === 'provider/snippets/agents.md'))
+    assert.equal(agentsSnippet.targetUsage, 'manual-copy-or-include-only')
 
     const editorPolicy = record(contributions.editorPolicy)
     assert.equal(editorPolicy.mode, 'structured-merge')

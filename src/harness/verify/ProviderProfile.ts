@@ -148,8 +148,10 @@ function assertJsonValue(errors: Array<string>, actual: unknown, expected: unkno
 
 interface ExpectedManagedFile {
   readonly id: string
+  readonly requiredKeywords?: ReadonlyArray<string>
   readonly sourcePath: string
   readonly targetPath: string
+  readonly targetUsage?: string
 }
 
 const expectedSelfMaterializationForbiddenSurfaces = [
@@ -168,6 +170,13 @@ function fileRecordById(
   return files?.find(file => isRecord(file) && file.id === id) as Record<string, unknown> | undefined
 }
 
+const forbiddenTargetLocalSourceClaims = [
+  'target SHOULD receive `repos/',
+  'target MUST receive `repos/',
+  'target 应该接收 `repos/',
+  'target 必须接收 `repos/',
+] as const
+
 const assertManagedFileContribution = Effect.fnUntraced(function* (
   errors: Array<string>,
   harness: string,
@@ -185,10 +194,27 @@ const assertManagedFileContribution = Effect.fnUntraced(function* (
   assertStringValue(errors, stringField(errors, file, 'targetPath', `${source}.files[${expected.id}]`), expected.targetPath, `${source}.files[${expected.id}].targetPath`)
   assertStringValue(errors, stringField(errors, file, 'contentType', `${source}.files[${expected.id}]`), 'text/markdown', `${source}.files[${expected.id}].contentType`)
   assertBooleanValue(errors, booleanField(errors, file, 'managed', `${source}.files[${expected.id}]`), true, `${source}.files[${expected.id}].managed`)
+  if (expected.targetUsage !== undefined) {
+    assertStringValue(errors, stringField(errors, file, 'targetUsage', `${source}.files[${expected.id}]`), expected.targetUsage, `${source}.files[${expected.id}].targetUsage`)
+  }
 
   const fs = yield* FileSystem.FileSystem
-  if (!(yield* fs.exists(`${harness}/${expected.sourcePath}`))) {
+  const path = `${harness}/${expected.sourcePath}`
+  if (!(yield* fs.exists(path))) {
     errors.push(`${source}.files[${expected.id}].sourcePath does not exist: ${expected.sourcePath}.`)
+    return
+  }
+
+  const text = yield* fs.readFileString(path)
+  for (const keyword of expected.requiredKeywords ?? []) {
+    if (!text.includes(keyword)) {
+      errors.push(`${expected.sourcePath} must contain managed docs topic ${keyword}.`)
+    }
+  }
+  for (const phrase of forbiddenTargetLocalSourceClaims) {
+    if (text.includes(phrase)) {
+      errors.push(`${expected.sourcePath} must not describe provider-internal repos as target-local content.`)
+    }
   }
 })
 
@@ -728,31 +754,43 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
     [
       {
         id: 'effect-code',
+        requiredKeywords: ['Effect Code', '@effect/vitest', 'Context.Service', 'effect/unstable/cli'],
         sourcePath: 'provider/docs/effect-code.md',
         targetPath: 'effect-code.md',
       },
       {
         id: 'diagnostics',
+        requiredKeywords: ['tsgo --noEmit', '@effect/language-service', 'diagnostic gate', 'drift'],
         sourcePath: 'provider/docs/diagnostics.md',
         targetPath: 'diagnostics.md',
       },
       {
         id: 'editor-policy',
+        requiredKeywords: ['auto-import', 'watch exclusion', 'search exclusion', 'file visibility'],
         sourcePath: 'provider/docs/editor-policy.md',
         targetPath: 'editor-policy.md',
       },
       {
+        id: 'managed-surfaces',
+        requiredKeywords: ['Managed Surfaces', 'target-managed surfaces', 'Artifact-Only', 'Snippets', 'Feedback Loop', 'local drift'],
+        sourcePath: 'provider/docs/managed-surfaces.md',
+        targetPath: 'managed-surfaces.md',
+      },
+      {
         id: 'package-config',
+        requiredKeywords: ['Package', 'effect-tsgo patch', 'tsgo --noEmit', 'tsconfig.json'],
         sourcePath: 'provider/docs/package-config.md',
         targetPath: 'package-config.md',
       },
       {
         id: 'quality-policy',
+        requiredKeywords: ['lint policy', 'test policy', 'verification policy', 'Prelude'],
         sourcePath: 'provider/docs/quality-policy.md',
         targetPath: 'quality-policy.md',
       },
       {
         id: 'source-identity',
+        requiredKeywords: ['Source Identity', 'target 不接收 source tree', 'Partita', 'provider record'],
         sourcePath: 'provider/docs/source-identity.md',
         targetPath: 'source-identity.md',
       },
@@ -767,8 +805,10 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
     [
       {
         id: 'agents-effect-harness',
+        requiredKeywords: ['Effect Harness Snippet', 'provider-managed source content', 'target `AGENTS.md` block'],
         sourcePath: 'provider/snippets/agents.md',
         targetPath: 'agents.md',
+        targetUsage: 'manual-copy-or-include-only',
       },
     ],
     'provider profile.profiles.codex-effect-v4.contributions.snippets',

@@ -628,6 +628,13 @@
               "managed": true
             },
             {
+              "id": "managed-surfaces",
+              "sourcePath": "provider/docs/managed-surfaces.md",
+              "targetPath": "managed-surfaces.md",
+              "contentType": "text/markdown",
+              "managed": true
+            },
+            {
               "id": "package-config",
               "sourcePath": "provider/docs/package-config.md",
               "targetPath": "package-config.md",
