@@ -80,6 +80,7 @@ provider 当前暴露以下能力：
 | Native tsgo backend setup | `contributions.packageJson.scripts.prepare` | `effect-tsgo patch` |
 | Strict language-service policy | `contributions.tsconfig.compilerOptions.plugins[]` | `tsconfig.json` plugin |
 | Strict tsgo execution policy | `contributions.tsconfig.tsgo` | `tsconfig.json` projection and package scripts |
+| Editor policy | `contributions.editorPolicy` | editor settings projection |
 | Provider identity record | `providerRecord` | `.prelude/providers/effect-harness/provider.json` |
 | Source identity | `sourceEntries`、`sourceBoundary` | provider record artifact identity only |
 | Target docs bundle | `contributions.documentationBundle` | `.prelude/providers/effect-harness/docs/**` |
@@ -96,6 +97,7 @@ Target 应该接收：
 
 - `package.json` dependencies and scripts
 - `tsconfig.json` strict language-service plugin
+- editor settings projection
 - `.prelude/providers/effect-harness/provider.json` provider record
 - `.prelude/providers/effect-harness/docs/**` docs bundle
 - `.prelude/providers/effect-harness/snippets/**` snippets
@@ -134,9 +136,13 @@ maintain 规则处理。
 
 ## 编辑器策略
 
-profile 把 source-entry editor policy 记录为数据。`repos/**` 的 auto-import exclusion 是默认硬边界。
-watch/search exclusion 需要显式编辑器配置。文件隐藏是偏好项，不是默认项。VSCode 和 Zed 的配置
-shape 分开记录。
+`contributions.editorPolicy` 把 source-entry editor policy 投影为 target-facing contribution。
+
+`repos/**` 的 auto-import exclusion 是默认硬边界。watch/search exclusion 是 recommended policy。
+文件隐藏是 preference。VSCode 和 Zed 的配置 shape 分开记录。
+
+这个 contribution 服务于 provider artifact 中的 source identity，不要求 target 接收 provider-internal
+source tree 本体。
 
 ## Tsgo policy
 

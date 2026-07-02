@@ -158,84 +158,7 @@
           "effect",
           "@effect/*",
           "@typescript/native-preview"
-        ],
-        "editorPolicy": {
-          "sourceEntryPatterns": [
-            "repos/**"
-          ],
-          "autoImportExclude": {
-            "default": true,
-            "vscode": {
-              "typescript.preferences.autoImportFileExcludePatterns": [
-                "repos/**"
-              ],
-              "javascript.preferences.autoImportFileExcludePatterns": [
-                "repos/**"
-              ]
-            },
-            "zed": {
-              "settingsPath": ".zed/settings.json",
-              "lsp": {
-                "typescript-language-server": {
-                  "initialization_options": {
-                    "preferences": {
-                      "autoImportFileExcludePatterns": [
-                        "repos/**"
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "watchExclude": {
-            "default": "recommended",
-            "requiresConfiguration": true,
-            "vscode": {
-              "files.watcherExclude": {
-                "repos/**": true
-              }
-            },
-            "zed": {
-              "setting": "file_scan_exclusions",
-              "patterns": [
-                "repos/**"
-              ],
-              "requiresExplicitOptIn": true
-            }
-          },
-          "searchExclude": {
-            "default": "recommended",
-            "requiresConfiguration": true,
-            "vscode": {
-              "search.exclude": {
-                "repos/**": true
-              }
-            },
-            "zed": {
-              "setting": "file_scan_exclusions",
-              "patterns": [
-                "repos/**"
-              ],
-              "requiresExplicitOptIn": true
-            }
-          },
-          "filesExclude": {
-            "default": "preference",
-            "requiresExplicitOptIn": true,
-            "vscode": {
-              "files.exclude": {
-                "repos/**": true
-              }
-            },
-            "zed": {
-              "setting": "file_scan_exclusions",
-              "patterns": [
-                "repos/**"
-              ]
-            }
-          }
-        }
+        ]
       },
       "packageBaseline": {
         "effect": "4.0.0-beta.92",
@@ -250,6 +173,7 @@
           "provider record at .prelude/providers/effect-harness/provider.json",
           "package.json dependency and devDependency structured pointers",
           "tsconfig.json @effect/language-service plugin structured pointer",
+          "editor policy structured pointer for target editor settings",
           "provider-managed docs bundle at .prelude/providers/effect-harness/docs",
           "provider-managed snippets at .prelude/providers/effect-harness/snippets"
         ],
@@ -460,6 +384,113 @@
             ]
           }
         },
+        "editorPolicy": {
+          "mode": "structured-merge",
+          "targetPaths": [
+            ".vscode/settings.json",
+            ".zed/settings.json"
+          ],
+          "sourceIdentity": {
+            "providerInternalPatterns": [
+              "repos/**"
+            ],
+            "targetReceivesSourceTrees": false
+          },
+          "policies": {
+            "autoImportExclude": {
+              "level": "hard-boundary",
+              "sourceEntryContractField": "editorPolicy.autoImportExclude",
+              "expectedContractValue": "block",
+              "patterns": [
+                "repos/**"
+              ],
+              "vscode": {
+                "typescript.preferences.autoImportFileExcludePatterns": [
+                  "repos/**"
+                ],
+                "javascript.preferences.autoImportFileExcludePatterns": [
+                  "repos/**"
+                ]
+              },
+              "zed": {
+                "settingsPath": ".zed/settings.json",
+                "lsp": {
+                  "typescript-language-server": {
+                    "initialization_options": {
+                      "preferences": {
+                        "autoImportFileExcludePatterns": [
+                          "repos/**"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "watchExclude": {
+              "level": "recommended",
+              "sourceEntryContractField": "editorPolicy.watcherExclude",
+              "expectedContractValue": "recommended",
+              "requiresConfiguration": true,
+              "patterns": [
+                "repos/**"
+              ],
+              "vscode": {
+                "files.watcherExclude": {
+                  "repos/**": true
+                }
+              },
+              "zed": {
+                "setting": "file_scan_exclusions",
+                "patterns": [
+                  "repos/**"
+                ],
+                "requiresExplicitOptIn": true
+              }
+            },
+            "searchExclude": {
+              "level": "recommended",
+              "sourceEntryContractField": "editorPolicy.searchExclude",
+              "expectedContractValue": "recommended",
+              "requiresConfiguration": true,
+              "patterns": [
+                "repos/**"
+              ],
+              "vscode": {
+                "search.exclude": {
+                  "repos/**": true
+                }
+              },
+              "zed": {
+                "setting": "file_scan_exclusions",
+                "patterns": [
+                  "repos/**"
+                ],
+                "requiresExplicitOptIn": true
+              }
+            },
+            "filesExclude": {
+              "level": "preference",
+              "sourceEntryContractField": "editorPolicy.filesExclude",
+              "requiresExplicitOptIn": true,
+              "sourceEntryDefaults": {
+                "effect-official-source": "enabled",
+                "tsgo-official-source": "disabled"
+              },
+              "vscode": {
+                "files.exclude": {
+                  "repos/effect/**": true
+                }
+              },
+              "zed": {
+                "setting": "file_scan_exclusions",
+                "patterns": [
+                  "repos/effect/**"
+                ]
+              }
+            }
+          }
+        },
         "documentationBundle": {
           "mode": "managed-files",
           "targetBasePath": ".prelude/providers/effect-harness/docs",
@@ -475,6 +506,13 @@
               "id": "diagnostics",
               "sourcePath": "provider/docs/diagnostics.md",
               "targetPath": "diagnostics.md",
+              "contentType": "text/markdown",
+              "managed": true
+            },
+            {
+              "id": "editor-policy",
+              "sourcePath": "provider/docs/editor-policy.md",
+              "targetPath": "editor-policy.md",
               "contentType": "text/markdown",
               "managed": true
             },

@@ -9,6 +9,8 @@ sources:
   - provider/effect-harness.provider.json
   - provider/docs/effect-code.md
   - provider/docs/diagnostics.md
+  - provider/docs/editor-policy.md
+  - provider/docs/package-config.md
   - provider/docs/source-identity.md
 updated: 2026-07-02
 ---
@@ -24,6 +26,7 @@ updated: 2026-07-02
 | --- | --- | --- |
 | `provider/docs/effect-code.md` | `.prelude/providers/effect-harness/docs/effect-code.md` | 说明 target 内 Effect 代码的编码基线。 |
 | `provider/docs/diagnostics.md` | `.prelude/providers/effect-harness/docs/diagnostics.md` | 说明 target 内 strict tsgo diagnostic gate。 |
+| `provider/docs/editor-policy.md` | `.prelude/providers/effect-harness/docs/editor-policy.md` | 说明 target 内 editor policy 的 hard、recommended 和 preference 层级。 |
 | `provider/docs/package-config.md` | `.prelude/providers/effect-harness/docs/package-config.md` | 说明 target 内 package baseline、script baseline 和 `tsconfig.json` projection。 |
 | `provider/docs/source-identity.md` | `.prelude/providers/effect-harness/docs/source-identity.md` | 说明 provider-internal source pin 如何以 identity 形式出现在 target record 中。 |
 

@@ -255,35 +255,89 @@ function assertPackageBaseline(
   }
 }
 
-function assertEditorPolicy(errors: Array<string>, options: Record<string, unknown> | undefined): void {
-  const editorPolicy = recordField(errors, options, 'editorPolicy', 'profile.options')
-  const autoImport = recordField(errors, editorPolicy, 'autoImportExclude', 'profile.options.editorPolicy')
-  assertBooleanValue(errors, booleanField(errors, autoImport, 'default', 'profile.options.editorPolicy.autoImportExclude'), true, 'profile.options.editorPolicy.autoImportExclude.default')
+function assertSourceEntryEditorPolicy(
+  errors: Array<string>,
+  sourceContract: Record<string, unknown>,
+  sourceEntryId: string,
+  filesExclude: 'disabled' | 'enabled',
+): void {
+  const editorPolicy = recordField(errors, sourceContract, 'editorPolicy', `${sourceEntryId} source contract`)
+  assertStringValue(errors, stringField(errors, editorPolicy, 'autoImportExclude', `${sourceEntryId} source contract.editorPolicy`), 'block', `${sourceEntryId} source contract.editorPolicy.autoImportExclude`)
+  assertStringValue(errors, stringField(errors, editorPolicy, 'watcherExclude', `${sourceEntryId} source contract.editorPolicy`), 'recommended', `${sourceEntryId} source contract.editorPolicy.watcherExclude`)
+  assertStringValue(errors, stringField(errors, editorPolicy, 'searchExclude', `${sourceEntryId} source contract.editorPolicy`), 'recommended', `${sourceEntryId} source contract.editorPolicy.searchExclude`)
+  assertStringValue(errors, stringField(errors, editorPolicy, 'filesExclude', `${sourceEntryId} source contract.editorPolicy`), filesExclude, `${sourceEntryId} source contract.editorPolicy.filesExclude`)
+}
 
-  const vscodeAutoImport = recordField(errors, autoImport, 'vscode', 'profile.options.editorPolicy.autoImportExclude')
-  assertArrayContainsString(errors, arrayField(errors, vscodeAutoImport, 'typescript.preferences.autoImportFileExcludePatterns', 'profile.options.editorPolicy.autoImportExclude.vscode'), 'repos/**', 'profile.options.editorPolicy.autoImportExclude.vscode.typescript.preferences.autoImportFileExcludePatterns')
-  assertArrayContainsString(errors, arrayField(errors, vscodeAutoImport, 'javascript.preferences.autoImportFileExcludePatterns', 'profile.options.editorPolicy.autoImportExclude.vscode'), 'repos/**', 'profile.options.editorPolicy.autoImportExclude.vscode.javascript.preferences.autoImportFileExcludePatterns')
+function assertEditorPolicyContribution(
+  errors: Array<string>,
+  contributions: Record<string, unknown> | undefined,
+  effectContract: Record<string, unknown>,
+  tsgoContract: Record<string, unknown>,
+  vscodeSettings: Record<string, unknown>,
+): void {
+  const editorPolicy = recordField(errors, contributions, 'editorPolicy', 'provider profile.profiles.codex-effect-v4.contributions')
+  assertStringValue(errors, stringField(errors, editorPolicy, 'mode', 'provider profile editorPolicy contribution'), 'structured-merge', 'provider profile editorPolicy.mode')
+  assertArrayContainsString(errors, arrayField(errors, editorPolicy, 'targetPaths', 'provider profile editorPolicy contribution'), '.vscode/settings.json', 'provider profile editorPolicy.targetPaths')
+  assertArrayContainsString(errors, arrayField(errors, editorPolicy, 'targetPaths', 'provider profile editorPolicy contribution'), '.zed/settings.json', 'provider profile editorPolicy.targetPaths')
 
-  const zedAutoImport = recordField(errors, autoImport, 'zed', 'profile.options.editorPolicy.autoImportExclude')
-  assertStringValue(errors, stringField(errors, zedAutoImport, 'settingsPath', 'profile.options.editorPolicy.autoImportExclude.zed'), '.zed/settings.json', 'profile.options.editorPolicy.autoImportExclude.zed.settingsPath')
-  if (recordField(errors, zedAutoImport, 'lsp', 'profile.options.editorPolicy.autoImportExclude.zed') === undefined) {
-    errors.push('profile.options.editorPolicy.autoImportExclude.zed must use a Zed-specific lsp settings shape.')
+  const sourceIdentity = recordField(errors, editorPolicy, 'sourceIdentity', 'provider profile editorPolicy contribution')
+  assertArrayContainsString(errors, arrayField(errors, sourceIdentity, 'providerInternalPatterns', 'provider profile editorPolicy.sourceIdentity'), 'repos/**', 'provider profile editorPolicy.sourceIdentity.providerInternalPatterns')
+  assertBooleanValue(errors, booleanField(errors, sourceIdentity, 'targetReceivesSourceTrees', 'provider profile editorPolicy.sourceIdentity'), false, 'provider profile editorPolicy.sourceIdentity.targetReceivesSourceTrees')
+
+  const policies = recordField(errors, editorPolicy, 'policies', 'provider profile editorPolicy contribution')
+  const autoImport = recordField(errors, policies, 'autoImportExclude', 'provider profile editorPolicy.policies')
+  assertStringValue(errors, stringField(errors, autoImport, 'level', 'provider profile editorPolicy.policies.autoImportExclude'), 'hard-boundary', 'provider profile editorPolicy.policies.autoImportExclude.level')
+  assertStringValue(errors, stringField(errors, autoImport, 'sourceEntryContractField', 'provider profile editorPolicy.policies.autoImportExclude'), 'editorPolicy.autoImportExclude', 'provider profile editorPolicy.policies.autoImportExclude.sourceEntryContractField')
+  assertStringValue(errors, stringField(errors, autoImport, 'expectedContractValue', 'provider profile editorPolicy.policies.autoImportExclude'), 'block', 'provider profile editorPolicy.policies.autoImportExclude.expectedContractValue')
+  assertArrayContainsString(errors, arrayField(errors, autoImport, 'patterns', 'provider profile editorPolicy.policies.autoImportExclude'), 'repos/**', 'provider profile editorPolicy.policies.autoImportExclude.patterns')
+  const vscodeAutoImport = recordField(errors, autoImport, 'vscode', 'provider profile editorPolicy.policies.autoImportExclude')
+  assertArrayContainsString(errors, arrayField(errors, vscodeAutoImport, 'typescript.preferences.autoImportFileExcludePatterns', 'provider profile editorPolicy.policies.autoImportExclude.vscode'), 'repos/**', 'provider profile editorPolicy.policies.autoImportExclude.vscode.typescript.preferences.autoImportFileExcludePatterns')
+  assertArrayContainsString(errors, arrayField(errors, vscodeAutoImport, 'javascript.preferences.autoImportFileExcludePatterns', 'provider profile editorPolicy.policies.autoImportExclude.vscode'), 'repos/**', 'provider profile editorPolicy.policies.autoImportExclude.vscode.javascript.preferences.autoImportFileExcludePatterns')
+  const zedAutoImport = recordField(errors, autoImport, 'zed', 'provider profile editorPolicy.policies.autoImportExclude')
+  assertStringValue(errors, stringField(errors, zedAutoImport, 'settingsPath', 'provider profile editorPolicy.policies.autoImportExclude.zed'), '.zed/settings.json', 'provider profile editorPolicy.policies.autoImportExclude.zed.settingsPath')
+  if (recordField(errors, zedAutoImport, 'lsp', 'provider profile editorPolicy.policies.autoImportExclude.zed') === undefined) {
+    errors.push('provider profile editorPolicy.policies.autoImportExclude.zed must use a Zed-specific lsp settings shape.')
   }
 
-  const watchExclude = recordField(errors, editorPolicy, 'watchExclude', 'profile.options.editorPolicy')
-  assertStringValue(errors, stringField(errors, watchExclude, 'default', 'profile.options.editorPolicy.watchExclude'), 'recommended', 'profile.options.editorPolicy.watchExclude.default')
-  assertBooleanValue(errors, booleanField(errors, watchExclude, 'requiresConfiguration', 'profile.options.editorPolicy.watchExclude'), true, 'profile.options.editorPolicy.watchExclude.requiresConfiguration')
-  const vscodeWatch = recordField(errors, watchExclude, 'vscode', 'profile.options.editorPolicy.watchExclude')
-  const vscodeWatcherExclude = recordField(errors, vscodeWatch, 'files.watcherExclude', 'profile.options.editorPolicy.watchExclude.vscode')
-  assertBooleanValue(errors, booleanField(errors, vscodeWatcherExclude, 'repos/**', 'profile.options.editorPolicy.watchExclude.vscode.files.watcherExclude'), true, 'profile.options.editorPolicy.watchExclude.vscode.files.watcherExclude["repos/**"]')
-  const zedWatch = recordField(errors, watchExclude, 'zed', 'profile.options.editorPolicy.watchExclude')
-  assertStringValue(errors, stringField(errors, zedWatch, 'setting', 'profile.options.editorPolicy.watchExclude.zed'), 'file_scan_exclusions', 'profile.options.editorPolicy.watchExclude.zed.setting')
-  assertBooleanValue(errors, booleanField(errors, zedWatch, 'requiresExplicitOptIn', 'profile.options.editorPolicy.watchExclude.zed'), true, 'profile.options.editorPolicy.watchExclude.zed.requiresExplicitOptIn')
-  assertArrayContainsString(errors, arrayField(errors, zedWatch, 'patterns', 'profile.options.editorPolicy.watchExclude.zed'), 'repos/**', 'profile.options.editorPolicy.watchExclude.zed.patterns')
+  const watchExclude = recordField(errors, policies, 'watchExclude', 'provider profile editorPolicy.policies')
+  assertStringValue(errors, stringField(errors, watchExclude, 'level', 'provider profile editorPolicy.policies.watchExclude'), 'recommended', 'provider profile editorPolicy.policies.watchExclude.level')
+  assertStringValue(errors, stringField(errors, watchExclude, 'sourceEntryContractField', 'provider profile editorPolicy.policies.watchExclude'), 'editorPolicy.watcherExclude', 'provider profile editorPolicy.policies.watchExclude.sourceEntryContractField')
+  assertStringValue(errors, stringField(errors, watchExclude, 'expectedContractValue', 'provider profile editorPolicy.policies.watchExclude'), 'recommended', 'provider profile editorPolicy.policies.watchExclude.expectedContractValue')
+  assertBooleanValue(errors, booleanField(errors, watchExclude, 'requiresConfiguration', 'provider profile editorPolicy.policies.watchExclude'), true, 'provider profile editorPolicy.policies.watchExclude.requiresConfiguration')
+  assertArrayContainsString(errors, arrayField(errors, watchExclude, 'patterns', 'provider profile editorPolicy.policies.watchExclude'), 'repos/**', 'provider profile editorPolicy.policies.watchExclude.patterns')
+  assertBooleanValue(errors, booleanField(errors, recordField(errors, recordField(errors, watchExclude, 'vscode', 'provider profile editorPolicy.policies.watchExclude'), 'files.watcherExclude', 'provider profile editorPolicy.policies.watchExclude.vscode'), 'repos/**', 'provider profile editorPolicy.policies.watchExclude.vscode.files.watcherExclude'), true, 'provider profile editorPolicy.policies.watchExclude.vscode.files.watcherExclude["repos/**"]')
 
-  const filesExclude = recordField(errors, editorPolicy, 'filesExclude', 'profile.options.editorPolicy')
-  assertStringValue(errors, stringField(errors, filesExclude, 'default', 'profile.options.editorPolicy.filesExclude'), 'preference', 'profile.options.editorPolicy.filesExclude.default')
-  assertBooleanValue(errors, booleanField(errors, filesExclude, 'requiresExplicitOptIn', 'profile.options.editorPolicy.filesExclude'), true, 'profile.options.editorPolicy.filesExclude.requiresExplicitOptIn')
+  const searchExclude = recordField(errors, policies, 'searchExclude', 'provider profile editorPolicy.policies')
+  assertStringValue(errors, stringField(errors, searchExclude, 'level', 'provider profile editorPolicy.policies.searchExclude'), 'recommended', 'provider profile editorPolicy.policies.searchExclude.level')
+  assertStringValue(errors, stringField(errors, searchExclude, 'sourceEntryContractField', 'provider profile editorPolicy.policies.searchExclude'), 'editorPolicy.searchExclude', 'provider profile editorPolicy.policies.searchExclude.sourceEntryContractField')
+  assertStringValue(errors, stringField(errors, searchExclude, 'expectedContractValue', 'provider profile editorPolicy.policies.searchExclude'), 'recommended', 'provider profile editorPolicy.policies.searchExclude.expectedContractValue')
+  assertBooleanValue(errors, booleanField(errors, searchExclude, 'requiresConfiguration', 'provider profile editorPolicy.policies.searchExclude'), true, 'provider profile editorPolicy.policies.searchExclude.requiresConfiguration')
+  assertArrayContainsString(errors, arrayField(errors, searchExclude, 'patterns', 'provider profile editorPolicy.policies.searchExclude'), 'repos/**', 'provider profile editorPolicy.policies.searchExclude.patterns')
+  assertBooleanValue(errors, booleanField(errors, recordField(errors, recordField(errors, searchExclude, 'vscode', 'provider profile editorPolicy.policies.searchExclude'), 'search.exclude', 'provider profile editorPolicy.policies.searchExclude.vscode'), 'repos/**', 'provider profile editorPolicy.policies.searchExclude.vscode.search.exclude'), true, 'provider profile editorPolicy.policies.searchExclude.vscode.search.exclude["repos/**"]')
+
+  const filesExclude = recordField(errors, policies, 'filesExclude', 'provider profile editorPolicy.policies')
+  assertStringValue(errors, stringField(errors, filesExclude, 'level', 'provider profile editorPolicy.policies.filesExclude'), 'preference', 'provider profile editorPolicy.policies.filesExclude.level')
+  assertStringValue(errors, stringField(errors, filesExclude, 'sourceEntryContractField', 'provider profile editorPolicy.policies.filesExclude'), 'editorPolicy.filesExclude', 'provider profile editorPolicy.policies.filesExclude.sourceEntryContractField')
+  assertBooleanValue(errors, booleanField(errors, filesExclude, 'requiresExplicitOptIn', 'provider profile editorPolicy.policies.filesExclude'), true, 'provider profile editorPolicy.policies.filesExclude.requiresExplicitOptIn')
+  const sourceEntryDefaults = recordField(errors, filesExclude, 'sourceEntryDefaults', 'provider profile editorPolicy.policies.filesExclude')
+  assertStringValue(errors, stringField(errors, sourceEntryDefaults, 'effect-official-source', 'provider profile editorPolicy.policies.filesExclude.sourceEntryDefaults'), 'enabled', 'provider profile editorPolicy.policies.filesExclude.sourceEntryDefaults.effect-official-source')
+  assertStringValue(errors, stringField(errors, sourceEntryDefaults, 'tsgo-official-source', 'provider profile editorPolicy.policies.filesExclude.sourceEntryDefaults'), 'disabled', 'provider profile editorPolicy.policies.filesExclude.sourceEntryDefaults.tsgo-official-source')
+  const contributionFilesExclude = recordField(errors, recordField(errors, filesExclude, 'vscode', 'provider profile editorPolicy.policies.filesExclude'), 'files.exclude', 'provider profile editorPolicy.policies.filesExclude.vscode')
+  assertBooleanValue(errors, booleanField(errors, contributionFilesExclude, 'repos/effect/**', 'provider profile editorPolicy.policies.filesExclude.vscode.files.exclude'), true, 'provider profile editorPolicy.policies.filesExclude.vscode.files.exclude["repos/effect/**"]')
+  assertRecordDoesNotContain(errors, contributionFilesExclude, 'repos/tsgo/**', 'provider profile editorPolicy.policies.filesExclude.vscode.files.exclude')
+  assertRecordDoesNotContain(errors, contributionFilesExclude, 'repos/**', 'provider profile editorPolicy.policies.filesExclude.vscode.files.exclude')
+
+  assertArrayContainsString(errors, arrayField(errors, vscodeSettings, 'typescript.preferences.autoImportFileExcludePatterns', '.vscode/settings.json'), 'repos/**', '.vscode/settings.json.typescript.preferences.autoImportFileExcludePatterns')
+  assertArrayContainsString(errors, arrayField(errors, vscodeSettings, 'javascript.preferences.autoImportFileExcludePatterns', '.vscode/settings.json'), 'repos/**', '.vscode/settings.json.javascript.preferences.autoImportFileExcludePatterns')
+  assertBooleanValue(errors, booleanField(errors, recordField(errors, vscodeSettings, 'files.watcherExclude', '.vscode/settings.json'), 'repos/**', '.vscode/settings.json.files.watcherExclude'), true, '.vscode/settings.json.files.watcherExclude["repos/**"]')
+  assertBooleanValue(errors, booleanField(errors, recordField(errors, vscodeSettings, 'search.exclude', '.vscode/settings.json'), 'repos/**', '.vscode/settings.json.search.exclude'), true, '.vscode/settings.json.search.exclude["repos/**"]')
+  const vscodeFilesExclude = recordField(errors, vscodeSettings, 'files.exclude', '.vscode/settings.json')
+  assertBooleanValue(errors, booleanField(errors, vscodeFilesExclude, 'repos/effect/**', '.vscode/settings.json.files.exclude'), true, '.vscode/settings.json.files.exclude["repos/effect/**"]')
+  assertRecordDoesNotContain(errors, vscodeFilesExclude, 'repos/tsgo/**', '.vscode/settings.json.files.exclude')
+  assertRecordDoesNotContain(errors, vscodeFilesExclude, 'repos/**', '.vscode/settings.json.files.exclude')
+
+  assertSourceEntryEditorPolicy(errors, effectContract, 'effect-official-source', 'enabled')
+  assertSourceEntryEditorPolicy(errors, tsgoContract, 'tsgo-official-source', 'disabled')
 }
 
 function assertPackageGroup(
@@ -445,6 +499,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   const effectContract = yield* readJson(`${harness}/repos/effect.subtree.json`, decodeJsonRecord)
   const tsgoContract = yield* readJson(`${harness}/repos/tsgo.subtree.json`, decodeJsonRecord)
   const packageManifest = yield* readJson(`${harness}/package.json`, decodeJsonRecord)
+  const vscodeSettings = yield* readJson(`${harness}/.vscode/settings.json`, decodeJsonRecord)
   const workspaceText = yield* fs.readFileString(`${harness}/pnpm-workspace.yaml`)
 
   const provider = recordField(errors, providerProfile, 'provider', 'provider profile')
@@ -510,7 +565,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
 
   const options = recordField(errors, profile, 'options', 'provider profile.profiles.codex-effect-v4')
   assertRecordDoesNotContain(errors, options, 'runtime', 'provider profile.profiles.codex-effect-v4.options')
-  assertEditorPolicy(errors, options)
+  assertRecordDoesNotContain(errors, options, 'editorPolicy', 'provider profile.profiles.codex-effect-v4.options')
 
   assertPackageBaseline(errors, recordField(errors, profile, 'packageBaseline', 'provider profile.profiles.codex-effect-v4'))
 
@@ -519,6 +574,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertArrayContainsString(errors, targetReceives, 'provider record at .prelude/providers/effect-harness/provider.json', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayContainsString(errors, targetReceives, 'provider-managed docs bundle at .prelude/providers/effect-harness/docs', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayContainsString(errors, targetReceives, 'provider-managed snippets at .prelude/providers/effect-harness/snippets', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
+  assertArrayContainsString(errors, targetReceives, 'editor policy structured pointer for target editor settings', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayDoesNotContainText(errors, targetReceives, 'runtime assets', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayDoesNotContainText(errors, targetReceives, 'AGENTS.md managed block', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayDoesNotContainText(errors, targetReceives, 'feedback', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
@@ -532,6 +588,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertRecordDoesNotContain(errors, contributions, 'codexAssets', 'provider profile.profiles.codex-effect-v4.contributions')
   assertPackageJsonContribution(errors, contributions, packageManifest, workspaceText)
   assertTsconfigContributionMetadata(errors, contributions)
+  assertEditorPolicyContribution(errors, contributions, effectContract, tsgoContract, vscodeSettings)
 
   yield* assertManagedFileBundle(
     errors,
@@ -548,6 +605,11 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
         id: 'diagnostics',
         sourcePath: 'provider/docs/diagnostics.md',
         targetPath: 'diagnostics.md',
+      },
+      {
+        id: 'editor-policy',
+        sourcePath: 'provider/docs/editor-policy.md',
+        targetPath: 'editor-policy.md',
       },
       {
         id: 'package-config',
