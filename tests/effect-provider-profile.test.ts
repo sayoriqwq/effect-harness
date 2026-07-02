@@ -97,6 +97,7 @@ it.layer(NodeServices.layer)((it) => {
 
   it.effect('provider profile exposes provider-internal source entries', () => Effect.gen(function* () {
     const profile = record(yield* readJson('provider/effect-harness.provider.json'))
+    const packageJson = record(yield* readJson('package.json'))
     const effectContract = record(yield* readJson('repos/effect.subtree.json'))
     const tsgoContract = record(yield* readJson('repos/tsgo.subtree.json'))
     const providerRecord = record(profile.providerRecord)
@@ -135,8 +136,28 @@ it.layer(NodeServices.layer)((it) => {
     assert.equal(sourceBoundary.targetDelivery, 'identity-only')
     assert.ok((sourceBoundary.targetMustNotReceive as ReadonlyArray<unknown>).includes('repos/effect'))
     assert.ok((sourceBoundary.targetMustNotReceive as ReadonlyArray<unknown>).includes('repos/tsgo'))
+    assert.ok((sourceBoundary.targetMustNotReceive as ReadonlyArray<unknown>).includes('harness/effect-routes.md'))
+    assert.ok((sourceBoundary.targetMustNotReceive as ReadonlyArray<unknown>).includes('harness/tsgo-routes.md'))
     assert.ok((sourceBoundary.allowedTargetSourceIdentity as ReadonlyArray<unknown>).includes('artifact.sourceIdentities[].contractPath'))
     assert.equal('officialSource' in codexProfile, false)
+
+    const artifactReferences = record(profile.artifactReferences)
+    assert.equal(artifactReferences.mode, 'provider-artifact-reference')
+    assert.equal(artifactReferences.targetDelivery, 'identity-only')
+    const references = record(artifactReferences.references)
+    assert.equal(record(references['effect-source-tree']).path, 'repos/effect')
+    assert.equal(record(references['effect-source-tree']).targetDelivery, 'artifact-only')
+    assert.equal(record(references['effect-route-doc']).path, 'harness/effect-routes.md')
+    assert.equal(record(references['tsgo-source-tree']).path, 'repos/tsgo')
+    assert.equal(record(references['tsgo-source-tree']).targetDelivery, 'artifact-only')
+    assert.equal(record(references['tsgo-route-doc']).path, 'harness/tsgo-routes.md')
+
+    const packageFiles = packageJson.files as ReadonlyArray<unknown>
+    assert.ok(packageFiles.includes('provider'))
+    assert.ok(packageFiles.includes('harness'))
+    assert.ok(packageFiles.includes('repos'))
+    assert.ok(packageFiles.includes('repos/effect.subtree.json'))
+    assert.ok(packageFiles.includes('repos/tsgo.subtree.json'))
   }))
 
   it.effect('provider profile and repository tsconfig use strict tsgo policy', () => Effect.gen(function* () {
@@ -237,8 +258,10 @@ it.layer(NodeServices.layer)((it) => {
     const targetDoesNotReceive = managedSurfaces.targetDoesNotReceive as ReadonlyArray<string>
     assert.ok(targetDoesNotReceive.includes('provider repo internal source pin repos/effect'))
     assert.ok(targetDoesNotReceive.includes('provider repo internal subtree contract repos/effect.subtree.json'))
+    assert.ok(targetDoesNotReceive.includes('provider repo internal Effect route harness/effect-routes.md'))
     assert.ok(targetDoesNotReceive.includes('provider repo internal source pin repos/tsgo'))
     assert.ok(targetDoesNotReceive.includes('provider repo internal subtree contract repos/tsgo.subtree.json'))
+    assert.ok(targetDoesNotReceive.includes('provider repo internal tsgo route harness/tsgo-routes.md'))
     assert.ok(targetDoesNotReceive.includes('effect-harness runtime assets under .codex'))
     assert.ok(targetDoesNotReceive.includes('.effect-harness.json standalone manifest'))
 

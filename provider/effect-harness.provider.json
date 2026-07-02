@@ -40,6 +40,59 @@
       ]
     }
   },
+  "artifactReferences": {
+    "mode": "provider-artifact-reference",
+    "targetDelivery": "identity-only",
+    "packageSurface": [
+      "provider",
+      "harness",
+      "repos",
+      "repos/effect.subtree.json",
+      "repos/tsgo.subtree.json"
+    ],
+    "references": {
+      "effect-source-tree": {
+        "sourceEntry": "effect-official-source",
+        "path": "repos/effect",
+        "targetDelivery": "artifact-only"
+      },
+      "effect-source-contract": {
+        "sourceEntry": "effect-official-source",
+        "path": "repos/effect.subtree.json",
+        "targetDelivery": "artifact-only"
+      },
+      "effect-anchor-doc": {
+        "sourceEntry": "effect-official-source",
+        "path": "repos/effect/LLMS.md",
+        "targetDelivery": "artifact-only"
+      },
+      "effect-route-doc": {
+        "sourceEntry": "effect-official-source",
+        "path": "harness/effect-routes.md",
+        "targetDelivery": "artifact-only"
+      },
+      "tsgo-source-tree": {
+        "sourceEntry": "tsgo-official-source",
+        "path": "repos/tsgo",
+        "targetDelivery": "artifact-only"
+      },
+      "tsgo-source-contract": {
+        "sourceEntry": "tsgo-official-source",
+        "path": "repos/tsgo.subtree.json",
+        "targetDelivery": "artifact-only"
+      },
+      "tsgo-anchor-doc": {
+        "sourceEntry": "tsgo-official-source",
+        "path": "repos/tsgo/README.md",
+        "targetDelivery": "artifact-only"
+      },
+      "tsgo-route-doc": {
+        "sourceEntry": "tsgo-official-source",
+        "path": "harness/tsgo-routes.md",
+        "targetDelivery": "artifact-only"
+      }
+    }
+  },
   "selfConformance": {
     "mode": "provider-repository",
     "conformsTo": "exported-harness",
@@ -135,9 +188,11 @@
           "repos/effect",
           "repos/effect.subtree.json",
           "repos/effect/LLMS.md",
+          "harness/effect-routes.md",
           "repos/tsgo",
           "repos/tsgo.subtree.json",
-          "repos/tsgo/README.md"
+          "repos/tsgo/README.md",
+          "harness/tsgo-routes.md"
         ],
         "allowedTargetSourceIdentity": [
           "artifact.sourceIdentity.name",
@@ -182,8 +237,10 @@
           "provider repo internal source pin repos/effect",
           "provider repo internal subtree contract repos/effect.subtree.json",
           "provider repo internal Effect LLMS route repos/effect/LLMS.md",
+          "provider repo internal Effect route harness/effect-routes.md",
           "provider repo internal source pin repos/tsgo",
           "provider repo internal subtree contract repos/tsgo.subtree.json",
+          "provider repo internal tsgo README route repos/tsgo/README.md",
           "provider repo internal tsgo route harness/tsgo-routes.md",
           "effect-harness runtime assets under .codex",
           "effect-harness AGENTS.md managed block",

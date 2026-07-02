@@ -644,6 +644,82 @@ function assertSelfConformanceContract(errors: Array<string>, providerProfile: R
   }
 }
 
+interface ExpectedArtifactReference {
+  readonly id: string
+  readonly path: string
+  readonly sourceEntry: string
+}
+
+function assertArtifactReference(
+  errors: Array<string>,
+  references: Record<string, unknown> | undefined,
+  expected: ExpectedArtifactReference,
+): void {
+  const reference = recordField(errors, references, expected.id, 'provider profile.artifactReferences.references')
+  assertStringValue(errors, stringField(errors, reference, 'sourceEntry', `provider profile.artifactReferences.references.${expected.id}`), expected.sourceEntry, `provider profile.artifactReferences.references.${expected.id}.sourceEntry`)
+  assertStringValue(errors, stringField(errors, reference, 'path', `provider profile.artifactReferences.references.${expected.id}`), expected.path, `provider profile.artifactReferences.references.${expected.id}.path`)
+  assertStringValue(errors, stringField(errors, reference, 'targetDelivery', `provider profile.artifactReferences.references.${expected.id}`), 'artifact-only', `provider profile.artifactReferences.references.${expected.id}.targetDelivery`)
+}
+
+function assertArtifactReferencesContract(
+  errors: Array<string>,
+  providerProfile: Record<string, unknown>,
+  packageManifest: Record<string, unknown>,
+): void {
+  const artifactReferences = recordField(errors, providerProfile, 'artifactReferences', 'provider profile')
+  assertStringValue(errors, stringField(errors, artifactReferences, 'mode', 'provider profile.artifactReferences'), 'provider-artifact-reference', 'provider profile.artifactReferences.mode')
+  assertStringValue(errors, stringField(errors, artifactReferences, 'targetDelivery', 'provider profile.artifactReferences'), 'identity-only', 'provider profile.artifactReferences.targetDelivery')
+
+  const packageFiles = arrayField(errors, packageManifest, 'files', 'package.json')
+  const packageSurface = arrayField(errors, artifactReferences, 'packageSurface', 'provider profile.artifactReferences')
+  for (const path of ['provider', 'harness', 'repos', 'repos/effect.subtree.json', 'repos/tsgo.subtree.json']) {
+    assertArrayContainsString(errors, packageFiles, path, 'package.json.files')
+    assertArrayContainsString(errors, packageSurface, path, 'provider profile.artifactReferences.packageSurface')
+  }
+
+  const references = recordField(errors, artifactReferences, 'references', 'provider profile.artifactReferences')
+  assertArtifactReference(errors, references, {
+    id: 'effect-source-tree',
+    path: 'repos/effect',
+    sourceEntry: 'effect-official-source',
+  })
+  assertArtifactReference(errors, references, {
+    id: 'effect-source-contract',
+    path: 'repos/effect.subtree.json',
+    sourceEntry: 'effect-official-source',
+  })
+  assertArtifactReference(errors, references, {
+    id: 'effect-anchor-doc',
+    path: 'repos/effect/LLMS.md',
+    sourceEntry: 'effect-official-source',
+  })
+  assertArtifactReference(errors, references, {
+    id: 'effect-route-doc',
+    path: 'harness/effect-routes.md',
+    sourceEntry: 'effect-official-source',
+  })
+  assertArtifactReference(errors, references, {
+    id: 'tsgo-source-tree',
+    path: 'repos/tsgo',
+    sourceEntry: 'tsgo-official-source',
+  })
+  assertArtifactReference(errors, references, {
+    id: 'tsgo-source-contract',
+    path: 'repos/tsgo.subtree.json',
+    sourceEntry: 'tsgo-official-source',
+  })
+  assertArtifactReference(errors, references, {
+    id: 'tsgo-anchor-doc',
+    path: 'repos/tsgo/README.md',
+    sourceEntry: 'tsgo-official-source',
+  })
+  assertArtifactReference(errors, references, {
+    id: 'tsgo-route-doc',
+    path: 'harness/tsgo-routes.md',
+    sourceEntry: 'tsgo-official-source',
+  })
+}
+
 export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors: Array<string>, harness: string) {
   const fs = yield* FileSystem.FileSystem
   const providerProfile = yield* readJson(`${harness}/provider/effect-harness.provider.json`, decodeJsonRecord)
@@ -659,6 +735,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertStringValue(errors, stringField(errors, provider, 'defaultProfile', 'provider profile.provider'), 'codex-effect-v4', 'provider profile.provider.defaultProfile')
   assertDeliveryModes(errors, providerProfile)
   assertSelfConformanceContract(errors, providerProfile)
+  assertArtifactReferencesContract(errors, providerProfile, packageManifest)
 
   const sourceEntries = recordField(errors, providerProfile, 'sourceEntries', 'provider profile')
   const profiles = recordField(errors, providerProfile, 'profiles', 'provider profile')
@@ -714,6 +791,8 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertStringValue(errors, stringField(errors, sourceBoundary, 'targetDelivery', 'provider profile.profiles.codex-effect-v4.sourceBoundary'), 'identity-only', 'provider profile.profiles.codex-effect-v4.sourceBoundary.targetDelivery')
   assertArrayContainsString(errors, arrayField(errors, sourceBoundary, 'targetMustNotReceive', 'provider profile.profiles.codex-effect-v4.sourceBoundary'), 'repos/effect', 'provider profile.profiles.codex-effect-v4.sourceBoundary.targetMustNotReceive')
   assertArrayContainsString(errors, arrayField(errors, sourceBoundary, 'targetMustNotReceive', 'provider profile.profiles.codex-effect-v4.sourceBoundary'), 'repos/tsgo', 'provider profile.profiles.codex-effect-v4.sourceBoundary.targetMustNotReceive')
+  assertArrayContainsString(errors, arrayField(errors, sourceBoundary, 'targetMustNotReceive', 'provider profile.profiles.codex-effect-v4.sourceBoundary'), 'harness/effect-routes.md', 'provider profile.profiles.codex-effect-v4.sourceBoundary.targetMustNotReceive')
+  assertArrayContainsString(errors, arrayField(errors, sourceBoundary, 'targetMustNotReceive', 'provider profile.profiles.codex-effect-v4.sourceBoundary'), 'harness/tsgo-routes.md', 'provider profile.profiles.codex-effect-v4.sourceBoundary.targetMustNotReceive')
 
   const options = recordField(errors, profile, 'options', 'provider profile.profiles.codex-effect-v4')
   assertRecordDoesNotContain(errors, options, 'runtime', 'provider profile.profiles.codex-effect-v4.options')
@@ -732,6 +811,9 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertArrayDoesNotContainText(errors, targetReceives, 'AGENTS.md managed block', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayDoesNotContainText(errors, targetReceives, 'feedback', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
   assertArrayDoesNotContainText(errors, targetReceives, '.effect-harness.json', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetReceives')
+  const targetDoesNotReceive = arrayField(errors, managedSurfaces, 'targetDoesNotReceive', 'provider profile.profiles.codex-effect-v4.managedSurfaces')
+  assertArrayContainsString(errors, targetDoesNotReceive, 'provider repo internal Effect route harness/effect-routes.md', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetDoesNotReceive')
+  assertArrayContainsString(errors, targetDoesNotReceive, 'provider repo internal tsgo route harness/tsgo-routes.md', 'provider profile.profiles.codex-effect-v4.managedSurfaces.targetDoesNotReceive')
 
   assertRecordDoesNotContain(errors, profile, 'state', 'provider profile.profiles.codex-effect-v4')
   assertRecordDoesNotContain(errors, profile, 'officialSource', 'provider profile.profiles.codex-effect-v4')
@@ -790,7 +872,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
       },
       {
         id: 'source-identity',
-        requiredKeywords: ['Source Identity', 'target 不接收 source tree', 'Partita', 'provider record'],
+        requiredKeywords: ['Source Identity', 'artifact-only', 'target delivery', 'source pin lifecycle', 'Partita', 'provider record'],
         sourcePath: 'provider/docs/source-identity.md',
         targetPath: 'source-identity.md',
       },
