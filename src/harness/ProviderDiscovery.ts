@@ -1,4 +1,4 @@
-import { Effect, Path } from 'effect'
+import { Effect, FileSystem, Path } from 'effect'
 import { readJson } from '../platform/Json.ts'
 import { HarnessError } from './Errors.ts'
 import { isRecord } from './verify/JsonFields.ts'
@@ -11,6 +11,7 @@ interface ManagedFileDeclaration {
   readonly targetPath: string
   readonly contentType: string
   readonly managed: boolean
+  readonly content: string
   readonly targetUsage?: string
 }
 
@@ -121,29 +122,33 @@ const expectStringArray = Effect.fnUntraced(function* (value: unknown, source: s
   return yield* Effect.forEach(array, (entry, index) => expectString(entry, `${source}[${index}]`))
 })
 
-const expectManagedFileDeclaration = Effect.fnUntraced(function* (value: unknown, source: string) {
+const expectManagedFileDeclaration = Effect.fnUntraced(function* (value: unknown, source: string, artifactRoot: string) {
   const file = yield* expectRecord(value, source)
+  const path = yield* Path.Path
+  const fs = yield* FileSystem.FileSystem
+  const sourcePath = yield* expectString(file.sourcePath, `${source}.sourcePath`)
   const targetUsage = file.targetUsage === undefined
     ? undefined
     : yield* expectString(file.targetUsage, `${source}.targetUsage`)
 
   return {
     id: yield* expectString(file.id, `${source}.id`),
-    sourcePath: yield* expectString(file.sourcePath, `${source}.sourcePath`),
+    sourcePath,
     targetPath: yield* expectString(file.targetPath, `${source}.targetPath`),
     contentType: yield* expectString(file.contentType, `${source}.contentType`),
     managed: yield* expectBoolean(file.managed, `${source}.managed`),
+    content: yield* fs.readFileString(path.join(artifactRoot, sourcePath)),
     ...(targetUsage === undefined ? {} : { targetUsage }),
   } satisfies ManagedFileDeclaration
 })
 
-const expectManagedFilesContribution = Effect.fnUntraced(function* (value: unknown, source: string) {
+const expectManagedFilesContribution = Effect.fnUntraced(function* (value: unknown, source: string, artifactRoot: string) {
   const contribution = yield* expectRecord(value, source)
   const files = yield* expectArray(contribution.files, `${source}.files`)
   return {
     mode: yield* expectString(contribution.mode, `${source}.mode`),
     targetBasePath: yield* expectString(contribution.targetBasePath, `${source}.targetBasePath`),
-    files: yield* Effect.forEach(files, (file, index) => expectManagedFileDeclaration(file, `${source}.files[${index}]`)),
+    files: yield* Effect.forEach(files, (file, index) => expectManagedFileDeclaration(file, `${source}.files[${index}]`, artifactRoot)),
   } satisfies ManagedFilesContribution
 })
 
@@ -221,8 +226,8 @@ export const discoverProvider = Effect.fnUntraced(function* (harness: string) {
     targetManagedSurfaces: {
       targetReceives: yield* expectStringArray(managedSurfaces.targetReceives, `provider profile.profiles.${defaultProfile}.managedSurfaces.targetReceives`),
       targetDoesNotReceive: yield* expectStringArray(managedSurfaces.targetDoesNotReceive, `provider profile.profiles.${defaultProfile}.managedSurfaces.targetDoesNotReceive`),
-      documentationBundle: yield* expectManagedFilesContribution(contributions.documentationBundle, `provider profile.profiles.${defaultProfile}.contributions.documentationBundle`),
-      snippets: yield* expectManagedFilesContribution(contributions.snippets, `provider profile.profiles.${defaultProfile}.contributions.snippets`),
+      documentationBundle: yield* expectManagedFilesContribution(contributions.documentationBundle, `provider profile.profiles.${defaultProfile}.contributions.documentationBundle`, artifactRoot),
+      snippets: yield* expectManagedFilesContribution(contributions.snippets, `provider profile.profiles.${defaultProfile}.contributions.snippets`, artifactRoot),
       contributions: {
         packageJson: yield* expectNamedRecord(contributions, 'packageJson', `provider profile.profiles.${defaultProfile}.contributions`),
         tsconfig: yield* expectNamedRecord(contributions, 'tsconfig', `provider profile.profiles.${defaultProfile}.contributions`),
