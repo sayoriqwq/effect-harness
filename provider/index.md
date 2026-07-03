@@ -77,8 +77,11 @@ provider 当前暴露以下能力：
 | Effect testing baseline | `contributions.packageJson.dependencyGroups.testing` | `package.json` devDependencies |
 | Effect diagnostics packages | `contributions.packageJson.dependencyGroups.diagnostics` | `package.json` devDependencies |
 | Native tsgo backend package | `contributions.packageJson.dependencyGroups.nativeBackend` | `package.json` devDependencies |
+| ESLint baseline | `contributions.packageJson.dependencyGroups.linting` | `package.json` devDependencies |
 | Effect diagnostics | `contributions.packageJson.scripts.typecheck` | `tsgo --noEmit` |
 | Native tsgo backend setup | `contributions.packageJson.scripts.prepare` | `effect-tsgo patch` |
+| Effect tests | `contributions.packageJson.scripts.test` | `vitest run` |
+| ESLint guardrail entry | `contributions.packageJson.scripts.lint` | `eslint` |
 | Strict language-service policy | `contributions.tsconfig.compilerOptions.plugins[]` | `tsconfig.json` plugin |
 | Strict tsgo execution policy | `contributions.tsconfig.tsgo` | `tsconfig.json` projection and package scripts |
 | Editor policy | `contributions.editorPolicy` | editor settings projection |
@@ -103,6 +106,7 @@ Target 应该接收：
 - `package.json` dependencies and scripts
 - `tsconfig.json` strict language-service plugin
 - editor settings projection
+- ESLint package baseline and guardrail config projection
 - lint/test/verification policy records
 - `.prelude/providers/effect-harness/provider.json` provider record
 - `.prelude/providers/effect-harness/docs/**` docs bundle

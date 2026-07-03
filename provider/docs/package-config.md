@@ -19,9 +19,13 @@ target 的 runtime dependencies MUST 包含 `effect` 和 `@effect/platform-node`
 
 target 的 Effect testing dependency MUST 包含 `@effect/vitest`。
 
+target 的 test runner dependency MUST 包含 `vitest`。
+
 target 的 diagnostics dependencies MUST 包含 `@effect/tsgo` 和 `@effect/language-service`。
 
 target 的 native backend dependency MUST 包含 `@typescript/native-preview`。
+
+target 的 lint dependencies MUST 包含 `eslint` 和 `@antfu/eslint-config`。
 
 版本基线由 provider profile 管理。target 不应该用局部版本覆盖降低 Effect v4 beta、tsgo 或
 language-service baseline。
@@ -38,6 +42,18 @@ target 的 primary diagnostics script SHOULD 指向：
 
 ```bash
 tsgo --noEmit
+```
+
+target 的 test script SHOULD 指向：
+
+```bash
+vitest run
+```
+
+target 的 lint script SHOULD 指向：
+
+```bash
+eslint
 ```
 
 这些 script 是 provider-managed 指针。Prelude materialization 和 maintain 应按 provider record

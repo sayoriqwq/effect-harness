@@ -221,7 +221,10 @@
         "@effect/vitest": "4.0.0-beta.92",
         "@effect/tsgo": "0.15.0",
         "@effect/language-service": "0.86.2",
-        "@typescript/native-preview": "7.0.0-dev.20260630.1"
+        "@typescript/native-preview": "7.0.0-dev.20260630.1",
+        "@antfu/eslint-config": "^9.0.0",
+        "eslint": "^10.3.0",
+        "vitest": "^4.1.8"
       },
       "managedSurfaces": {
         "targetReceives": [
@@ -229,6 +232,8 @@
           "package.json dependency and devDependency structured pointers",
           "tsconfig.json @effect/language-service plugin structured pointer",
           "editor policy structured pointer for target editor settings",
+          "eslint package baseline and lint script structured pointers",
+          "test package baseline and test script structured pointers",
           "lint, test, and verification policy records",
           "provider-managed docs bundle at .prelude/providers/effect-harness/docs",
           "provider-managed snippets at .prelude/providers/effect-harness/snippets"
@@ -264,7 +269,8 @@
             "testing": {
               "field": "devDependencies",
               "packages": {
-                "@effect/vitest": "4.0.0-beta.92"
+                "@effect/vitest": "4.0.0-beta.92",
+                "vitest": "^4.1.8"
               }
             },
             "diagnostics": {
@@ -279,6 +285,13 @@
               "packages": {
                 "@typescript/native-preview": "7.0.0-dev.20260630.1"
               }
+            },
+            "linting": {
+              "field": "devDependencies",
+              "packages": {
+                "@antfu/eslint-config": "^9.0.0",
+                "eslint": "^10.3.0"
+              }
             }
           },
           "scripts": {
@@ -289,6 +302,14 @@
             "typecheck": {
               "semantic": "primary Effect diagnostics",
               "defaultCommand": "tsgo --noEmit"
+            },
+            "test": {
+              "semantic": "run Effect tests",
+              "defaultCommand": "vitest run"
+            },
+            "lint": {
+              "semantic": "run ESLint guardrails",
+              "defaultCommand": "eslint"
             }
           }
         },
@@ -598,10 +619,10 @@
           "mode": "command-policy",
           "stage": "tests",
           "command": "pnpm test",
-          "packageScript": "vitest run tests/*.test.ts",
+          "packageScript": "vitest run",
           "framework": "@effect/vitest",
           "expectedEntries": [
-            "tests/*.test.ts"
+            "tests/**/*.test.ts"
           ],
           "effectEntrypoints": [
             "it.effect",

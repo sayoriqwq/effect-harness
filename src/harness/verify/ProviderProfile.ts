@@ -254,7 +254,7 @@ const expectedPackageGroups = {
   },
   testing: {
     field: 'devDependencies',
-    packageNames: ['@effect/vitest'],
+    packageNames: ['@effect/vitest', 'vitest'],
   },
   diagnostics: {
     field: 'devDependencies',
@@ -264,12 +264,16 @@ const expectedPackageGroups = {
     field: 'devDependencies',
     packageNames: ['@typescript/native-preview'],
   },
+  linting: {
+    field: 'devDependencies',
+    packageNames: ['@antfu/eslint-config', 'eslint'],
+  },
 } as const satisfies Readonly<Record<string, ExpectedPackageGroup>>
 
 const expectedLintCommand = 'pnpm lint --max-warnings 0'
 const expectedLintScript = 'eslint'
 const expectedTestCommand = 'pnpm test'
-const expectedTestScript = 'vitest run tests/*.test.ts'
+const expectedTestScript = 'vitest run'
 const expectedVerifyCommand = 'pnpm verify'
 const expectedVerifyScript = 'node bin/effect-harness.ts verify --harness .'
 
@@ -434,7 +438,6 @@ function assertLintGuardrailsContribution(
 function assertTestPolicyContribution(
   errors: Array<string>,
   contributions: Record<string, unknown> | undefined,
-  packageManifest: Record<string, unknown>,
 ): void {
   const testPolicy = recordField(errors, contributions, 'testPolicy', 'provider profile.profiles.codex-effect-v4.contributions')
   assertStringValue(errors, stringField(errors, testPolicy, 'mode', 'provider profile testPolicy contribution'), 'command-policy', 'provider profile testPolicy.mode')
@@ -442,15 +445,12 @@ function assertTestPolicyContribution(
   assertStringValue(errors, stringField(errors, testPolicy, 'command', 'provider profile testPolicy contribution'), expectedTestCommand, 'provider profile testPolicy.command')
   assertStringValue(errors, stringField(errors, testPolicy, 'packageScript', 'provider profile testPolicy contribution'), expectedTestScript, 'provider profile testPolicy.packageScript')
   assertStringValue(errors, stringField(errors, testPolicy, 'framework', 'provider profile testPolicy contribution'), '@effect/vitest', 'provider profile testPolicy.framework')
-  assertArrayContainsString(errors, arrayField(errors, testPolicy, 'expectedEntries', 'provider profile testPolicy contribution'), 'tests/*.test.ts', 'provider profile testPolicy.expectedEntries')
+  assertArrayContainsString(errors, arrayField(errors, testPolicy, 'expectedEntries', 'provider profile testPolicy contribution'), 'tests/**/*.test.ts', 'provider profile testPolicy.expectedEntries')
   assertArrayContainsString(errors, arrayField(errors, testPolicy, 'effectEntrypoints', 'provider profile testPolicy contribution'), 'it.effect', 'provider profile testPolicy.effectEntrypoints')
   assertArrayContainsString(errors, arrayField(errors, testPolicy, 'effectEntrypoints', 'provider profile testPolicy contribution'), 'it.live', 'provider profile testPolicy.effectEntrypoints')
   assertArrayContainsString(errors, arrayField(errors, testPolicy, 'effectEntrypoints', 'provider profile testPolicy contribution'), 'layer', 'provider profile testPolicy.effectEntrypoints')
   assertArrayContainsString(errors, arrayField(errors, testPolicy, 'disallowedImports', 'provider profile testPolicy contribution'), 'node:test', 'provider profile testPolicy.disallowedImports')
   assertArrayContainsString(errors, arrayField(errors, testPolicy, 'disallowedImports', 'provider profile testPolicy contribution'), 'vitest', 'provider profile testPolicy.disallowedImports')
-
-  const scripts = recordField(errors, packageManifest, 'scripts', 'package.json')
-  assertStringValue(errors, stringField(errors, scripts, 'test', 'package.json.scripts'), expectedTestScript, 'package.json.scripts.test')
 }
 
 function stageRecordByTag(
@@ -565,12 +565,17 @@ function assertPackageScriptsContribution(
   const contributionScripts = recordField(errors, packageContribution, 'scripts', 'provider profile packageJson contribution')
   const prepare = recordField(errors, contributionScripts, 'prepare', 'provider profile packageJson.scripts')
   const typecheck = recordField(errors, contributionScripts, 'typecheck', 'provider profile packageJson.scripts')
+  const test = recordField(errors, contributionScripts, 'test', 'provider profile packageJson.scripts')
+  const lint = recordField(errors, contributionScripts, 'lint', 'provider profile packageJson.scripts')
   assertStringValue(errors, stringField(errors, prepare, 'defaultCommand', 'provider profile packageJson.scripts.prepare'), expectedPrepareCommand, 'provider profile packageJson.scripts.prepare.defaultCommand')
   assertStringValue(errors, stringField(errors, typecheck, 'defaultCommand', 'provider profile packageJson.scripts.typecheck'), expectedTypecheckCommand, 'provider profile packageJson.scripts.typecheck.defaultCommand')
+  assertStringValue(errors, stringField(errors, test, 'defaultCommand', 'provider profile packageJson.scripts.test'), expectedTestScript, 'provider profile packageJson.scripts.test.defaultCommand')
+  assertStringValue(errors, stringField(errors, lint, 'defaultCommand', 'provider profile packageJson.scripts.lint'), expectedLintScript, 'provider profile packageJson.scripts.lint.defaultCommand')
 
   const manifestScripts = recordField(errors, packageManifest, 'scripts', 'package.json')
   assertStringValue(errors, stringField(errors, manifestScripts, 'prepare', 'package.json.scripts'), expectedPrepareCommand, 'package.json.scripts.prepare')
   assertStringValue(errors, stringField(errors, manifestScripts, 'typecheck', 'package.json.scripts'), expectedTypecheckCommand, 'package.json.scripts.typecheck')
+  assertStringValue(errors, stringField(errors, manifestScripts, 'lint', 'package.json.scripts'), expectedLintScript, 'package.json.scripts.lint')
 }
 
 function assertPackageJsonContribution(
@@ -825,7 +830,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertTsconfigContributionMetadata(errors, contributions)
   assertEditorPolicyContribution(errors, contributions, effectContract, tsgoContract, vscodeSettings)
   assertLintGuardrailsContribution(errors, contributions, packageManifest, eslintText)
-  assertTestPolicyContribution(errors, contributions, packageManifest)
+  assertTestPolicyContribution(errors, contributions)
   assertVerificationPolicyContribution(errors, contributions, packageManifest)
 
   yield* assertManagedFileBundle(

@@ -7,6 +7,9 @@ export const expectedPackageBaseline = {
   '@effect/tsgo': '0.15.0',
   '@effect/language-service': '0.86.2',
   '@typescript/native-preview': '7.0.0-dev.20260630.1',
+  '@antfu/eslint-config': '^9.0.0',
+  'eslint': '^10.3.0',
+  'vitest': '^4.1.8',
 } as const
 
 export const expectedEffectTsgoVersion = '0.15.0'
