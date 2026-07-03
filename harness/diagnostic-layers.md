@@ -59,7 +59,7 @@ ESLint 是 lint stage 的入口。它只负责不需要 tsgo 类型语义、但�
 
 - import boundary：应用代码和测试代码不能从 `repos/effect` 或 `repos/tsgo` import。
 - package baseline：不使用 `@effect/cli`，CLI 代码使用 `effect/unstable/cli`。
-- test entry：本仓测试使用 `@effect/vitest`，不使用 `node:test` 或普通 `vitest` import。
+- test entry：本仓测试使用 `@effect/vitest`，不使用 `node:test` 或从 `vitest` 导入普通测试入口。
 - harness baseline：当前 service definition baseline 不新增 `Context.Tag` service definition。
 - syntax-level bans：只有当 tsgo 没有对应 rule，且规则是本仓制度时才放进 ESLint。例如
   `{ disableValidation: true }` 禁令属于 lint 层。

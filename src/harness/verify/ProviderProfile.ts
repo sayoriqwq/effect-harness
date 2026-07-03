@@ -411,7 +411,7 @@ function assertLintGuardrailsContribution(
 
   const rules = recordField(errors, lintGuardrails, 'rules', 'provider profile lintGuardrails contribution')
   const restrictedImports = arrayField(errors, rules, 'restrictedImports', 'provider profile lintGuardrails.rules')
-  for (const source of ['node:test', 'vitest', '@effect/cli', '@effect/cli/*', 'repos/effect/**', 'repos/tsgo/**']) {
+  for (const source of ['node:test', '@effect/cli', '@effect/cli/*', 'repos/effect/**', 'repos/tsgo/**']) {
     assertArrayContainsString(errors, restrictedImports, source, 'provider profile lintGuardrails.rules.restrictedImports')
     const eslintMarker = source.endsWith('/**')
       ? source.slice(0, -3)
@@ -420,6 +420,16 @@ function assertLintGuardrailsContribution(
         : source
     assertEslintConfigContains(errors, eslintText, eslintMarker)
   }
+  const restrictedVitestImports = arrayField(errors, rules, 'restrictedVitestImports', 'provider profile lintGuardrails.rules')
+  for (const importName of ['describe', 'it', 'test']) {
+    assertArrayContainsString(errors, restrictedVitestImports, importName, 'provider profile lintGuardrails.rules.restrictedVitestImports')
+  }
+  const allowedVitestImports = arrayField(errors, rules, 'allowedVitestImports', 'provider profile lintGuardrails.rules')
+  for (const importName of ['vi', 'beforeEach', 'afterEach', 'beforeAll', 'afterAll']) {
+    assertArrayContainsString(errors, allowedVitestImports, importName, 'provider profile lintGuardrails.rules.allowedVitestImports')
+  }
+  assertEslintConfigContains(errors, eslintText, 'vitest')
+  assertEslintConfigContains(errors, eslintText, 'importNames')
 
   const restrictedSyntax = arrayField(errors, rules, 'restrictedSyntax', 'provider profile lintGuardrails.rules')
   for (const syntax of ['Context.Tag', 'Effect.catchAllCause', 'Effect.ignore', 'Effect.serviceOption', '{ disableValidation: true }', 'plain it() in tests']) {
@@ -450,7 +460,10 @@ function assertTestPolicyContribution(
   assertArrayContainsString(errors, arrayField(errors, testPolicy, 'effectEntrypoints', 'provider profile testPolicy contribution'), 'it.live', 'provider profile testPolicy.effectEntrypoints')
   assertArrayContainsString(errors, arrayField(errors, testPolicy, 'effectEntrypoints', 'provider profile testPolicy contribution'), 'layer', 'provider profile testPolicy.effectEntrypoints')
   assertArrayContainsString(errors, arrayField(errors, testPolicy, 'disallowedImports', 'provider profile testPolicy contribution'), 'node:test', 'provider profile testPolicy.disallowedImports')
-  assertArrayContainsString(errors, arrayField(errors, testPolicy, 'disallowedImports', 'provider profile testPolicy contribution'), 'vitest', 'provider profile testPolicy.disallowedImports')
+  const disallowedVitestImports = arrayField(errors, testPolicy, 'disallowedVitestImports', 'provider profile testPolicy contribution')
+  for (const importName of ['describe', 'it', 'test']) {
+    assertArrayContainsString(errors, disallowedVitestImports, importName, 'provider profile testPolicy.disallowedVitestImports')
+  }
 }
 
 function stageRecordByTag(

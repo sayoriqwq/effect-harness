@@ -71,7 +71,8 @@ export default antfu(
             },
             {
               name: 'vitest',
-              message: 'Use @effect/vitest for this Effect harness test suite.',
+              importNames: ['describe', 'it', 'test'],
+              message: 'Use @effect/vitest for Effect test entries. Import Vitest mock and lifecycle APIs directly from vitest when the runner requires it.',
             },
             {
               name: '@effect/cli',

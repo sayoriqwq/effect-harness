@@ -22,9 +22,12 @@ lint policy 负责 repository boundary 和 syntax-level guardrails。
 target 的 lint entry 由 provider package contribution 暴露为 `pnpm lint`，底层脚本是 `eslint`。
 需要 hard gate 时，verification policy 使用 `pnpm lint --max-warnings 0`。
 
-lint policy SHOULD block provider-internal source imports、`@effect/cli` imports、普通 `vitest` imports、
-`node:test` imports、`Context.Tag` service definitions、指定 Effect member，以及关闭 Schema validation
-的写法。
+lint policy SHOULD block provider-internal source imports、`@effect/cli` imports、`node:test` imports、
+从 `vitest` 导入测试入口（`describe`、`it`、`test`）、`Context.Tag` service definitions、指定 Effect
+member，以及关闭 Schema validation 的写法。
+
+lint policy SHOULD allow Vitest mock/lifecycle API（例如 `vi`、`beforeEach`）直接从 `vitest` 导入，因为
+Vitest 的 mock transformer 依赖直接导入。
 
 lint policy MUST NOT 替代 tsgo diagnostics。Effect semantic diagnostics、type requirement diagnostics 和
 strict rule severity map 由 tsgo policy 负责。

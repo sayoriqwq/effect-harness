@@ -360,6 +360,8 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok((lintGuardrails.configFiles as ReadonlyArray<unknown>).includes('eslint.config.mjs'))
     assert.ok((record(lintGuardrails.rules).restrictedImports as ReadonlyArray<unknown>).includes('@effect/cli'))
     assert.ok((record(lintGuardrails.rules).restrictedImports as ReadonlyArray<unknown>).includes('repos/effect/**'))
+    assert.ok((record(lintGuardrails.rules).restrictedVitestImports as ReadonlyArray<unknown>).includes('it'))
+    assert.ok((record(lintGuardrails.rules).allowedVitestImports as ReadonlyArray<unknown>).includes('vi'))
     assert.ok((record(lintGuardrails.rules).restrictedSyntax as ReadonlyArray<unknown>).includes('Context.Tag'))
     assert.ok((record(lintGuardrails.rules).restrictedSyntax as ReadonlyArray<unknown>).includes('{ disableValidation: true }'))
 
@@ -373,7 +375,7 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok((testPolicy.effectEntrypoints as ReadonlyArray<unknown>).includes('it.effect'))
     assert.ok((testPolicy.effectEntrypoints as ReadonlyArray<unknown>).includes('it.live'))
     assert.ok((testPolicy.disallowedImports as ReadonlyArray<unknown>).includes('node:test'))
-    assert.ok((testPolicy.disallowedImports as ReadonlyArray<unknown>).includes('vitest'))
+    assert.ok((testPolicy.disallowedVitestImports as ReadonlyArray<unknown>).includes('it'))
 
     const verificationPolicy = record(contributions.verificationPolicy)
     assert.equal(verificationPolicy.mode, 'pipeline-policy')

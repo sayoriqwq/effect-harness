@@ -594,11 +594,22 @@
           "rules": {
             "restrictedImports": [
               "node:test",
-              "vitest",
               "@effect/cli",
               "@effect/cli/*",
               "repos/effect/**",
               "repos/tsgo/**"
+            ],
+            "restrictedVitestImports": [
+              "describe",
+              "it",
+              "test"
+            ],
+            "allowedVitestImports": [
+              "vi",
+              "beforeEach",
+              "afterEach",
+              "beforeAll",
+              "afterAll"
             ],
             "restrictedSyntax": [
               "Context.Tag",
@@ -630,8 +641,12 @@
             "layer"
           ],
           "disallowedImports": [
-            "node:test",
-            "vitest"
+            "node:test"
+          ],
+          "disallowedVitestImports": [
+            "describe",
+            "it",
+            "test"
           ]
         },
         "verificationPolicy": {
