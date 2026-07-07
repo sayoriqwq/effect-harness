@@ -20,6 +20,11 @@ function record(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>
 }
 
+function string(value: unknown): string {
+  assert.equal(typeof value, 'string')
+  return value as string
+}
+
 interface CommandResult {
   readonly status: number
   readonly stdout: string
@@ -121,7 +126,17 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok(discovery.targetManagedSurfaces.snippets.files.some(file => file.sourcePath === 'provider/snippets/agents.md'))
 
     const contributions = discovery.targetManagedSurfaces.contributions
-    assert.equal(record(contributions.packageJson).mode, 'structured-merge')
+    const packageJson = record(contributions.packageJson)
+    const dependencyGroups = record(packageJson.dependencyGroups)
+    const scripts = record(packageJson.scripts)
+    assert.equal(packageJson.mode, 'structured-merge')
+    assert.deepStrictEqual(record(record(dependencyGroups.linting).packages), {
+      '@antfu/eslint-config': '^9.0.0',
+      'eslint': '^10.3.0',
+    })
+    assert.equal(record(dependencyGroups.linting).field, 'devDependencies')
+    assert.equal(record(scripts.test).defaultCommand, 'vitest run')
+    assert.equal(record(scripts.lint).defaultCommand, 'eslint')
     assert.equal(record(contributions.tsconfig).mode, 'structured-merge')
     assert.equal(record(contributions.editorPolicy).mode, 'structured-merge')
     assert.equal(record(contributions.lintGuardrails).mode, 'command-policy')
@@ -163,5 +178,30 @@ it.layer(NodeServices.layer)((it) => {
     assert.equal(record(discovery.provider).id, 'effect-harness')
     assert.equal(record(discovery.packageLocator).packageName, '@sayoriqwq/effect-harness')
     assert.equal(record(discovery.discovery).mode, 'provider-discovery')
+
+    const surfaces = record(discovery.targetManagedSurfaces)
+    const contributions = record(surfaces.contributions)
+    const packageJson = record(contributions.packageJson)
+    const dependencyGroups = record(packageJson.dependencyGroups)
+    const scripts = record(packageJson.scripts)
+    assert.deepStrictEqual(record(record(dependencyGroups.linting).packages), {
+      '@antfu/eslint-config': '^9.0.0',
+      'eslint': '^10.3.0',
+    })
+    assert.equal(record(scripts.test).defaultCommand, 'vitest run')
+    assert.equal(record(scripts.lint).defaultCommand, 'eslint')
+
+    const documentationBundle = record(surfaces.documentationBundle)
+    const documentationFiles = documentationBundle.files as ReadonlyArray<unknown>
+    const discoveryDoc = record(documentationFiles.find(file => record(file).sourcePath === 'provider/docs/discovery.md'))
+    assert.ok(string(discoveryDoc.content).includes('Provider Discovery'))
+    assert.ok(string(discoveryDoc.content).includes('provider-discover'))
+
+    const snippets = record(surfaces.snippets)
+    const snippetFiles = snippets.files as ReadonlyArray<unknown>
+    const agentsSnippet = record(snippetFiles.find(file => record(file).sourcePath === 'provider/snippets/agents.md'))
+    assert.ok(string(agentsSnippet.content).includes('effect-harness'))
+    assert.ok(string(agentsSnippet.content).includes('target verify command'))
+    assert.ok(string(agentsSnippet.content).includes('provider-managed surfaces'))
   })), 60_000)
 })
