@@ -35,9 +35,6 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Update npm
-        run: npm install -g npm@latest
-
       - name: Verify
         run: pnpm verify
 
