@@ -684,13 +684,20 @@ function assertArtifactReferencesContract(
   providerProfile: Record<string, unknown>,
   packageManifest: Record<string, unknown>,
 ): void {
+  assertStringValue(errors, stringField(errors, packageManifest, 'main', 'package.json'), 'dist/src/index.js', 'package.json.main')
+  assertStringValue(errors, stringField(errors, packageManifest, 'types', 'package.json'), 'dist/src/index.d.ts', 'package.json.types')
+  const packageExports = recordField(errors, packageManifest, 'exports', 'package.json')
+  const rootExport = recordField(errors, packageExports, '.', 'package.json.exports')
+  assertStringValue(errors, stringField(errors, rootExport, 'import', 'package.json.exports["."]'), './dist/src/index.js', 'package.json.exports["."].import')
+  assertStringValue(errors, stringField(errors, rootExport, 'types', 'package.json.exports["."]'), './dist/src/index.d.ts', 'package.json.exports["."].types')
+
   const artifactReferences = recordField(errors, providerProfile, 'artifactReferences', 'provider profile')
   assertStringValue(errors, stringField(errors, artifactReferences, 'mode', 'provider profile.artifactReferences'), 'provider-artifact-reference', 'provider profile.artifactReferences.mode')
   assertStringValue(errors, stringField(errors, artifactReferences, 'targetDelivery', 'provider profile.artifactReferences'), 'identity-only', 'provider profile.artifactReferences.targetDelivery')
 
   const packageFiles = arrayField(errors, packageManifest, 'files', 'package.json')
   const packageSurface = arrayField(errors, artifactReferences, 'packageSurface', 'provider profile.artifactReferences')
-  for (const path of ['provider', 'harness', 'repos', 'repos/effect.subtree.json', 'repos/tsgo.subtree.json']) {
+  for (const path of ['dist', 'provider', 'harness', 'repos', 'repos/effect.subtree.json', 'repos/tsgo.subtree.json']) {
     assertArrayContainsString(errors, packageFiles, path, 'package.json.files')
     assertArrayContainsString(errors, packageSurface, path, 'provider profile.artifactReferences.packageSurface')
   }
@@ -764,14 +771,14 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
   assertProviderSourceEntry(errors, sourceEntries, {
     contractPath: 'repos/effect.subtree.json',
     id: 'effect-official-source',
-    updateCommand: 'partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
-    verifyCommand: 'partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
+    updateCommand: 'npx --yes @sayoriqwq/partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
+    verifyCommand: 'npx --yes @sayoriqwq/partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
   })
   assertProviderSourceEntry(errors, sourceEntries, {
     contractPath: 'repos/tsgo.subtree.json',
     id: 'tsgo-official-source',
-    updateCommand: 'partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run',
-    verifyCommand: 'partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo',
+    updateCommand: 'npx --yes @sayoriqwq/partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run',
+    verifyCommand: 'npx --yes @sayoriqwq/partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo',
   })
   assertPartitaSubtreeContract(errors, effectContract, {
     anchor: 'repos/effect/LLMS.md',
@@ -781,8 +788,8 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
     prefix: 'repos/effect',
     repository: 'https://github.com/Effect-TS/effect-smol',
     route: 'harness/effect-routes.md',
-    updateCommand: 'partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
-    verifyCommand: 'partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
+    updateCommand: 'npx --yes @sayoriqwq/partita pin update --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run',
+    verifyCommand: 'npx --yes @sayoriqwq/partita pin verify --contract repos/effect.subtree.json --name effect --prefix repos/effect',
   })
   assertPartitaSubtreeContract(errors, tsgoContract, {
     anchor: 'repos/tsgo/README.md',
@@ -792,8 +799,8 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
     prefix: 'repos/tsgo',
     repository: 'https://github.com/Effect-TS/tsgo',
     route: 'harness/tsgo-routes.md',
-    updateCommand: 'partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run',
-    verifyCommand: 'partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo',
+    updateCommand: 'npx --yes @sayoriqwq/partita pin update --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run',
+    verifyCommand: 'npx --yes @sayoriqwq/partita pin verify --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo',
   })
 
   const providerRecord = recordField(errors, providerProfile, 'providerRecord', 'provider profile')
@@ -878,7 +885,7 @@ export const verifyProviderProfileContract = Effect.fnUntraced(function* (errors
       },
       {
         id: 'discovery',
-        requiredKeywords: ['Provider Discovery', 'provider-discover', 'Prelude', 'target-managed surfaces', 'artifact-only', 'internal harness'],
+        requiredKeywords: ['Provider Discovery', 'provider-discover', 'Prelude', 'target-managed surfaces', 'artifact-only', 'internal harness', 'npm selects the artifact', 'effect-harness owns desired semantics', 'Prelude projects the artifact', 'Prelude lifecycle commands', 'npm same-name cwd short-circuit'],
         sourcePath: 'provider/docs/discovery.md',
         targetPath: 'discovery.md',
       },

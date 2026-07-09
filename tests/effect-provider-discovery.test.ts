@@ -1,5 +1,5 @@
 import type { ProviderDiscovery } from '../src/harness/ProviderDiscovery.ts'
-import { fileURLToPath } from 'node:url'
+import { fileURLToPath, pathToFileURL } from 'node:url'
 import * as NodeServices from '@effect/platform-node/NodeServices'
 import { assert, it } from '@effect/vitest'
 import { Effect, FileSystem, Path, Schema, Stream } from 'effect'
@@ -88,6 +88,19 @@ const packageVersion = Effect.fnUntraced(function* (root: string) {
   return packageJson.version
 })
 
+const readJsonFile = Effect.fnUntraced(function* (filePath: string) {
+  const fs = yield* FileSystem.FileSystem
+  const text = yield* fs.readFileString(filePath)
+  return yield* Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(text)
+})
+
+const unpackedPackageRoot = Effect.fnUntraced(function* (directory: string, tarball: string) {
+  const path = yield* Path.Path
+  const extract = yield* runCommand(directory, 'tar', ['-xzf', tarball, '-C', directory])
+  assert.equal(extract.status, 0, extract.stderr)
+  return path.join(directory, 'package')
+})
+
 it.layer(NodeServices.layer)((it) => {
   it.effect('provider discovery exposes a Prelude-readable provider envelope', () => Effect.gen(function* () {
     const root = yield* repoRoot()
@@ -115,6 +128,13 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok(discovery.packageLocator.packageFiles.includes('provider'))
     assert.ok(discovery.packageLocator.packageFiles.includes('repos'))
 
+    assert.equal(discovery.packageArtifactIdentity.packageName, '@sayoriqwq/effect-harness')
+    assert.equal(discovery.packageArtifactIdentity.packageVersion, expectedPackageVersion)
+    assert.equal(discovery.packageArtifactIdentity.artifactRoot, root)
+    assert.equal(discovery.packageArtifactIdentity.npmSelector, `@sayoriqwq/effect-harness@${expectedPackageVersion}`)
+    assert.equal(discovery.packageArtifactIdentity.invocationFailureClassification.sameNameCwdShortCircuit.code, 'npm-same-name-cwd-short-circuit')
+    assert.equal(discovery.packageArtifactIdentity.invocationFailureClassification.sameNameCwdShortCircuit.classification, 'npm-invocation-failure')
+
     assert.equal(record(discovery.deliveryModes.internalHarness).mode, 'internal-harness')
     assert.equal(record(discovery.internalHarnessSurfaces).mode, 'internal-harness')
 
@@ -126,6 +146,7 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok(discovery.targetManagedSurfaces.snippets.files.some(file => file.sourcePath === 'provider/snippets/agents.md'))
 
     const contributions = discovery.targetManagedSurfaces.contributions
+    assert.deepStrictEqual(discovery.semanticContributions, contributions)
     const packageJson = record(contributions.packageJson)
     const dependencyGroups = record(packageJson.dependencyGroups)
     const scripts = record(packageJson.scripts)
@@ -145,9 +166,12 @@ it.layer(NodeServices.layer)((it) => {
 
     assert.equal(discovery.artifactOnlyReferences.mode, 'provider-artifact-reference')
     assert.equal(discovery.artifactOnlyReferences.targetDelivery, 'identity-only')
+    assert.ok(discovery.artifactOnlyReferences.packageSurface.includes('dist'))
     assert.equal(record(discovery.artifactOnlyReferences.references)['effect-source-tree'], record(discovery.sourceIdentities.artifactReferences)['effect-source-tree'])
     assert.equal(record(record(discovery.artifactOnlyReferences.references)['effect-source-tree']).targetDelivery, 'artifact-only')
     assert.equal(record(record(discovery.artifactOnlyReferences.references)['tsgo-route-doc']).path, 'harness/tsgo-routes.md')
+    assert.ok(discovery.artifactOnlyReferenceAudit.references.every(reference => reference.available))
+    assert.ok(discovery.artifactOnlyReferenceAudit.references.some(reference => reference.path === 'repos/effect/LLMS.md'))
 
     assert.equal(discovery.sourceIdentities.defaultSourceEntry, 'effect-official-source')
     assert.ok(discovery.sourceIdentities.sourceEntries.includes('tsgo-official-source'))
@@ -155,7 +179,66 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok(discovery.sourceIdentities.sourceBoundary.targetMustNotReceive.includes('repos/tsgo'))
   }))
 
-  it.effect('packed package provider-discover runs in a clean npx install', () => withTempDir(directory => Effect.gen(function* () {
+  it.effect('packed package exposes public programmatic discovery matching the CLI envelope', () => withTempDir(directory => Effect.gen(function* () {
+    const root = yield* repoRoot()
+    const pack = yield* runCommand(root, 'pnpm', ['pack', '--pack-destination', directory])
+    assert.equal(pack.status, 0, pack.stderr)
+
+    const tarball = yield* packedTarball(directory)
+    const packageRoot = yield* unpackedPackageRoot(directory, tarball)
+    const path = yield* Path.Path
+    const packageManifest = record(yield* readJsonFile(path.join(packageRoot, 'package.json')))
+    const exports = record(packageManifest.exports)
+    assert.deepStrictEqual(record(exports['.']), {
+      import: './dist/src/index.js',
+      types: './dist/src/index.d.ts',
+    })
+
+    const cliResult = yield* runCommand(root, 'node', [
+      path.join(root, 'dist/bin/effect-harness.js'),
+      'provider-discover',
+      '--harness',
+      packageRoot,
+    ])
+    assert.equal(cliResult.status, 0, cliResult.stderr)
+
+    const publicApiModule = pathToFileURL(path.join(root, 'dist/src/index.js')).href
+    const publicApiModuleLiteral = yield* Schema.encodeUnknownEffect(Schema.UnknownFromJsonString)(publicApiModule)
+    const packageRootLiteral = yield* Schema.encodeUnknownEffect(Schema.UnknownFromJsonString)(packageRoot)
+    const apiResult = yield* runCommand(root, 'node', [
+      '--input-type=module',
+      '--eval',
+      [
+        `import { classifyProviderDiscoveryFailure, discoverProviderArtifact } from ${publicApiModuleLiteral};`,
+        `const discovery = await discoverProviderArtifact({ artifactRoot: ${packageRootLiteral} });`,
+        'const classified = classifyProviderDiscoveryFailure({',
+        '  cwdPackageName: "@sayoriqwq/effect-harness",',
+        '  cwdPackageVersion: discovery.packageLocator.packageVersion,',
+        '  requestedPackageName: "@sayoriqwq/effect-harness",',
+        '  requestedPackageVersion: discovery.packageLocator.packageVersion,',
+        '  stderr: "sh: effect-harness: command not found"',
+        '});',
+        'console.log(JSON.stringify({ classified, discovery }));',
+      ].join('\n'),
+    ])
+    assert.equal(apiResult.status, 0, apiResult.stderr)
+
+    const cliDiscovery = record(yield* Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(cliResult.stdout.trim()))
+    const apiOutput = record(yield* Schema.decodeUnknownEffect(Schema.UnknownFromJsonString)(apiResult.stdout.trim()))
+    const apiDiscovery = record(apiOutput.discovery)
+    assert.deepStrictEqual(apiDiscovery.provider, cliDiscovery.provider)
+    assert.deepStrictEqual(apiDiscovery.packageArtifactIdentity, cliDiscovery.packageArtifactIdentity)
+    assert.deepStrictEqual(apiDiscovery.semanticContributions, cliDiscovery.semanticContributions)
+    assert.deepStrictEqual(apiDiscovery.deliveryModes, cliDiscovery.deliveryModes)
+    assert.deepStrictEqual(apiDiscovery.artifactOnlyReferences, cliDiscovery.artifactOnlyReferences)
+    assert.deepStrictEqual(record(apiOutput.classified), {
+      classification: 'npm-invocation-failure',
+      code: 'npm-same-name-cwd-short-circuit',
+      providerDiscoveryStarted: false,
+    })
+  })), 120_000)
+
+  it.effect('packed package provider-discover runs in a clean npx install without target mutation', () => withTempDir(directory => Effect.gen(function* () {
     const root = yield* repoRoot()
     const pack = yield* runCommand(root, 'pnpm', ['pack', '--pack-destination', directory])
     assert.equal(pack.status, 0, pack.stderr)
@@ -163,6 +246,7 @@ it.layer(NodeServices.layer)((it) => {
     const tarball = yield* packedTarball(directory)
     const discoveryResult = yield* runCommand(directory, 'npx', [
       '--yes',
+      '--engine-strict=false',
       '--package',
       tarball,
       'effect-harness',
@@ -203,5 +287,10 @@ it.layer(NodeServices.layer)((it) => {
     assert.ok(string(agentsSnippet.content).includes('effect-harness'))
     assert.ok(string(agentsSnippet.content).includes('target verify command'))
     assert.ok(string(agentsSnippet.content).includes('provider-managed surfaces'))
-  })), 60_000)
+
+    const fs = yield* FileSystem.FileSystem
+    const path = yield* Path.Path
+    assert.equal(yield* fs.exists(path.join(directory, '.prelude')), false)
+    assert.equal(yield* fs.exists(path.join(directory, '.prelude/providers/effect-harness')), false)
+  })), 120_000)
 })

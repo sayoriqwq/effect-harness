@@ -19,6 +19,8 @@ updated: 2026-07-02
 Prelude SHOULD 通过 package artifact 执行 discovery，而不是复制
 `provider/effect-harness.provider.json` 到 Prelude 源码中维护。
 
+边界口径是：npm selects the artifact，effect-harness owns desired semantics，Prelude projects the artifact，target repositories are mutated only by Prelude lifecycle commands。
+
 稳定入口是：
 
 ```bash
@@ -31,8 +33,28 @@ npx --yes @sayoriqwq/effect-harness provider-discover
 node bin/effect-harness.ts provider-discover --harness .
 ```
 
+public programmatic API 暴露同一套 discovery contract：
+
+```ts
+import { discoverProviderArtifact } from '@sayoriqwq/effect-harness'
+
+const discovery = await discoverProviderArtifact()
+```
+
 discovery 输出是 machine-readable JSON。它从 provider profile 和 package manifest 派生，不是第二份
 profile 真源。
+
+## Failure Classification
+
+`provider-discover` 启动后产生的 profile、docs、snippets 或 artifact-only reference 错误属于
+provider discovery failure。
+
+npm、npx 或 shell 在启动 `effect-harness` binary 前失败，属于 npm invocation failure。
+
+已知特殊情况：在 effect-harness provider repository 根目录下运行同名同版本
+`npx @sayoriqwq/effect-harness@... provider-discover`，可能因为 npm same-name cwd short-circuit 报
+`sh: effect-harness: command not found`。这不是 provider discovery failure；应从 neutral working
+directory 执行，或使用 `--package`/`--prefix` 让 npm 明确选择 package artifact。
 
 ## Shape
 
@@ -52,6 +74,8 @@ discovery envelope MUST 暴露 package locator：
 - provider profile path
 - package files
 - discovery command
+- package artifact identity
+- npm invocation failure classification
 
 discovery envelope MUST 暴露 target-managed surfaces：
 
@@ -75,6 +99,8 @@ discovery envelope MUST 暴露 artifact-only references：
 - tsgo source contract identity
 - tsgo anchor doc identity
 - tsgo route doc identity
+
+discovery envelope MUST audit artifact-only references against the selected package artifact root。
 
 discovery envelope MUST 暴露 internal harness surfaces，使 Prelude 能明确这些内容只服务
 effect-harness 本仓维护和 self-conformance。

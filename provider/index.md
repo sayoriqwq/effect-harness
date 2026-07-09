@@ -149,6 +149,10 @@ maintain 规则处理。
 Prelude SHOULD 通过 `npx --yes @sayoriqwq/effect-harness provider-discover` 读取 provider discovery
 envelope。
 
+package-backed discovery 的职责边界是：npm selects the artifact，effect-harness owns desired
+semantics，Prelude projects the artifact，target repositories are mutated only by Prelude lifecycle
+commands。
+
 discovery envelope 暴露 provider identity、artifact root、package locator、target-managed surfaces、
 artifact-only references、source identity 和 internal harness surfaces。
 

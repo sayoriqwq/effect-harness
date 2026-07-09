@@ -21,11 +21,71 @@ interface ManagedFilesContribution {
   readonly files: ReadonlyArray<ManagedFileDeclaration>
 }
 
+interface SemanticContributions {
+  readonly packageJson: JsonRecord
+  readonly tsconfig: JsonRecord
+  readonly editorPolicy: JsonRecord
+  readonly lintGuardrails: JsonRecord
+  readonly testPolicy: JsonRecord
+  readonly verificationPolicy: JsonRecord
+}
+
+interface ArtifactOnlyReferenceAuditEntry {
+  readonly id: string
+  readonly path: string
+  readonly sourceEntry: string
+  readonly targetDelivery: string
+  readonly available: true
+}
+
+interface ArtifactOnlyReferenceAudit {
+  readonly mode: 'artifact-only-reference-audit'
+  readonly references: ReadonlyArray<ArtifactOnlyReferenceAuditEntry>
+}
+
+interface NpmInvocationFailureClassification {
+  readonly classification: 'npm-invocation-failure'
+  readonly code: 'npm-command-failed' | 'npm-same-name-cwd-short-circuit'
+  readonly providerDiscoveryStarted: false
+}
+
+interface ProviderDiscoveryFailureClassification {
+  readonly classification: 'provider-discovery-failure'
+  readonly code: 'provider-discovery-error'
+  readonly providerDiscoveryStarted: true
+}
+
+export interface ProviderDiscoveryFailureInput {
+  readonly stderr: string
+  readonly stdout?: string
+  readonly cwdPackageName?: string
+  readonly cwdPackageVersion?: string
+  readonly requestedPackageName?: string
+  readonly requestedPackageVersion?: string
+}
+
+export type ProviderDiscoveryFailure
+  = | NpmInvocationFailureClassification
+    | ProviderDiscoveryFailureClassification
+
 export interface ProviderDiscovery {
   readonly schemaVersion: 1
   readonly artifactRoot: string
   readonly providerProfilePath: string
   readonly providerProfileRelativePath: 'provider/effect-harness.provider.json'
+  readonly packageArtifactIdentity: {
+    readonly packageName: string
+    readonly packageVersion: string
+    readonly packageManager: string
+    readonly artifactRoot: string
+    readonly packageJsonPath: string
+    readonly providerProfilePath: string
+    readonly npmSelector: string
+    readonly neutralDiscoveryCommand: string
+    readonly invocationFailureClassification: {
+      readonly sameNameCwdShortCircuit: NpmInvocationFailureClassification
+    }
+  }
   readonly packageLocator: {
     readonly packageName: string
     readonly packageVersion: string
@@ -52,19 +112,13 @@ export interface ProviderDiscovery {
     readonly providerArtifactReference: JsonRecord
     readonly exportedHarness: JsonRecord
   }
+  readonly semanticContributions: SemanticContributions
   readonly targetManagedSurfaces: {
     readonly targetReceives: ReadonlyArray<string>
     readonly targetDoesNotReceive: ReadonlyArray<string>
     readonly documentationBundle: ManagedFilesContribution
     readonly snippets: ManagedFilesContribution
-    readonly contributions: {
-      readonly packageJson: JsonRecord
-      readonly tsconfig: JsonRecord
-      readonly editorPolicy: JsonRecord
-      readonly lintGuardrails: JsonRecord
-      readonly testPolicy: JsonRecord
-      readonly verificationPolicy: JsonRecord
-    }
+    readonly contributions: SemanticContributions
   }
   readonly artifactOnlyReferences: {
     readonly mode: string
@@ -72,6 +126,7 @@ export interface ProviderDiscovery {
     readonly packageSurface: ReadonlyArray<string>
     readonly references: JsonRecord
   }
+  readonly artifactOnlyReferenceAudit: ArtifactOnlyReferenceAudit
   readonly sourceIdentities: {
     readonly defaultSourceEntry: string
     readonly sourceEntries: ReadonlyArray<string>
@@ -85,6 +140,44 @@ export interface ProviderDiscovery {
     readonly artifactReferences: JsonRecord
   }
   readonly internalHarnessSurfaces: JsonRecord
+}
+
+export function resolvePackageArtifactRoot(entrypoint: string): string {
+  for (const marker of ['/dist/bin/', '/dist/src/', '/bin/', '/src/']) {
+    const index = entrypoint.indexOf(marker)
+    if (index >= 0) {
+      return entrypoint.slice(0, index)
+    }
+  }
+  return entrypoint
+}
+
+export function classifyProviderDiscoveryFailure(input: ProviderDiscoveryFailureInput): ProviderDiscoveryFailure {
+  const sameRequestedPackage = input.cwdPackageName === input.requestedPackageName
+    && input.cwdPackageVersion === input.requestedPackageVersion
+  const commandNotFound = /(?:^|\n)(?:sh: )?effect-harness: command not found(?:\n|$)/u.test(input.stderr)
+
+  if (sameRequestedPackage && commandNotFound) {
+    return {
+      classification: 'npm-invocation-failure',
+      code: 'npm-same-name-cwd-short-circuit',
+      providerDiscoveryStarted: false,
+    }
+  }
+
+  if (commandNotFound || input.stderr.includes('Cannot find package') || input.stderr.includes('npm ERR!')) {
+    return {
+      classification: 'npm-invocation-failure',
+      code: 'npm-command-failed',
+      providerDiscoveryStarted: false,
+    }
+  }
+
+  return {
+    classification: 'provider-discovery-failure',
+    code: 'provider-discovery-error',
+    providerDiscoveryStarted: true,
+  }
 }
 
 function decodeJsonRecord(value: unknown, source: string): Effect.Effect<JsonRecord, HarnessError> {
@@ -103,6 +196,10 @@ function expectString(value: unknown, source: string): Effect.Effect<string, Har
   return typeof value === 'string'
     ? Effect.succeed(value)
     : Effect.fail(new HarnessError({ message: `${source} must be a string` }))
+}
+
+function optionalString(value: unknown, fallback: string): string {
+  return typeof value === 'string' ? value : fallback
 }
 
 function expectBoolean(value: unknown, source: string): Effect.Effect<boolean, HarnessError> {
@@ -176,14 +273,41 @@ const expectArtifactReferences = Effect.fnUntraced(function* (providerProfile: J
   }
 })
 
+const expectArtifactOnlyReferenceAudit = Effect.fnUntraced(function* (references: JsonRecord, artifactRoot: string) {
+  const fs = yield* FileSystem.FileSystem
+  const path = yield* Path.Path
+  const entries = yield* Effect.forEach(Object.entries(references), ([id, value]) => Effect.gen(function* () {
+    const reference = yield* expectRecord(value, `provider profile.artifactReferences.references.${id}`)
+    const referencePath = yield* expectString(reference.path, `provider profile.artifactReferences.references.${id}.path`)
+    const absolutePath = path.join(artifactRoot, referencePath)
+    const available = yield* fs.exists(absolutePath)
+    if (!available) {
+      return yield* new HarnessError({ message: `artifact-only reference ${id} is missing from package artifact at ${referencePath}` })
+    }
+    return {
+      available: true,
+      id,
+      path: referencePath,
+      sourceEntry: yield* expectString(reference.sourceEntry, `provider profile.artifactReferences.references.${id}.sourceEntry`),
+      targetDelivery: yield* expectString(reference.targetDelivery, `provider profile.artifactReferences.references.${id}.targetDelivery`),
+    } satisfies ArtifactOnlyReferenceAuditEntry
+  }))
+
+  return {
+    mode: 'artifact-only-reference-audit',
+    references: entries,
+  } satisfies ArtifactOnlyReferenceAudit
+})
+
 export const discoverProvider = Effect.fnUntraced(function* (harness: string) {
   const path = yield* Path.Path
   const artifactRoot = path.resolve(harness)
   const providerProfileRelativePath = 'provider/effect-harness.provider.json'
   const providerProfilePath = path.join(artifactRoot, providerProfileRelativePath)
+  const packageJsonPath = path.join(artifactRoot, 'package.json')
 
   const providerProfile = yield* readJson(providerProfilePath, decodeJsonRecord)
-  const packageManifest = yield* readJson(path.join(artifactRoot, 'package.json'), decodeJsonRecord)
+  const packageManifest = yield* readJson(packageJsonPath, decodeJsonRecord)
   const provider = yield* expectNamedRecord(providerProfile, 'provider', 'provider profile')
   const profiles = yield* expectNamedRecord(providerProfile, 'profiles', 'provider profile')
   const defaultProfile = yield* expectString(provider.defaultProfile, 'provider profile.provider.defaultProfile')
@@ -195,15 +319,44 @@ export const discoverProvider = Effect.fnUntraced(function* (harness: string) {
   const packageBin = yield* expectNamedRecord(packageManifest, 'bin', 'package.json')
   const artifactOnlyReferences = yield* expectArtifactReferences(providerProfile)
   const deliveryModes = yield* expectDeliveryModes(providerProfile)
+  const packageName = yield* expectString(packageManifest.name, 'package.json.name')
+  const packageVersion = yield* expectString(packageManifest.version, 'package.json.version')
+  const packageManager = optionalString(packageManifest.packageManager, 'unknown')
+  const npmSelector = `${packageName}@${packageVersion}`
+  const semanticContributions = {
+    packageJson: yield* expectNamedRecord(contributions, 'packageJson', `provider profile.profiles.${defaultProfile}.contributions`),
+    tsconfig: yield* expectNamedRecord(contributions, 'tsconfig', `provider profile.profiles.${defaultProfile}.contributions`),
+    editorPolicy: yield* expectNamedRecord(contributions, 'editorPolicy', `provider profile.profiles.${defaultProfile}.contributions`),
+    lintGuardrails: yield* expectNamedRecord(contributions, 'lintGuardrails', `provider profile.profiles.${defaultProfile}.contributions`),
+    testPolicy: yield* expectNamedRecord(contributions, 'testPolicy', `provider profile.profiles.${defaultProfile}.contributions`),
+    verificationPolicy: yield* expectNamedRecord(contributions, 'verificationPolicy', `provider profile.profiles.${defaultProfile}.contributions`),
+  } satisfies SemanticContributions
 
   return {
     schemaVersion: 1,
     artifactRoot,
     providerProfilePath,
     providerProfileRelativePath,
+    packageArtifactIdentity: {
+      packageName,
+      packageVersion,
+      packageManager,
+      artifactRoot,
+      packageJsonPath,
+      providerProfilePath,
+      npmSelector,
+      neutralDiscoveryCommand: `npx --yes --package ${npmSelector} effect-harness provider-discover`,
+      invocationFailureClassification: {
+        sameNameCwdShortCircuit: {
+          classification: 'npm-invocation-failure',
+          code: 'npm-same-name-cwd-short-circuit',
+          providerDiscoveryStarted: false,
+        },
+      },
+    },
     packageLocator: {
-      packageName: yield* expectString(packageManifest.name, 'package.json.name'),
-      packageVersion: yield* expectString(packageManifest.version, 'package.json.version'),
+      packageName,
+      packageVersion,
       binName: 'effect-harness',
       binPath: yield* expectString(packageBin['effect-harness'], 'package.json.bin.effect-harness'),
       discoveryCommand: 'npx --yes @sayoriqwq/effect-harness provider-discover',
@@ -223,21 +376,16 @@ export const discoverProvider = Effect.fnUntraced(function* (harness: string) {
       targetLifecycleOwner: yield* expectString(selfConformance.lifecycleOwner, 'provider profile.selfConformance.lifecycleOwner'),
     },
     deliveryModes,
+    semanticContributions,
     targetManagedSurfaces: {
       targetReceives: yield* expectStringArray(managedSurfaces.targetReceives, `provider profile.profiles.${defaultProfile}.managedSurfaces.targetReceives`),
       targetDoesNotReceive: yield* expectStringArray(managedSurfaces.targetDoesNotReceive, `provider profile.profiles.${defaultProfile}.managedSurfaces.targetDoesNotReceive`),
       documentationBundle: yield* expectManagedFilesContribution(contributions.documentationBundle, `provider profile.profiles.${defaultProfile}.contributions.documentationBundle`, artifactRoot),
       snippets: yield* expectManagedFilesContribution(contributions.snippets, `provider profile.profiles.${defaultProfile}.contributions.snippets`, artifactRoot),
-      contributions: {
-        packageJson: yield* expectNamedRecord(contributions, 'packageJson', `provider profile.profiles.${defaultProfile}.contributions`),
-        tsconfig: yield* expectNamedRecord(contributions, 'tsconfig', `provider profile.profiles.${defaultProfile}.contributions`),
-        editorPolicy: yield* expectNamedRecord(contributions, 'editorPolicy', `provider profile.profiles.${defaultProfile}.contributions`),
-        lintGuardrails: yield* expectNamedRecord(contributions, 'lintGuardrails', `provider profile.profiles.${defaultProfile}.contributions`),
-        testPolicy: yield* expectNamedRecord(contributions, 'testPolicy', `provider profile.profiles.${defaultProfile}.contributions`),
-        verificationPolicy: yield* expectNamedRecord(contributions, 'verificationPolicy', `provider profile.profiles.${defaultProfile}.contributions`),
-      },
+      contributions: semanticContributions,
     },
     artifactOnlyReferences,
+    artifactOnlyReferenceAudit: yield* expectArtifactOnlyReferenceAudit(artifactOnlyReferences.references, artifactRoot),
     sourceIdentities: {
       defaultSourceEntry: yield* expectString(selectedProfile.sourceEntry, `provider profile.profiles.${defaultProfile}.sourceEntry`),
       sourceEntries: yield* expectStringArray(selectedProfile.sourceEntries, `provider profile.profiles.${defaultProfile}.sourceEntries`),

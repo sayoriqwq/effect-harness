@@ -1,7 +1,7 @@
 {
   "name": "@sayoriqwq/effect-harness",
   "type": "module",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "private": false,
   "publishConfig": {
     "access": "public",
@@ -14,7 +14,14 @@
     "type": "git",
     "url": "https://github.com/sayoriqwq/effect-harness"
   },
-  "main": "dist/bin/effect-harness.js",
+  "exports": {
+    ".": {
+      "types": "./dist/src/index.d.ts",
+      "import": "./dist/src/index.js"
+    }
+  },
+  "main": "dist/src/index.js",
+  "types": "dist/src/index.d.ts",
   "bin": {
     "effect-harness": "dist/bin/effect-harness.js"
   },
