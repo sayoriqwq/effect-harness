@@ -740,7 +740,7 @@ packages:
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
   '@sayoriqwq/prelude-contract@0.1.0':
-    resolution: {integrity: sha512-eAkYZzsDl1Rde4nEC9cTXgytNCuOJbPAokQrcsX4//7KHtQXhgSH/pJnTc2wPjdGaCEuXQk1BFYkiD/BX+L0Xg==}
+    resolution: {integrity: sha512-2Ruj/bC82ZzabpLyfCE+5aqjFNP/hazjc/lma4pWD1GWoydvHczumEPx38hCALG/RnZzJwqAj0ozQWOB3eNFPw==}
     engines: {node: '>=22'}
     peerDependencies:
       effect: 4.0.0-beta.92
