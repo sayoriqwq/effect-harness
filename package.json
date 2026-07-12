@@ -1,7 +1,7 @@
 {
   "name": "@sayoriqwq/effect-harness",
   "type": "module",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": false,
   "publishConfig": {
     "access": "public",
@@ -50,7 +50,7 @@
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "prepare": "effect-tsgo patch",
-    "test": "vitest run tests/*.test.ts",
+    "test": "pnpm build && vitest run tests/*.test.ts",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",
     "verify": "pnpm typecheck && pnpm test && pnpm lint && pnpm knip"

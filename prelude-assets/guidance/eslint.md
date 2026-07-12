@@ -4,12 +4,12 @@
 stable Artifact export to its existing flat-config composition:
 
 ```js
+import antfu from '@antfu/eslint-config'
 import effectHarnessEslintConfig from '@sayoriqwq/effect-harness/eslint'
 
-export default [
-  ...effectHarnessEslintConfig,
-]
+export default antfu().append(...effectHarnessEslintConfig)
 ```
 
+Antfu v9 returns a `FlatConfigComposer`; do not spread `antfu()` into an array.
 Preserve target-specific config and rerun `prelude plan` after the user has
 approved the target-owned patch.

@@ -15,7 +15,7 @@ const effectLanguageServicePlugin = {
   ignoreEffectErrorsInTscExitCode: false,
 }
 
-const routingBlock = `## Effect Harness\n\nFor Effect application, test, package, TypeScript, editor, or lint changes, read \`effect/managed/docs/index.md\` first. Keep \`effect/feedback/**\` target-owned. Use installed Effect packages; never import pinned source diagnostics.\n`
+const routingBlock = `## Effect Harness\n\nFor Effect application, test, package, TypeScript, editor, or lint changes, read \`effect/managed/docs/index.md\` first. For ESLint or package-config repair, read \`effect/managed/docs/package-config.md\`; Antfu v9 integrations use its \`antfu().append(...effectHarness)\` form. Keep \`effect/feedback/**\` target-owned. Use installed Effect packages; never import pinned source diagnostics.\n`
 
 function eslintIntegrationIssue(content: string | undefined) {
   if (typeof content === 'string') {
@@ -42,6 +42,17 @@ function hasEffectHarnessEslintComposition(content: string): boolean {
     TypeScript.ScriptKind.JS,
   )
 
+  let antfuBinding = ''
+  for (const statement of source.statements) {
+    if (
+      TypeScript.isImportDeclaration(statement)
+      && TypeScript.isStringLiteral(statement.moduleSpecifier)
+      && statement.moduleSpecifier.text === '@antfu/eslint-config'
+    ) {
+      antfuBinding = statement.importClause?.name?.text ?? ''
+    }
+  }
+
   for (const statement of source.statements) {
     if (
       !TypeScript.isImportDeclaration(statement)
@@ -52,7 +63,7 @@ function hasEffectHarnessEslintComposition(content: string): boolean {
     }
 
     const binding = statement.importClause?.name?.text ?? ''
-    if (binding.length > 0 && composesEslintBinding(source, binding)) {
+    if (binding.length > 0 && composesEslintBinding(source, binding, antfuBinding)) {
       return true
     }
   }
@@ -60,7 +71,11 @@ function hasEffectHarnessEslintComposition(content: string): boolean {
   return false
 }
 
-function composesEslintBinding(source: TypeScript.SourceFile, binding: string): boolean {
+function composesEslintBinding(
+  source: TypeScript.SourceFile,
+  binding: string,
+  antfuBinding: string,
+): boolean {
   return source.statements.some((statement) => {
     if (TypeScript.isExportAssignment(statement) === false)
       return false
@@ -68,14 +83,50 @@ function composesEslintBinding(source: TypeScript.SourceFile, binding: string): 
     if (statement.isExportEquals === true)
       return false
 
-    if (!TypeScript.isArrayLiteralExpression(statement.expression))
-      return false
+    if (TypeScript.isArrayLiteralExpression(statement.expression)) {
+      const spreadsEffectConfig = statement.expression.elements.some(element =>
+        TypeScript.isSpreadElement(element)
+        && TypeScript.isIdentifier(element.expression)
+        && element.expression.text === binding)
+      return spreadsEffectConfig && !spreadsAntfuCall(statement.expression, antfuBinding)
+    }
 
-    return statement.expression.elements.some(element =>
-      TypeScript.isSpreadElement(element)
-      && TypeScript.isIdentifier(element.expression)
-      && element.expression.text === binding)
+    return appendsEffectConfigToAntfu(statement.expression, binding, antfuBinding)
   })
+}
+
+function spreadsAntfuCall(expression: TypeScript.ArrayLiteralExpression, antfuBinding: string): boolean {
+  return antfuBinding.length > 0 && expression.elements.some(element =>
+    TypeScript.isSpreadElement(element)
+    && TypeScript.isCallExpression(element.expression)
+    && TypeScript.isIdentifier(element.expression.expression)
+    && element.expression.expression.text === antfuBinding)
+}
+
+function appendsEffectConfigToAntfu(
+  expression: TypeScript.Expression,
+  effectBinding: string,
+  antfuBinding: string,
+): boolean {
+  if (antfuBinding.length === 0 || !TypeScript.isCallExpression(expression))
+    return false
+
+  const append = expression.expression
+  if (!TypeScript.isPropertyAccessExpression(append) || append.name.text !== 'append')
+    return false
+
+  if (
+    !TypeScript.isCallExpression(append.expression)
+    || !TypeScript.isIdentifier(append.expression.expression)
+    || append.expression.expression.text !== antfuBinding
+  ) {
+    return false
+  }
+
+  return expression.arguments.some(argument =>
+    TypeScript.isSpreadElement(argument)
+    && TypeScript.isIdentifier(argument.expression)
+    && argument.expression.text === effectBinding)
 }
 
 export const harnessModule = defineHarnessModule({

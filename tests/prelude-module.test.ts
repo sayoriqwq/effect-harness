@@ -11,7 +11,7 @@ const context: HarnessModuleContext = {
   integration: { integrationId: 'effect', packageRoot: '.' },
   artifact: {
     packageName: '@sayoriqwq/effect-harness',
-    packageVersion: '0.1.0',
+    packageVersion: '0.1.1',
     module: '@sayoriqwq/effect-harness/prelude',
     resolutionId: 'fixture',
   },
@@ -35,6 +35,10 @@ it.effect('plans a schema-valid read-only Effect target transition', () =>
     expect(decodeModulePlan(structuredClone(plan))).toEqual(plan)
     expect(plan.outputs).toHaveLength(6)
     expect(plan.outputs[0]).toMatchObject({ kind: 'ManagedTree', targetRoot: 'effect/managed' })
+    expect(plan.outputs[1]).toMatchObject({
+      blockId: 'effect-harness-routing',
+      content: expect.stringContaining('effect/managed/docs/package-config.md'),
+    })
     expect(plan.issues).toHaveLength(1)
     expect(plan.issues[0]?.guidance).toBe('prelude-assets/guidance/eslint.md')
   }))
@@ -86,6 +90,18 @@ it.effect('blocks a composition that spreads a different binding', () =>
   Effect.gen(function* () {
     const plan = yield* planWithEslintConfig('import effectConfig from \'@sayoriqwq/effect-harness/eslint\'\nconst otherConfig = []\nexport default [...otherConfig]')
     expect(plan.issues).toHaveLength(1)
+  }))
+
+it.effect('blocks the non-iterable Antfu v9 array-spread composition', () =>
+  Effect.gen(function* () {
+    const plan = yield* planWithEslintConfig('import antfu from \'@antfu/eslint-config\'\nimport effectHarness from \'@sayoriqwq/effect-harness/eslint\'\nexport default [...antfu(), ...effectHarness]')
+    expect(plan.issues).toHaveLength(1)
+  }))
+
+it.effect('accepts the executable Antfu v9 append composition', () =>
+  Effect.gen(function* () {
+    const plan = yield* planWithEslintConfig('import antfu from \'@antfu/eslint-config\'\nimport effectHarness from \'@sayoriqwq/effect-harness/eslint\'\nexport default antfu().append(...effectHarness)')
+    expect(plan.issues).toEqual([])
   }))
 
 it.effect('blocks absent and unrelated ESLint config', () =>
