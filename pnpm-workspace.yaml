@@ -41,6 +41,7 @@ catalog:
   '@effect/platform-node': 4.0.0-beta.92
   '@effect/tsgo': 0.15.0
   '@effect/vitest': 4.0.0-beta.92
+  '@sayoriqwq/prelude-contract': 0.1.0
   '@types/node': ^25.6.0
   '@typescript/native-preview': 7.0.0-dev.20260630.1
   effect: 4.0.0-beta.92

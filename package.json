@@ -1,14 +1,14 @@
 {
   "name": "@sayoriqwq/effect-harness",
   "type": "module",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "private": false,
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "packageManager": "pnpm@10.33.2",
-  "description": "Effect v4 beta provider profile and source route package.",
+  "description": "Effect v4 beta Prelude Harness Module.",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -18,21 +18,25 @@
     ".": {
       "types": "./dist/src/index.d.ts",
       "import": "./dist/src/index.js"
+    },
+    "./prelude": {
+      "types": "./dist/src/prelude.d.ts",
+      "import": "./dist/src/prelude.js"
+    },
+    "./eslint": {
+      "types": "./dist/src/eslint.d.ts",
+      "import": "./dist/src/eslint.js"
     }
   },
   "main": "dist/src/index.js",
   "types": "dist/src/index.d.ts",
-  "bin": {
-    "effect-harness": "dist/bin/effect-harness.js"
-  },
   "files": [
-    "HARNESS.md",
-    "README.md",
+    "diagnostics",
     "dist",
-    "harness",
-    "provider",
-    "repos",
+    "prelude-assets",
+    "repos/effect",
     "repos/effect.subtree.json",
+    "repos/tsgo",
     "repos/tsgo.subtree.json"
   ],
   "engines": {
@@ -41,22 +45,19 @@
   "scripts": {
     "build": "tsc --project tsconfig.build.json",
     "prepack": "pnpm build",
-    "dev": "pnpm build && node dist/bin/effect-harness.js --help",
-    "effect:verify": "node bin/effect-harness.ts provider-verify --harness .",
+    "dev": "pnpm build",
     "knip": "knip",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "prepare": "effect-tsgo patch",
-    "source:status": "npx --yes @sayoriqwq/partita pin status --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect && npx --yes @sayoriqwq/partita pin status --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo",
-    "source:update": "npx --yes @sayoriqwq/partita pin update --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run && npx --yes @sayoriqwq/partita pin update --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run",
-    "source:verify": "npx --yes @sayoriqwq/partita pin verify --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect && npx --yes @sayoriqwq/partita pin verify --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo",
     "test": "vitest run tests/*.test.ts",
     "typecheck": "tsgo --noEmit",
     "typecheck:tsc": "tsc --noEmit",
-    "verify": "node bin/effect-harness.ts verify --harness ."
+    "verify": "pnpm typecheck && pnpm test && pnpm lint && pnpm knip"
   },
   "dependencies": {
     "@effect/platform-node": "catalog:",
+    "@sayoriqwq/prelude-contract": "catalog:",
     "effect": "catalog:",
     "typescript": "catalog:"
   },

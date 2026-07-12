@@ -15,6 +15,9 @@ catalogs:
     '@effect/platform-node':
       specifier: 4.0.0-beta.92
       version: 4.0.0-beta.92
+    '@sayoriqwq/prelude-contract':
+      specifier: 0.1.0
+      version: 0.1.0
     '@effect/tsgo':
       specifier: 0.15.0
       version: 0.15.0
@@ -53,6 +56,9 @@ importers:
       '@effect/platform-node':
         specifier: 'catalog:'
         version: 4.0.0-beta.92(effect@4.0.0-beta.92)(ioredis@5.11.1)
+      '@sayoriqwq/prelude-contract':
+        specifier: 'catalog:'
+        version: 0.1.0(effect@4.0.0-beta.92)
       effect:
         specifier: 'catalog:'
         version: 4.0.0-beta.92
@@ -732,6 +738,12 @@ packages:
 
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
+
+  '@sayoriqwq/prelude-contract@0.1.0':
+    resolution: {integrity: sha512-eAkYZzsDl1Rde4nEC9cTXgytNCuOJbPAokQrcsX4//7KHtQXhgSH/pJnTc2wPjdGaCEuXQk1BFYkiD/BX+L0Xg==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      effect: 4.0.0-beta.92
 
   '@sindresorhus/base62@1.0.0':
     resolution: {integrity: sha512-TeheYy0ILzBEI/CO55CP6zJCSdSWeRtGnHy8U8dWSUH4I68iqTsy7HkMktR4xakThc9jotkPQUXT4ITdbV7cHA==}
@@ -2727,6 +2739,10 @@ snapshots:
     optional: true
 
   '@rolldown/pluginutils@1.0.1': {}
+
+  '@sayoriqwq/prelude-contract@0.1.0(effect@4.0.0-beta.92)':
+    dependencies:
+      effect: 4.0.0-beta.92
 
   '@sindresorhus/base62@1.0.0': {}
 

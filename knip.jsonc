@@ -1,7 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "src/index.ts",
+    "src/prelude.ts",
+    "src/eslint.ts"
+  ],
   "ignore": [
-    "fixture/**",
     "repos/**"
   ]
 }
