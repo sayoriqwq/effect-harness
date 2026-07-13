@@ -1,59 +1,7 @@
-autoInstallPeers: true
-
-catalogMode: manual
-
-cleanupUnusedCatalogs: true
-
-dedupeDirectDeps: true
-
-minimumReleaseAgeExclude:
-  - '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260630.1'
-  - '@typescript/native-preview-darwin-x64@7.0.0-dev.20260630.1'
-  - '@typescript/native-preview-linux-arm64@7.0.0-dev.20260630.1'
-  - '@typescript/native-preview-linux-arm@7.0.0-dev.20260630.1'
-  - '@typescript/native-preview-linux-x64@7.0.0-dev.20260630.1'
-  - '@typescript/native-preview-win32-arm64@7.0.0-dev.20260630.1'
-  - '@typescript/native-preview-win32-x64@7.0.0-dev.20260630.1'
-  - '@typescript/native-preview@7.0.0-dev.20260630.1'
-
-optimisticRepeatInstall: true
-
-resolvePeersFromWorkspaceRoot: true
-
-shellEmulator: true
-
-trustPolicy: no-downgrade
-
-trustPolicyExclude:
-  - '@effect/platform-node@4.0.0-beta.92'
-  - '@effect/platform-node-shared@4.0.0-beta.92'
-  - '@effect/vitest@4.0.0-beta.92'
-  - effect@4.0.0-beta.92
-
-packages: []
-
-overrides:
-  '@effect/platform-node-shared': 4.0.0-beta.92
-
-catalog:
-  '@antfu/eslint-config': ^9.0.0
-  '@effect/language-service': 0.86.2
-  '@effect/platform-node': 4.0.0-beta.92
-  '@effect/tsgo': 0.15.0
-  '@effect/vitest': 4.0.0-beta.92
-  '@types/node': ^25.6.0
-  '@typescript/native-preview': 7.0.0-dev.20260630.1
-  effect: 4.0.0-beta.92
-  eslint: ^10.3.0
-  knip: ^6.12.0
-  typescript: ^6.0.3
-  vitest: ^4.1.8
-
-updateConfig:
-  ignoreDependencies:
-    - typescript
-
-verifyDepsBeforeRun: error
-
-allowBuilds:
-  msgpackr-extract: false
+packages:
+  - "testdata/tests/effect-v3"
+  - "testdata/tests/effect-v3-refactors"
+  - "testdata/tests/effect-v4"
+  - "testdata/tests/effect-v4-document-symbols"
+  - "testdata/tests/effect-v4-refactors"
+  - "_packages/*"

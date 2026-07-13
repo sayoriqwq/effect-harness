@@ -1,66 +1,22 @@
 {
-  "name": "@sayoriqwq/effect-harness",
-  "type": "module",
-  "version": "0.0.0",
-  "private": false,
-  "publishConfig": {
-    "access": "public",
-    "registry": "https://registry.npmjs.org/"
-  },
-  "packageManager": "pnpm@10.33.2",
-  "description": "Shared Effect v4 beta harness for local target projects.",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/sayoriqwq/effect-harness"
-  },
-  "main": "dist/bin/effect-harness.js",
-  "bin": {
-    "effect-harness": "dist/bin/effect-harness.js"
-  },
-  "files": [
-    "HARNESS.md",
-    "README.md",
-    "dist",
-    "harness",
-    "repos",
-    "repos/effect.subtree.json",
-    "repos/tsgo.subtree.json"
-  ],
-  "engines": {
-    "node": ">=22.22.1"
-  },
-  "scripts": {
-    "build": "tsc --project tsconfig.build.json",
-    "prepack": "pnpm build",
-    "dev": "pnpm build && node dist/bin/effect-harness.js --help",
-    "effect:verify": "node bin/effect-harness.ts provider-verify --harness .",
-    "knip": "knip",
-    "lint": "eslint",
-    "lint:fix": "eslint --fix",
-    "prepare": "effect-tsgo patch",
-    "source:status": "node ../partita/dist/bin/partita.js pin status --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect && node ../partita/dist/bin/partita.js pin status --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo",
-    "source:update": "node ../partita/dist/bin/partita.js pin update --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect --dry-run && node ../partita/dist/bin/partita.js pin update --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo --dry-run",
-    "source:verify": "node ../partita/dist/bin/partita.js pin verify --root . --contract repos/effect.subtree.json --name effect --prefix repos/effect && node ../partita/dist/bin/partita.js pin verify --root . --contract repos/tsgo.subtree.json --name tsgo --prefix repos/tsgo",
-    "test": "vitest run tests/*.test.ts",
-    "typecheck": "tsgo --noEmit",
-    "typecheck:tsc": "tsc --noEmit",
-    "verify": "pnpm effect:verify && pnpm typecheck && pnpm test && pnpm lint && pnpm knip"
-  },
-  "dependencies": {
-    "@effect/platform-node": "catalog:",
-    "effect": "catalog:"
-  },
-  "devDependencies": {
-    "@antfu/eslint-config": "catalog:",
-    "@effect/language-service": "catalog:",
-    "@effect/tsgo": "catalog:",
-    "@effect/vitest": "catalog:",
-    "@types/node": "catalog:",
-    "@typescript/native-preview": "catalog:",
-    "eslint": "catalog:",
-    "knip": "catalog:",
-    "typescript": "catalog:",
-    "vitest": "catalog:"
-  }
+    "scripts": {
+        "setup-repo": "bash _tools/setup-repo.sh",
+        "check": "pnpm run check:go && pnpm run check:cli",
+        "check:go": "CGO_ENABLED=0 go build ./...",
+        "check:cli": "pnpm --filter @effect/tsgo check",
+        "changeset": "changeset",
+        "changeset:version": "changeset version && bash _tools/version-prepare.sh",
+        "changeset:publish": "changeset publish",
+        "lint": "CGO_ENABLED=0 golangci-lint run ./...",
+        "test": "pnpm run test:go && pnpm run test:cli",
+        "test:go": "CGO_ENABLED=0 go test ./...",
+        "test:cli": "pnpm --filter @effect/tsgo test",
+        "build": "pnpm run build:go && pnpm run build:cli",
+        "build:go": "CGO_ENABLED=0 go build -o tsgo ./typescript-go/cmd/tsgo",
+        "build:cli": "pnpm --filter @effect/tsgo build",
+        "release:prepare": "bash _tools/release-prepare.sh"
+    },
+    "devDependencies": {
+        "@changesets/cli": "^2.30.0"
+    }
 }
