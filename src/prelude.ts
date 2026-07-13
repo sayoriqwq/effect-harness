@@ -1,21 +1,103 @@
+import type { ModulePlan, PackageRequirement } from '@sayoriqwq/prelude-contract'
+import { Buffer } from 'node:buffer'
 import {
   defineHarnessModule,
-  MODULE_PROTOCOL_V1,
-  PRELUDE_V1_SUPPORTED_FEATURES,
+  MODULE_PROTOCOL_V2,
+  PRELUDE_V2_SUPPORTED_FEATURES,
 } from '@sayoriqwq/prelude-contract'
 import { Effect } from 'effect'
 import * as TypeScript from 'typescript'
 
-const effectLanguageServicePlugin = {
-  name: '@effect/language-service',
-  diagnostics: true,
-  includeSuggestionsInTsc: true,
-  ignoreEffectSuggestionsInTscExitCode: false,
-  ignoreEffectWarningsInTscExitCode: false,
-  ignoreEffectErrorsInTscExitCode: false,
+import { effectLanguageServicePlugin } from './harness/Policy.ts'
+import { pinnedReferenceOutputs } from './harness/SourcePins.ts'
+
+const routingBlock = `## Effect Harness\n\nFor Effect application, test, package, TypeScript, editor, or lint changes, read the current Effect integration's \`.prelude/**/managed/docs/index.md\` first. Use \`.prelude/**/managed/skills/adapt-effect-target/SKILL.md\` when package selection or target-owned TypeScript topology needs adaptation. Keep \`.prelude/**/feedback/**\` target-owned. Treat \`.prelude/**/repos/**\` as read-only source diagnostics: consult it when installed declarations and managed guidance are insufficient, but never import or edit it.\n`
+
+const managedTreeOutput = {
+  kind: 'ManagedTree',
+  id: 'effect.managed',
+  sourceRoot: 'prelude-assets/effect/managed',
+  locator: { root: 'IntegrationWorkspace', path: 'managed' },
+} as const satisfies ModulePlan['outputs'][number]
+
+const routingOutput = {
+  kind: 'ManagedBlock',
+  id: 'effect.agent-routing',
+  locator: { root: 'ControlRoot', path: 'AGENTS.md' },
+  blockId: 'effect-harness-routing',
+  content: routingBlock,
+} as const satisfies ModulePlan['outputs'][number]
+
+const editorPolicyOutputs = [
+  {
+    kind: 'JsonValue',
+    id: 'effect.vscode.auto-import-exclude',
+    locator: { root: 'ControlRoot', path: '.vscode/settings.json' },
+    pointer: '/typescript.preferences.autoImportFileExcludePatterns',
+    value: ['.prelude/**/repos/**'],
+  },
+  {
+    kind: 'JsonValue',
+    id: 'effect.vscode.javascript-auto-import-exclude',
+    locator: { root: 'ControlRoot', path: '.vscode/settings.json' },
+    pointer: '/javascript.preferences.autoImportFileExcludePatterns',
+    value: ['.prelude/**/repos/**'],
+  },
+  {
+    kind: 'JsonValue',
+    id: 'effect.zed.auto-import-exclude',
+    locator: { root: 'ControlRoot', path: '.zed/settings.json' },
+    pointer: '/lsp/typescript-language-server/initialization_options/preferences/autoImportFileExcludePatterns',
+    value: ['.prelude/**/repos/**'],
+  },
+] as const satisfies ModulePlan['outputs']
+
+const packageRequirements = [
+  { id: 'runtime', packageName: 'effect', range: '4.0.0-beta.97', section: 'dependencies' },
+  { id: 'platform-node', packageName: '@effect/platform-node', range: '4.0.0-beta.97', section: 'dependencies' },
+  { id: 'vitest', packageName: '@effect/vitest', range: '4.0.0-beta.97', section: 'devDependencies' },
+  { id: 'tsgo', packageName: '@effect/tsgo', range: '0.19.0', section: 'devDependencies' },
+  { id: 'native-typescript', packageName: '@typescript/native', range: 'npm:typescript@7.0.2', section: 'devDependencies' },
+  { id: 'eslint', packageName: 'eslint', range: '^10.3.0', section: 'devDependencies' },
+  { id: 'antfu-eslint-config', packageName: '@antfu/eslint-config', range: '^9.0.0', section: 'devDependencies' },
+  { id: 'vitest-runner', packageName: 'vitest', range: '^4.1.8', section: 'devDependencies' },
+  { id: 'typescript', packageName: 'typescript', range: 'npm:@typescript/typescript6@6.0.2', section: 'devDependencies' },
+] as const satisfies ReadonlyArray<Omit<PackageRequirement, 'id' | 'packageRoot'> & { readonly id: string }>
+
+function packageRootKey(packageRoot: string): string {
+  return Buffer.from(packageRoot, 'utf8').toString('hex')
 }
 
-const routingBlock = `## Effect Harness\n\nFor Effect application, test, package, TypeScript, editor, or lint changes, read \`effect/managed/docs/index.md\` first. For ESLint or package-config repair, read \`effect/managed/docs/package-config.md\`; Antfu v9 integrations use its \`antfu().append(...effectHarness)\` form. Keep \`effect/feedback/**\` target-owned. Use installed Effect packages; never import pinned source diagnostics.\n`
+function packageOutputs(packageRoot: string): ModulePlan['outputs'] {
+  const rootKey = packageRootKey(packageRoot)
+  return [{
+    kind: 'JsonKeyedItem',
+    id: `effect.tsconfig.language-service.${rootKey}`,
+    locator: { root: 'PackageRoot', packageRoot, path: 'tsconfig.json' },
+    collectionPointer: '/compilerOptions/plugins',
+    keyField: 'name',
+    keyValue: '@effect/language-service',
+    item: effectLanguageServicePlugin,
+  }]
+}
+
+function requirementsFor(packageRoot: string): ModulePlan['requirements'] {
+  const rootKey = packageRootKey(packageRoot)
+  return packageRequirements.map(requirement => ({
+    ...requirement,
+    id: `effect.${requirement.id}.${rootKey}`,
+    packageRoot,
+  }))
+}
+
+function checksFor(packageRoot: string): ModulePlan['checks'] {
+  const rootKey = packageRootKey(packageRoot)
+  return [
+    { id: `effect.typecheck.${rootKey}`, summary: 'Run strict Effect diagnostics', packageRoot, argv: ['pnpm', 'typecheck'] },
+    { id: `effect.lint.${rootKey}`, summary: 'Run Effect lint guardrails', packageRoot, argv: ['pnpm', 'lint', '--max-warnings', '0'] },
+    { id: `effect.verify.${rootKey}`, summary: 'Run Effect domain verification', packageRoot, argv: ['pnpm', 'verify'] },
+  ]
+}
 
 function eslintIntegrationIssue(content: string | undefined) {
   if (typeof content === 'string') {
@@ -29,7 +111,7 @@ function eslintIntegrationIssue(content: string | undefined) {
     summary: 'Target ESLint config does not compose Effect Harness guardrails',
     detail: 'The target-owned eslint.config.mjs must import and include @sayoriqwq/effect-harness/eslint.',
     evidence: content === undefined ? 'eslint.config.mjs is absent.' : 'eslint.config.mjs does not reference the stable Effect Harness ESLint export.',
-    guidance: 'prelude-assets/guidance/eslint.md',
+    guidance: 'prelude-assets/effect/managed/docs/package-config.md',
   }] as const
 }
 
@@ -132,74 +214,28 @@ function appendsEffectConfigToAntfu(
 export const harnessModule = defineHarnessModule({
   descriptor: {
     harnessId: 'effect-harness',
-    protocolVersion: MODULE_PROTOCOL_V1,
-    requiredFeatures: PRELUDE_V1_SUPPORTED_FEATURES,
+    protocolVersion: MODULE_PROTOCOL_V2,
+    requiredFeatures: PRELUDE_V2_SUPPORTED_FEATURES,
   },
   plan: context => Effect.gen(function* () {
-    const eslintConfig = yield* context.target.readText('eslint.config.mjs')
+    const eslintConfig = yield* context.target.readText({
+      root: 'ControlRoot',
+      path: 'eslint.config.mjs',
+    })
+    const outputs = context.integration.packageRoots.flatMap(packageOutputs)
+    const requirements = context.integration.packageRoots.flatMap(requirementsFor)
+    const checks = context.integration.packageRoots.flatMap(checksFor)
+
     return {
       outputs: [
-        {
-          kind: 'ManagedTree' as const,
-          id: 'effect.managed',
-          sourceRoot: 'prelude-assets/effect/managed',
-          targetRoot: 'effect/managed',
-        },
-        {
-          kind: 'ManagedBlock' as const,
-          id: 'effect.agent-routing',
-          path: 'AGENTS.md',
-          blockId: 'effect-harness-routing',
-          content: routingBlock,
-        },
-        {
-          kind: 'JsonKeyedItem' as const,
-          id: 'effect.tsconfig.language-service',
-          path: 'tsconfig.json',
-          collectionPointer: '/compilerOptions/plugins',
-          keyField: 'name',
-          keyValue: '@effect/language-service',
-          item: effectLanguageServicePlugin,
-        },
-        {
-          kind: 'JsonValue' as const,
-          id: 'effect.vscode.auto-import-exclude',
-          path: '.vscode/settings.json',
-          pointer: '/typescript.preferences.autoImportFileExcludePatterns',
-          value: ['repos/**'],
-        },
-        {
-          kind: 'JsonValue' as const,
-          id: 'effect.vscode.javascript-auto-import-exclude',
-          path: '.vscode/settings.json',
-          pointer: '/javascript.preferences.autoImportFileExcludePatterns',
-          value: ['repos/**'],
-        },
-        {
-          kind: 'JsonValue' as const,
-          id: 'effect.zed.auto-import-exclude',
-          path: '.zed/settings.json',
-          pointer: '/lsp/typescript-language-server/initialization_options/preferences/autoImportFileExcludePatterns',
-          value: ['repos/**'],
-        },
+        managedTreeOutput,
+        routingOutput,
+        ...pinnedReferenceOutputs,
+        ...outputs,
+        ...editorPolicyOutputs,
       ],
-      requirements: [
-        { id: 'effect.runtime', packageRoot: context.integration.packageRoot, packageName: 'effect', range: '4.0.0-beta.92', section: 'dependencies' as const },
-        { id: 'effect.platform-node', packageRoot: context.integration.packageRoot, packageName: '@effect/platform-node', range: '4.0.0-beta.92', section: 'dependencies' as const },
-        { id: 'effect.vitest', packageRoot: context.integration.packageRoot, packageName: '@effect/vitest', range: '4.0.0-beta.92', section: 'devDependencies' as const },
-        { id: 'effect.tsgo', packageRoot: context.integration.packageRoot, packageName: '@effect/tsgo', range: '0.15.0', section: 'devDependencies' as const },
-        { id: 'effect.language-service', packageRoot: context.integration.packageRoot, packageName: '@effect/language-service', range: '0.86.2', section: 'devDependencies' as const },
-        { id: 'effect.native-typescript', packageRoot: context.integration.packageRoot, packageName: '@typescript/native-preview', range: '7.0.0-dev.20260630.1', section: 'devDependencies' as const },
-        { id: 'effect.eslint', packageRoot: context.integration.packageRoot, packageName: 'eslint', range: '^10.3.0', section: 'devDependencies' as const },
-        { id: 'effect.antfu-eslint-config', packageRoot: context.integration.packageRoot, packageName: '@antfu/eslint-config', range: '^9.0.0', section: 'devDependencies' as const },
-        { id: 'effect.vitest-runner', packageRoot: context.integration.packageRoot, packageName: 'vitest', range: '^4.1.8', section: 'devDependencies' as const },
-        { id: 'effect.typescript', packageRoot: context.integration.packageRoot, packageName: 'typescript', range: '^6.0.3', section: 'devDependencies' as const },
-      ],
-      checks: [
-        { id: 'effect.typecheck', summary: 'Run strict Effect diagnostics', packageRoot: context.integration.packageRoot, argv: ['pnpm', 'typecheck'] },
-        { id: 'effect.lint', summary: 'Run Effect lint guardrails', packageRoot: context.integration.packageRoot, argv: ['pnpm', 'lint', '--max-warnings', '0'] },
-        { id: 'effect.verify', summary: 'Run Effect domain verification', packageRoot: context.integration.packageRoot, argv: ['pnpm', 'verify'] },
-      ],
+      requirements,
+      checks,
       issues: eslintIntegrationIssue(eslintConfig),
     }
   }),

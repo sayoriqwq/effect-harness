@@ -18,11 +18,11 @@
     "llmDocument": "repos/effect/LLMS.md"
   },
   "commands": {
-    "update": "pnpm source-pin:update -- --name effect --ref f643dbb265093065dc0a61ca6133693dc2401678",
+    "update": "npx --yes @sayoriqwq/partita pin plan --name effect --prefix repos/effect --contract repos/effect.subtree.json --repository https://github.com/Effect-TS/effect-smol --branch main --ref f643dbb265093065dc0a61ca6133693dc2401678",
     "verify": "npx --yes @sayoriqwq/partita pin verify --name effect --prefix repos/effect --contract repos/effect.subtree.json"
   },
   "agent": {
-    "route": "harness/effect-routes.md"
+    "route": "prelude-assets/effect/managed/docs/effect-source.md"
   },
   "editorPolicy": {
     "autoImportExclude": "block",

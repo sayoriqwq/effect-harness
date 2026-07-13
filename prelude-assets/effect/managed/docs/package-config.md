@@ -1,13 +1,17 @@
-# Package and TypeScript configuration
+# Package, TypeScript, and ESLint configuration
 
-Direct requirements cover the Effect runtime, Node platform, Effect Vitest,
-tsgo, language service, native TypeScript backend, ESLint, Antfu config, and
-Vitest. The named language-service plugin is structurally merged by its name.
+Run [adapt-effect-target](../skills/adapt-effect-target/SKILL.md) when selecting
+package roots or repairing TypeScript inheritance. The Harness declares the
+complete named language-service item at each approved root; the skill decides
+which roots actually author Effect and how secondary projects inherit it.
 
-## Antfu v9 ESLint composition
+Dependencies are resolved before Apply. Review exact manifest and workspace
+lock changes, then replan. Apply performs only the approved frozen install and
+must not resolve a range again.
 
-`@antfu/eslint-config` v9 returns a `FlatConfigComposer`, not an iterable
-array. Compose the stable Effect Harness export through `append`:
+## ESLint composition
+
+Executable ESLint configuration is Target-owned. Compose the stable export:
 
 ```js
 import antfu from '@antfu/eslint-config'
@@ -16,5 +20,5 @@ import effectHarness from '@sayoriqwq/effect-harness/eslint'
 export default antfu().append(...effectHarness)
 ```
 
-Do not use `export default [...antfu(), ...effectHarness]`; it fails before
-ESLint can lint because the Antfu composer is not iterable.
+Antfu v9 returns a `FlatConfigComposer`; do not spread `antfu()` into an array.
+ESLint owns syntax and repository boundaries, while tsgo owns Effect semantics.

@@ -1,19 +1,11 @@
 {
   "extends": "./tsconfig.json",
-  "compilerOptions": {
-    "target": "ES2024",
-    "rootDir": ".",
-    "declaration": true,
-    "rewriteRelativeImportExtensions": true,
-    "emitDeclarationOnly": false,
-    "inlineSources": true,
-    "noEmit": false,
-    "outDir": "dist",
-    "sourceMap": true
-  },
   "include": [
-    "src/index.ts",
-    "src/prelude.ts",
-    "src/eslint.ts"
+    "src/**/*"
+  ],
+  "exclude": [
+    "tests/**/*",
+    "node_modules",
+    "dist"
   ]
 }

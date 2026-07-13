@@ -18,11 +18,11 @@
     "llmDocument": "repos/tsgo/README.md"
   },
   "commands": {
-    "update": "pnpm source-pin:update -- --name tsgo --ref f0d48a67515048d277feb2c184c41cd7cffa51a4",
+    "update": "npx --yes @sayoriqwq/partita pin plan --name tsgo --prefix repos/tsgo --contract repos/tsgo.subtree.json --repository https://github.com/Effect-TS/tsgo --branch main --ref f0d48a67515048d277feb2c184c41cd7cffa51a4",
     "verify": "npx --yes @sayoriqwq/partita pin verify --name tsgo --prefix repos/tsgo --contract repos/tsgo.subtree.json"
   },
   "agent": {
-    "route": "harness/tsgo-routes.md"
+    "route": "prelude-assets/effect/managed/docs/tsgo-source.md"
   },
   "editorPolicy": {
     "autoImportExclude": "block",

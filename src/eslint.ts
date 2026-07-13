@@ -25,7 +25,7 @@ const effectHarnessEslintConfig = [
       'no-restricted-syntax': [
         'error',
         { selector: 'MemberExpression[object.name="Context"][property.name="Tag"]', message: 'Use Context.Service for Effect v4 services.' },
-        { selector: 'MemberExpression[object.name="Effect"][property.name=/^(catchAllCause|ignore|serviceOption)$/]', message: 'Use the Effect-native safer pattern.' },
+        { selector: 'MemberExpression[object.name="Effect"][property.name=/^(catchAllCause|serviceOption)$/]', message: 'Use the Effect-native safer pattern.' },
       ],
     },
   },

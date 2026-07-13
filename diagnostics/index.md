@@ -2,7 +2,7 @@
 
 This directory routes exceptional diagnosis into the pinned Effect and tsgo
 source trees shipped inside this npm Artifact. It is not part of the normal
-`effect/managed/**` Target bundle.
+Integration Workspace `managed/**` Target bundle.
 
 - [Effect source route](./effect-routes.md)
 - [tsgo source route](./tsgo-routes.md)

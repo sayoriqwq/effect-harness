@@ -1,0 +1,4 @@
+interface:
+  display_name: Adapt Effect Target
+  short_description: Map Effect policy onto a real target repository
+  default_prompt: Use $adapt-effect-target to select the Effect package roots and prepare their TypeScript configuration.

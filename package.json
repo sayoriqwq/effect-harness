@@ -1,7 +1,7 @@
 {
   "name": "@sayoriqwq/effect-harness",
   "type": "module",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": false,
   "publishConfig": {
     "access": "public",
@@ -15,21 +15,15 @@
     "url": "https://github.com/sayoriqwq/effect-harness"
   },
   "exports": {
-    ".": {
-      "types": "./dist/src/index.d.ts",
-      "import": "./dist/src/index.js"
-    },
     "./prelude": {
-      "types": "./dist/src/prelude.d.ts",
-      "import": "./dist/src/prelude.js"
+      "types": "./dist/prelude.d.ts",
+      "import": "./dist/prelude.js"
     },
     "./eslint": {
-      "types": "./dist/src/eslint.d.ts",
-      "import": "./dist/src/eslint.js"
+      "types": "./dist/eslint.d.ts",
+      "import": "./dist/eslint.js"
     }
   },
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
   "files": [
     "diagnostics",
     "dist",
@@ -43,33 +37,37 @@
     "node": ">=22.22.1"
   },
   "scripts": {
-    "build": "tsc --project tsconfig.build.json",
+    "build": "tsdown --config tsdown.config.ts",
     "prepack": "pnpm build",
     "dev": "pnpm build",
     "knip": "knip",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "prepare": "effect-tsgo patch",
-    "test": "pnpm build && vitest run tests/*.test.ts",
-    "typecheck": "tsgo --noEmit",
-    "typecheck:tsc": "tsc --noEmit",
-    "verify": "pnpm typecheck && pnpm test && pnpm lint && pnpm knip"
+    "test": "vitest run tests/*.test.ts",
+    "typecheck": "tsc --noEmit",
+    "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm lint --max-warnings 0 && pnpm knip"
+  },
+  "knip": {
+    "ignoreDependencies": [
+      "@effect/language-service"
+    ]
   },
   "dependencies": {
-    "@effect/platform-node": "catalog:",
     "@sayoriqwq/prelude-contract": "catalog:",
     "effect": "catalog:",
     "typescript": "catalog:"
   },
   "devDependencies": {
     "@antfu/eslint-config": "catalog:",
-    "@effect/language-service": "catalog:",
+    "@effect/platform-node": "catalog:",
     "@effect/tsgo": "catalog:",
     "@effect/vitest": "catalog:",
     "@types/node": "catalog:",
-    "@typescript/native-preview": "catalog:",
+    "@typescript/native": "catalog:",
     "eslint": "catalog:",
     "knip": "catalog:",
+    "tsdown": "catalog:",
     "vitest": "catalog:"
   }
 }

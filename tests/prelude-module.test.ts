@@ -3,19 +3,20 @@ import { expect, it } from '@effect/vitest'
 import { decodeModulePlan } from '@sayoriqwq/prelude-contract'
 import { Effect } from 'effect'
 
+import { effectLanguageServicePlugin } from '../src/harness/Policy.ts'
 import { harnessModule } from '../src/prelude.ts'
 
 const missing = <Value>() => Effect.sync<Value | undefined>(() => undefined)
 
 const context: HarnessModuleContext = {
-  integration: { integrationId: 'effect', packageRoot: '.' },
+  integration: { integrationId: 'effect', packageRoots: ['.'] },
   artifact: {
     packageName: '@sayoriqwq/effect-harness',
-    packageVersion: '0.1.1',
+    packageVersion: '0.2.0',
     module: '@sayoriqwq/effect-harness/prelude',
     resolutionId: 'fixture',
   },
-  host: { supportedProtocolVersions: [1], supportedFeatures: [...harnessModule.descriptor.requiredFeatures] },
+  host: { supportedProtocolVersions: [2], supportedFeatures: [...harnessModule.descriptor.requiredFeatures] },
   artifactAssets: {
     readBytes: () => missing<Uint8Array>(),
     readText: () => missing<string>(),
@@ -33,14 +34,76 @@ it.effect('plans a schema-valid read-only Effect target transition', () =>
   Effect.gen(function* () {
     const plan = yield* harnessModule.plan(context)
     expect(decodeModulePlan(structuredClone(plan))).toEqual(plan)
-    expect(plan.outputs).toHaveLength(6)
-    expect(plan.outputs[0]).toMatchObject({ kind: 'ManagedTree', targetRoot: 'effect/managed' })
+    expect(harnessModule.descriptor.protocolVersion).toBe(2)
+    expect(plan.outputs).toHaveLength(8)
+    expect(plan.outputs[0]).toMatchObject({
+      kind: 'ManagedTree',
+      locator: { root: 'IntegrationWorkspace', path: 'managed' },
+    })
+    expect(plan.outputs.filter(output => output.kind === 'PinnedReferenceTree')).toEqual([
+      expect.objectContaining({
+        id: 'effect.reference.effect',
+        locator: { root: 'IntegrationWorkspace', path: 'repos/effect' },
+        referenceOnly: true,
+      }),
+      expect.objectContaining({
+        id: 'effect.reference.tsgo',
+        locator: { root: 'IntegrationWorkspace', path: 'repos/tsgo' },
+        referenceOnly: true,
+      }),
+    ])
     expect(plan.outputs[1]).toMatchObject({
       blockId: 'effect-harness-routing',
-      content: expect.stringContaining('effect/managed/docs/package-config.md'),
+      locator: { root: 'ControlRoot', path: 'AGENTS.md' },
+      content: expect.stringContaining('.prelude/'),
     })
     expect(plan.issues).toHaveLength(1)
-    expect(plan.issues[0]?.guidance).toBe('prelude-assets/guidance/eslint.md')
+    expect(plan.issues[0]?.guidance).toBe('prelude-assets/effect/managed/docs/package-config.md')
+  }))
+
+it.effect('shares Integration Outputs while planning policy per selected package root', () =>
+  Effect.gen(function* () {
+    const packageRoots = ['apps/api', 'packages/effect-runtime'] as const
+    const plan = yield* harnessModule.plan({
+      ...context,
+      integration: { ...context.integration, packageRoots: [...packageRoots] },
+    })
+
+    expect(plan.outputs.filter(output => output.kind === 'ManagedTree')).toHaveLength(1)
+    expect(plan.outputs.filter(output => output.kind === 'PinnedReferenceTree')).toHaveLength(2)
+    expect(plan.outputs.filter(output => output.kind === 'JsonKeyedItem')).toEqual(
+      packageRoots.map(packageRoot => expect.objectContaining({
+        locator: { root: 'PackageRoot', packageRoot, path: 'tsconfig.json' },
+      })),
+    )
+    expect(new Set(plan.requirements.map(requirement => requirement.packageRoot))).toEqual(new Set(packageRoots))
+    expect(new Set(plan.checks.map(check => check.packageRoot))).toEqual(new Set(packageRoots))
+    expect(plan.outputs.some(output =>
+      output.locator.root === 'IntegrationWorkspace'
+      && (output.locator.path === 'feedback' || output.locator.path.startsWith('feedback/')),
+    )).toBe(false)
+  }))
+
+it.effect('projects the complete canonical language-service policy', () =>
+  Effect.gen(function* () {
+    const plan = yield* harnessModule.plan(context)
+    const output = plan.outputs.find(candidate => candidate.kind === 'JsonKeyedItem')
+
+    expect(output).toMatchObject({
+      kind: 'JsonKeyedItem',
+      item: {
+        diagnosticSeverity: {
+          catchToIgnore: 'suggestion',
+          flatMapToMap: 'suggestion',
+        },
+      },
+    })
+
+    if (output?.kind !== 'JsonKeyedItem')
+      throw new Error('Effect language-service policy Output is absent')
+
+    expect(Object.keys(effectLanguageServicePlugin.diagnosticSeverity)).toHaveLength(78)
+    expect(output.item).toEqual(effectLanguageServicePlugin)
   }))
 
 function planWithEslintConfig(content: string | undefined) {
