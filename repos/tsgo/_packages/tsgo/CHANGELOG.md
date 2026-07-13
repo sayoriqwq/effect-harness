@@ -1,5 +1,82 @@
 # @effect/tsgo
 
+## 0.19.0
+
+### Minor Changes
+
+- 16a52e5: Add the `flatMapToMap` diagnostic and quick fix, which replaces `Effect.flatMap` callbacks that only wrap their result with `Effect.succeed` with `Effect.map`. The diagnostic supports pipe, pipeable, data-first, and data-last forms.
+
+## 0.18.1
+
+### Patch Changes
+
+- d6cdab2: Allow `effect-tsgo patch` to skip TypeScript package aliases that do not include package metadata needed for native binary matching.
+
+## 0.18.0
+
+### Minor Changes
+
+- 308652f: Add `effect-tsgo patch --typescript-package <name>` and automatically fall back from `typescript` to `@typescript/native` when resolving the native TypeScript package to patch.
+
+## 0.17.0
+
+### Minor Changes
+
+- 74a7ccb: Modernize release workflow publishing and GitHub Actions runtimes.
+
+## 0.16.4
+
+### Patch Changes
+
+- d7f6e86: Expose additional generated shims for TypeScript-Go language-service and checker internals, and add an `etsapi` helper for rendering structural schema statements from a resolved type.
+- 082a955: Update TypeScript-Go automation so `main` tracks `typescript@next`, while release `tsc` binaries are built from a generated `generated/latest` branch pinned to `typescript@latest`.
+- 98bbce0: Fix layer magic ordering for unrelated layers so layers that only require services are composed after layers that provide no services.
+- 5cfbe23: Update to [`typescript@next`](https://www.npmjs.com/package/typescript/v/7.1.0-dev.20260708.3), which ships [`typescript-go`](https://github.com/microsoft/typescript-go/commit/52168999f3dcfc9205432d47f6f600051f02f1a2) commit `52168999f3dcfc9205432d47f6f600051f02f1a2`.
+- d46803d: Publish TypeScript upstream metadata beside packaged binaries and select the patched binary whose TypeScript git head matches the installed `typescript` package, with `effect-tsgo patch --force` as an explicit fallback.
+
+## 0.16.3
+
+### Patch Changes
+
+- 633fbd6: Update to [`@typescript/native-preview@7.0.0-dev.20260707.2`](https://www.npmjs.com/package/@typescript/native-preview/v/7.0.0-dev.20260707.2), which ships [`typescript-go`](https://github.com/microsoft/typescript-go/commit/9977d6d38fcc78de8ae71770f3aa08256e6cc861) commit `9977d6d38fcc78de8ae71770f3aa08256e6cc861`.
+
+## 0.16.2
+
+### Patch Changes
+
+- 0b9960d: Fix checker panics on `import.defer(...)` calls and bindingless import clauses.
+
+  `import.defer` parses as a meta property, and the checker debug-asserts (panics) when asked for its symbol or type while it is used as an import-call callee. Rules resolving arbitrary call callees (e.g. `catchUnfailableEffect`, `globalFetch`, `globalTimers`) crashed tsc and the LSP on files containing:
+
+  ```ts
+  import.defer("./module");
+  ```
+
+  Symbol resolution now goes through a guarded `TypeParser.GetSymbolAtLocation` wrapper that skips meta properties, and all rule/refactor/LSP call sites were audited to use it. `TypeParser.GetTypeAtLocation` gained the same meta-property guard, plus a guard for import clauses without a default binding (`import { A } from "x"`), which previously hit a nil-symbol panic that was silently recovered.
+
+  Also adds rule sweep stress tests that run the every-node diagnostics (`anyUnknownInErrorContext`, `effectInFailure`) over the typescript-go compiler test corpus, the effect-v4 fixtures, and effect's own package sources under a watchdog, failing on panics or non-termination.
+
+## 0.16.1
+
+### Patch Changes
+
+- c45a407: Fix `internal/effecttest` LSP test helpers broken by the `typescript-go` update: the untyped `SendRequestWorker` now returns the response result as a raw `json.Value`, so the inlay hint, diagnostic, and code action helpers decode it via `RequestInfo.UnmarshalResult` instead of type-asserting the typed response struct.
+- e094fda: Make the EffectLinks checker patch apply across newer typescript-go commits by anchoring it to stable Checker fields.
+- cb7d6bc: Avoid suggesting `unnecessaryEffectGen` when a single-return generator contains nested `yield*` expressions.
+- 64343c5: Fix the release workflow embedding a stale `EffectVersion` in the published `tsc` binary. The version bump from the changeset release PR only lands on `main`, while the `tsc` binary builds from `generated/stable`; the workflow now syncs `_packages/tsgo/package.json` from the release merge commit and re-runs `_tools/version-prepare.sh` before building. All release checkouts are also pinned to the merge commit SHA instead of the moving `main` ref so the release is deterministic.
+- abfa2ef: Update to [`@typescript/native-preview@7.0.0-dev.20260703.1`](https://www.npmjs.com/package/@typescript/native-preview/v/7.0.0-dev.20260703.1), which ships [`typescript-go`](https://github.com/microsoft/typescript-go/commit/acfaa5bcc8631d3c51ad65a8562a656c8d6a4bd5) commit `acfaa5bcc8631d3c51ad65a8562a656c8d6a4bd5`.
+
+## 0.16.0
+
+### Minor Changes
+
+- dbc279b: Add an ETS API helper for extracting layer magic from caller-provided layer nodes, and allow layer graph extraction to start from multiple nodes without exploding expressions.
+- f5da105: Add the `catchToIgnore` diagnostic, which suggests `Effect.ignore` or `Effect.ignoreCause` when `Effect.catch` or `Effect.catchCause` returns `Effect.void` on a void success channel.
+
+### Patch Changes
+
+- 8078f7a: Add a public `etsapi` package exposing a narrow wrapper around the internal type parser for Effect, Layer, Stream, service, Context.Tag, Schema, union member, and YieldableError type inspection.
+
 ## 0.15.0
 
 ### Minor Changes

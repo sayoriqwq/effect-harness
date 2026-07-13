@@ -1386,6 +1386,29 @@
       }
     },
     {
+      "name": "catchToIgnore",
+      "group": "style",
+      "description": "Suggests using Effect.ignore or Effect.ignoreCause instead of Effect.catch/catchCause returning Effect.void",
+      "defaultSeverity": "suggestion",
+      "fixable": true,
+      "supportedEffect": [
+        "v4"
+      ],
+      "codes": [
+        377099
+      ],
+      "preview": {
+        "sourceText": "import { Effect } from \"effect\"\n\ndeclare const program: Effect.Effect\u003cvoid, string, never\u003e\n\nexport const recovered = program.pipe(\n  Effect.catch(() =\u003e Effect.void)\n)\n",
+        "diagnostics": [
+          {
+            "start": 133,
+            "end": 145,
+            "text": "`Effect.ignore` expresses ignored failure more directly than `Effect.catch` returning `Effect.void`. effect(catchToIgnore)"
+          }
+        ]
+      }
+    },
+    {
       "name": "catchToOrElseSucceed",
       "group": "style",
       "description": "Suggests using Effect.orElseSucceed instead of Effect.catch + Effect.succeed",
@@ -1549,6 +1572,30 @@
             "start": 56,
             "end": 81,
             "text": "`Effect.void` represents the same outcome as `Effect.succeed(undefined)` or `Effect.succeed(void 0)`. effect(effectSucceedWithVoid)"
+          }
+        ]
+      }
+    },
+    {
+      "name": "flatMapToMap",
+      "group": "style",
+      "description": "Suggests using Effect.map instead of Effect.flatMap when the callback only wraps its result with Effect.succeed",
+      "defaultSeverity": "suggestion",
+      "fixable": true,
+      "supportedEffect": [
+        "v3",
+        "v4"
+      ],
+      "codes": [
+        377100
+      ],
+      "preview": {
+        "sourceText": "import { Effect } from \"effect\"\n\nconst program = Effect.succeed(1).pipe(\n  Effect.flatMap((value) =\u003e Effect.succeed(value + 1))\n)\n",
+        "diagnostics": [
+          {
+            "start": 75,
+            "end": 89,
+            "text": "`Effect.map` expresses this success-value transformation more directly than `Effect.flatMap` followed by `Effect.succeed`. effect(flatMapToMap)"
           }
         ]
       }

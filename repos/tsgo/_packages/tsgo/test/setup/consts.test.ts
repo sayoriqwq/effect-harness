@@ -1,9 +1,8 @@
 import { describe, it, expect } from "vitest"
 import {
+  defaultTypescriptPackageNames,
   isNativeTypescriptVersion,
-  nativeBackendTsdkPath,
-  NATIVE_PREVIEW_PACKAGE_NAME,
-  TYPESCRIPT_PACKAGE_NAME
+  nativeBackendTsdkPath
 } from "../../src/setup/consts.js"
 
 describe("isNativeTypescriptVersion", () => {
@@ -31,8 +30,13 @@ describe("isNativeTypescriptVersion", () => {
 })
 
 describe("nativeBackendTsdkPath", () => {
-  it("returns the node_modules folder for each backend package", () => {
-    expect(nativeBackendTsdkPath(NATIVE_PREVIEW_PACKAGE_NAME)).toBe("node_modules/@typescript/native-preview")
-    expect(nativeBackendTsdkPath(TYPESCRIPT_PACKAGE_NAME)).toBe("node_modules/typescript")
+  it("returns the node_modules folder for TypeScript", () => {
+    expect(nativeBackendTsdkPath(defaultTypescriptPackageNames[0])).toBe("node_modules/typescript")
+  })
+})
+
+describe("defaultTypescriptPackageNames", () => {
+  it("tries typescript before the @typescript/native alias", () => {
+    expect(defaultTypescriptPackageNames).toEqual(["typescript", "@typescript/native"])
   })
 })

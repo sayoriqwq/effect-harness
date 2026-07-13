@@ -22,7 +22,7 @@ This will guide you through the installation process, which includes:
 4. Hinting at any additional editor configuration needed to ensure the LSP is active.
 
 > [!NOTE]
-> At the moment, you still need a native TypeScript install alongside `@effect/tsgo` — either `@typescript/native-preview` (nightlies) or `typescript` >= 7 (e.g. the 7.0 RC, `typescript@rc`). `effect-tsgo patch` and `effect-tsgo setup` detect and use whichever one is installed.
+> At the moment, you still need a native TypeScript install alongside `@effect/tsgo`: `typescript` >= 7 (e.g. `typescript@latest` or `typescript@next`) or an alias such as `@typescript/native`. `effect-tsgo patch` tries `typescript`, then `@typescript/native`, and accepts `--typescript-package <name>` to try a custom package name first.
 
 ## Diagnostic Status
 
@@ -93,6 +93,7 @@ Some diagnostics are off by default or have a default severity of suggestion, bu
     <tr><td><code>unsafeEffectTypeAssertion</code></td><td>➖</td><td>🔧</td><td>Detects unsafe type assertions that narrow Effect, Stream, or Layer error or requirements channels</td><td>✓</td><td>✓</td></tr>
     <tr><td colspan="6"><strong>Style</strong> <em>Cleanup, consistency, and idiomatic Effect code.</em></td></tr>
     <tr><td><code>catchAllToMapError</code></td><td>💡</td><td>🔧</td><td>Suggests using Effect.mapError instead of Effect.catch + Effect.fail</td><td>✓</td><td>✓</td></tr>
+    <tr><td><code>catchToIgnore</code></td><td>💡</td><td>🔧</td><td>Suggests using Effect.ignore or Effect.ignoreCause instead of Effect.catch/catchCause returning Effect.void</td><td></td><td>✓</td></tr>
     <tr><td><code>catchToOrElseSucceed</code></td><td>💡</td><td>🔧</td><td>Suggests using Effect.orElseSucceed instead of Effect.catch + Effect.succeed</td><td>✓</td><td>✓</td></tr>
     <tr><td><code>deterministicKeys</code></td><td>➖</td><td>🔧</td><td>Enforces deterministic naming for service/tag/error identifiers based on class names</td><td>✓</td><td>✓</td></tr>
     <tr><td><code>effectDoNotation</code></td><td>➖</td><td></td><td>Suggests using Effect.gen or Effect.fn instead of the Effect.Do notation helpers</td><td>✓</td><td>✓</td></tr>
@@ -100,6 +101,7 @@ Some diagnostics are off by default or have a default severity of suggestion, bu
     <tr><td><code>effectMapFlatten</code></td><td>💡</td><td></td><td>Suggests using Effect.flatMap instead of Effect.map followed by Effect.flatten in piping flows</td><td>✓</td><td>✓</td></tr>
     <tr><td><code>effectMapVoid</code></td><td>💡</td><td>🔧</td><td>Suggests using Effect.asVoid instead of Effect.map(() =&gt; void 0), Effect.map(() =&gt; undefined), or Effect.map(() =&gt; {})</td><td>✓</td><td>✓</td></tr>
     <tr><td><code>effectSucceedWithVoid</code></td><td>💡</td><td>🔧</td><td>Suggests using Effect.void instead of Effect.succeed(undefined) or Effect.succeed(void 0)</td><td>✓</td><td>✓</td></tr>
+    <tr><td><code>flatMapToMap</code></td><td>💡</td><td>🔧</td><td>Suggests using Effect.map instead of Effect.flatMap when the callback only wraps its result with Effect.succeed</td><td>✓</td><td>✓</td></tr>
     <tr><td><code>missedPipeableOpportunity</code></td><td>➖</td><td>🔧</td><td>Suggests using .pipe() for nested function calls</td><td>✓</td><td>✓</td></tr>
     <tr><td><code>missingEffectServiceDependency</code></td><td>➖</td><td></td><td>Checks that Effect.Service dependencies satisfy all required layer inputs</td><td>✓</td><td></td></tr>
     <tr><td><code>multipleCatchTag</code></td><td>💡</td><td></td><td>Suggests collapsing consecutive Effect.catchTag transformations into a single Effect.catchTags call when semantics stay equivalent</td><td></td><td>✓</td></tr>

@@ -27,7 +27,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           submodules: recursive
@@ -36,13 +36,13 @@ jobs:
         run: git config submodule.typescript-go.ignore dirty
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: "1.26"
           cache: false
 
       - name: Cache Go build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/go-build
@@ -52,12 +52,12 @@ jobs:
             go-build-update-typescript-go-${{ runner.os }}-
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9
 
@@ -68,22 +68,32 @@ jobs:
         id: before
         run: echo "sha=$(git -C typescript-go rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Resolve native preview metadata
-        id: native_preview
+      - name: Resolve TypeScript next metadata
+        id: typescript
+        env:
+          TYPESCRIPT_SPEC: typescript@next
         run: |
-          metadata="$(npm view @typescript/native-preview@latest version gitHead --json)"
+          metadata="$(npm view "${TYPESCRIPT_SPEC}" version gitHead --json)"
           version="$(node -e 'const m = JSON.parse(process.argv[1]); if (!m.version) process.exit(1); process.stdout.write(m.version)' "$metadata")"
           git_head="$(node -e 'const m = JSON.parse(process.argv[1]); if (!/^[0-9a-f]{40}$/.test(m.gitHead || "")) process.exit(1); process.stdout.write(m.gitHead)' "$metadata")"
 
+          echo "spec=${TYPESCRIPT_SPEC}" >> "$GITHUB_OUTPUT"
           echo "version=${version}" >> "$GITHUB_OUTPUT"
           echo "git_head=${git_head}" >> "$GITHUB_OUTPUT"
 
       - name: Update TypeScript-Go submodule
         run: |
-          git -C typescript-go fetch --depth 1 origin "${{ steps.native_preview.outputs.git_head }}"
-          git -C typescript-go checkout --detach "${{ steps.native_preview.outputs.git_head }}"
+          git -C typescript-go fetch --depth 1 origin "${{ steps.typescript.outputs.git_head }}"
+          git -C typescript-go checkout --detach "${{ steps.typescript.outputs.git_head }}"
           git -C typescript-go submodule sync --recursive
           git -C typescript-go submodule update --init --recursive --force
+
+      - name: Write upstream TypeScript metadata
+        env:
+          TS_VERSION: ${{ steps.typescript.outputs.version }}
+          TS_GIT_HEAD: ${{ steps.typescript.outputs.git_head }}
+        run: |
+          node -e 'const fs = require("node:fs"); fs.writeFileSync("_packages/tsgo/upstream.json", JSON.stringify({ tsVersion: process.env.TS_VERSION, tsGitHead: process.env.TS_GIT_HEAD }, null, 2) + "\n")'
 
       - name: Regenerate shims and generated files
         run: pnpm setup-repo --ci
@@ -92,8 +102,8 @@ jobs:
         id: after
         run: echo "sha=$(git -C typescript-go rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Stage TypeScript-Go submodule pointer
-        run: git add typescript-go
+      - name: Stage TypeScript-Go metadata
+        run: git add typescript-go _packages/tsgo/upstream.json
 
       - name: Build upstream changelog
         id: changelog
@@ -123,7 +133,7 @@ jobs:
             exit 0
           fi
 
-          if git diff --quiet; then
+          if git diff --cached --quiet && git diff --quiet; then
             echo "has_changes=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -139,7 +149,7 @@ jobs:
           ---
 
           Update to \
-          [\`@typescript/native-preview@${{ steps.native_preview.outputs.version }}\`](https://www.npmjs.com/package/@typescript/native-preview/v/${{ steps.native_preview.outputs.version }}), \
+          [\`${{ steps.typescript.outputs.spec }}\`](https://www.npmjs.com/package/typescript/v/${{ steps.typescript.outputs.version }}), \
           which ships \
           [\`typescript-go\`](https://github.com/microsoft/typescript-go/commit/${{ steps.after.outputs.sha }}) \
           commit \`${{ steps.after.outputs.sha }}\`.
@@ -160,7 +170,8 @@ jobs:
 
             ## TypeScript-Go
 
-            - Native preview version: `@typescript/native-preview@${{ steps.native_preview.outputs.version }}`
+            - TypeScript package: `${{ steps.typescript.outputs.spec }}`
+            - TypeScript version: `${{ steps.typescript.outputs.version }}`
             - Previous commit: `${{ steps.before.outputs.sha }}`
             - Updated commit: `${{ steps.after.outputs.sha }}`
             - Compare: ${{ steps.changelog.outputs.compare_url }}
@@ -187,7 +198,7 @@ jobs:
     steps:
       - name: Create PR validation check
         id: create_check
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           HEAD_SHA: ${{ needs.update.outputs.head_sha }}
           PR_NUMBER: ${{ needs.update.outputs.pr_number }}
@@ -208,20 +219,20 @@ jobs:
             core.setOutput('check_run_id', String(data.id))
 
       - name: Checkout generated PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ needs.update.outputs.head_sha }}
           submodules: recursive
 
       - name: Setup Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
           go-version: "1.26"
           cache: false
 
       - name: Cache Go build
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             ~/.cache/go-build
@@ -231,12 +242,12 @@ jobs:
             go-build-update-typescript-go-${{ runner.os }}-
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: "24"
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v4
+        uses: pnpm/action-setup@v6
         with:
           version: 9
 
@@ -264,7 +275,7 @@ jobs:
       - name: Validate lint
         id: validate_lint
         continue-on-error: true
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v9
         with:
           version: v2.9
           args: ./...
@@ -273,7 +284,7 @@ jobs:
 
       - name: Complete PR validation check
         if: always()
-        uses: actions/github-script@v7
+        uses: actions/github-script@v9
         env:
           CHECK_RUN_ID: ${{ steps.create_check.outputs.check_run_id }}
           PR_NUMBER: ${{ needs.update.outputs.pr_number }}
