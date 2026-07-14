@@ -1,5 +1,14 @@
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readdirSync, rmSync } from 'node:fs'
+import {
+  lstatSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import process from 'node:process'
@@ -53,6 +62,24 @@ it.effect('packs only the supported Artifact surface', () => Effect.sync(() => {
     expect(entries.has('package/dist/reference-archives/tsgo.pta')).toBe(false)
     expect(prelude).toContain('archive:')
     expect(prelude).not.toContain('closure:')
+
+    const consumer = join(packDirectory, 'consumer')
+    const scopeDirectory = join(consumer, 'node_modules/@sayoriqwq')
+    const installedArtifact = join(scopeDirectory, 'effect-harness')
+    mkdirSync(scopeDirectory, { recursive: true })
+    run('tar', ['-xzf', tarball, '-C', scopeDirectory], root)
+    renameSync(join(scopeDirectory, 'package'), installedArtifact)
+    expect(lstatSync(installedArtifact).isSymbolicLink()).toBe(false)
+    symlinkSync(join(root, 'node_modules/@antfu'), join(consumer, 'node_modules/@antfu'), 'dir')
+    writeFileSync(join(consumer, 'package.json'), '{"type":"module"}\n')
+    writeFileSync(join(consumer, 'eslint.config.mjs'), [
+      'import antfu from \'@antfu/eslint-config\'',
+      'import effectHarness from \'@sayoriqwq/effect-harness/eslint\'',
+      'export default antfu().append(...effectHarness)',
+      '',
+    ].join('\n'))
+    writeFileSync(join(consumer, 'example.js'), 'export const answer = 42\n')
+    expect(run(join(root, 'node_modules/.bin/eslint'), ['example.js'], consumer)).toBe('')
   }
   finally {
     rmSync(packDirectory, { recursive: true, force: true })

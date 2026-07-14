@@ -29,12 +29,16 @@ host and decides how a valid plan is applied.
 
 - `src/prelude.ts`: Module descriptor and read-only plan.
 - `src/harness/Policy.ts`: canonical complete Effect language-service policy.
+- `src/harness/EslintPolicy.ts`: canonical Effect ESLint rules and plugin,
+  consumed unchanged by the public Target and repository self adapters; only
+  their delivery and composition differ.
 - `src/harness/SourcePins.ts`: derived immutable pinned-reference declarations.
 - `artifact-assets/effect/reference-archives/*.{pta,json}`: Partita-published
   Effect and tsgo archives with generic provenance consumed by the Module.
 - `tsdown.config.ts`: package bundling without Source Pin inspection or archive
   composition.
-- `src/eslint.ts`: stable, composable ESLint config API.
+- `src/eslint.ts`: stable, composable public adapter over the canonical ESLint
+  policy; root `eslint.config.mjs` consumes the same policy directly from source.
 - `artifact-assets/effect/managed/**`: complete target documentation bundle.
 - `repos/effect/**`, `repos/tsgo/**`, and their subtree contracts: repository
   Source Pin inputs excluded from the published Artifact.

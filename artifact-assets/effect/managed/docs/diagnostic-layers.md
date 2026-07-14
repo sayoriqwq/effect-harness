@@ -11,5 +11,9 @@ Each feedback layer has one job:
   reachability, suppression rejection, and packed Artifact completeness.
 
 If tsgo and ESLint prescribe conflicting Effect code, keep the verified tsgo
-behavior and narrow ESLint. `Effect.ignore` is intentionally permitted because
-the current tsgo policy can recommend it.
+behavior and narrow ESLint. Both the public Target adapter and Effect Harness's
+repository self adapter intentionally permit `Effect.ignore` because the
+current tsgo policy can recommend it. They also apply the same canonical
+`effect-harness/no-disable-validation` rule and reject
+`{ disableValidation: true }`; only delivery and surrounding repository
+composition differ.
