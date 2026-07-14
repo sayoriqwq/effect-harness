@@ -13,11 +13,7 @@ it.effect('typechecks every file inside stable source, test, and tooling boundar
     { config: 'tsconfig.tests.json', files: filesUnder('tests') },
     {
       config: 'tsconfig.tooling.json',
-      files: [
-        ...rootConfigFiles(),
-        ...filesUnder('bin'),
-        ...filesUnder('scripts'),
-      ],
+      files: rootConfigFiles(),
     },
   ] as const
 
@@ -37,7 +33,7 @@ it.effect('runs the complete graph and keeps focused entry points', () => Effect
   const { scripts } = JSON.parse(manifest) as { scripts: Readonly<Record<string, string>> }
 
   expect(scripts).toMatchObject({
-    'acceptance:cross-repo': 'node --experimental-strip-types scripts/cross-repo-acceptance.ts',
+    'acceptance:cross-repo': 'node --experimental-strip-types tests/acceptance/cross-repo.ts',
     'test': 'vitest run',
     'test:focused': 'vitest run',
     'typecheck': 'pnpm typecheck:source && pnpm typecheck:tests && pnpm typecheck:tooling',

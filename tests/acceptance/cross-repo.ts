@@ -14,17 +14,17 @@ import {
   writeFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { basename, join, resolve } from 'node:path'
+import { join, resolve } from 'node:path'
 import process from 'node:process'
 
-const harnessRoot = resolve(import.meta.dirname, '..')
+const harnessRoot = resolve(import.meta.dirname, '../..')
 const infraRoot = resolve(harnessRoot, '..')
 const partitaRoot = resolve(process.env.PARTITA_ROOT ?? join(infraRoot, 'partita'))
 const preludeRoot = resolve(process.env.PRELUDE_ROOT ?? join(infraRoot, 'prelude'))
 const keepTemp = process.env.CROSS_REPO_KEEP_TEMP === '1'
 const runRoot = mkdtempSync(join(tmpdir(), 'effect-harness-cross-repo-'))
 const packsRoot = join(runRoot, 'packs')
-const harnessTempRoot = join(harnessRoot, 'tmp', basename(runRoot))
+const harnessTempRoot = mkdtempSync(join(harnessRoot, 'effect-harness-cross-repo-'))
 const publicationRoot = join(harnessTempRoot, 'publication')
 
 try {
@@ -66,11 +66,14 @@ try {
   })
   assert.equal(existsSync(gitSentinel.log), false, 'Target convergence must not invoke Git')
 
-  console.log('Cross-repository packed acceptance passed.')
-  console.log(`Partita: ${partitaTarball}`)
-  console.log(`Prelude Contract: ${contractTarball}`)
-  console.log(`Effect Harness: ${harnessTarball}`)
-  console.log(`Prelude: ${preludeTarball}`)
+  process.stdout.write([
+    'Cross-repository packed acceptance passed.',
+    `Partita: ${partitaTarball}`,
+    `Prelude Contract: ${contractTarball}`,
+    `Effect Harness: ${harnessTarball}`,
+    `Prelude: ${preludeTarball}`,
+    '',
+  ].join('\n'))
 }
 finally {
   if (keepTemp && existsSync(harnessTempRoot))
