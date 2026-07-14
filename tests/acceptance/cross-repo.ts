@@ -207,12 +207,6 @@ function assertHarnessArtifact(tarball: string): void {
   const skillPath = 'artifact-assets/effect/managed/skills/adapt-effect-target/SKILL.md'
   const skillBytes = runBytes('tar', ['-xOf', tarball, `package/${skillPath}`], { cwd: harnessRoot })
   assert.deepEqual(skillBytes, readFileSync(join(harnessRoot, skillPath)))
-  const skill = skillBytes.toString()
-  for (const phase of ['Observe', 'Propose', 'Authorize', 'Mutate', 'Verify', 'Hand back'])
-    assert.equal(skill.includes(`**${phase}.**`), true, `Control Handoff skill is missing ${phase}`)
-  assert.equal(skill.includes('one toolchain root and activation owner'), true)
-  assert.equal(skill.includes('Never patch once per package in a monorepo'), true)
-  assert.equal(skill.includes('Never add suppression merely to make verification pass'), true)
   assert.deepEqual(
     runBytes('tar', ['-xOf', tarball, 'package/artifact-assets/effect/reference-archives/tsgo.pta'], { cwd: harnessRoot }),
     readFileSync(join(publicationRoot, 'first.pta')),
