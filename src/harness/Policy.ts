@@ -4,7 +4,7 @@
  * Prelude projection and Artifact verification consume this value directly;
  * checked-in self and managed configurations are verified against it.
  */
-export const effectLanguageServicePlugin = {
+export const canonicalEffectTsgoPolicy = {
   name: '@effect/language-service',
   diagnostics: true,
   includeSuggestionsInTsc: true,
@@ -105,4 +105,16 @@ export const effectLanguageServicePlugin = {
   inlays: true,
   allowedDuplicatedPackages: [],
   pipeableMinArgCount: 2,
+} as const
+
+/** Checked-in JSON projection consumed by Effect Harness's own tsconfig. */
+export const effectTsgoSelfProjection = {
+  compilerOptions: {
+    plugins: [canonicalEffectTsgoPolicy],
+  },
+} as const
+
+/** Policy item projected into each approved Target Package Root by Prelude. */
+export const effectTsgoTargetProjection = {
+  languageServicePlugin: canonicalEffectTsgoPolicy,
 } as const

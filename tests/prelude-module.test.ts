@@ -3,7 +3,7 @@ import { expect, it } from '@effect/vitest'
 import { decodeModulePlan } from '@sayoriqwq/prelude-contract'
 import { Effect } from 'effect'
 
-import { effectLanguageServicePlugin } from '../src/harness/Policy.ts'
+import { effectTsgoTargetProjection } from '../src/harness/Policy.ts'
 import { harnessModule } from '../src/prelude.ts'
 
 const missing = <Value>() => Effect.sync<Value | undefined>(() => undefined)
@@ -148,8 +148,8 @@ it.effect('projects the complete canonical language-service policy', () =>
     if (output?.kind !== 'JsonKeyedItem')
       throw new Error('Effect language-service policy Output is absent')
 
-    expect(Object.keys(effectLanguageServicePlugin.diagnosticSeverity)).toHaveLength(78)
-    expect(output.item).toEqual(effectLanguageServicePlugin)
+    expect(Object.keys(effectTsgoTargetProjection.languageServicePlugin.diagnosticSeverity)).toHaveLength(78)
+    expect(output.item).toEqual(effectTsgoTargetProjection.languageServicePlugin)
   }))
 
 function planWithEslintConfig(content: string | undefined) {

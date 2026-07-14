@@ -3,7 +3,11 @@ import { resolve } from 'node:path'
 import { expect, it } from '@effect/vitest'
 import { Effect } from 'effect'
 
-import { effectLanguageServicePlugin } from '../src/harness/Policy.ts'
+import {
+  canonicalEffectTsgoPolicy,
+  effectTsgoSelfProjection,
+  effectTsgoTargetProjection,
+} from '../src/harness/Policy.ts'
 
 const root = resolve(import.meta.dirname, '..')
 
@@ -16,14 +20,37 @@ it.effect('keeps the installed package graph on the accepted TS7 Effect baseline
   expect(packageIdentity('@typescript/native')).toEqual({ name: 'typescript', version: '7.0.2' })
 }))
 
-it.effect('keeps self configuration equal to the exported canonical policy', () => Effect.sync(() => {
-  const config = readJson('tsconfig.json') as {
-    compilerOptions: { plugins: ReadonlyArray<{ name?: string }> }
-  }
-  const plugin = config.compilerOptions.plugins.find(candidate =>
-    candidate.name === '@effect/language-service')
+it.effect('self-hosts the verified source projection through tsconfig inheritance', () => Effect.sync(() => {
+  const config = readJson('tsconfig.json') as { extends?: string, compilerOptions?: { plugins?: unknown } }
+  const checkedInProjection = readJson('tsconfig.effect.json')
 
-  expect(plugin).toEqual(effectLanguageServicePlugin)
+  expect(config.extends).toBe('./tsconfig.effect.json')
+  expect(config.compilerOptions?.plugins).toBeUndefined()
+  expect(checkedInProjection).toEqual(effectTsgoSelfProjection)
+  expect(effectTsgoSelfProjection.compilerOptions.plugins).toEqual([canonicalEffectTsgoPolicy])
+}))
+
+it.effect('keeps self and Target projections semantically identical', () => Effect.sync(() => {
+  const [selfPlugin] = effectTsgoSelfProjection.compilerOptions.plugins
+
+  expect(selfPlugin).toEqual(canonicalEffectTsgoPolicy)
+  expect(effectTsgoTargetProjection.languageServicePlugin).toEqual(canonicalEffectTsgoPolicy)
+  expect(selfPlugin).toEqual(effectTsgoTargetProjection.languageServicePlugin)
+}))
+
+it.effect('keeps managed Target guidance aligned with the canonical projection', () => Effect.sync(() => {
+  const guidance = readFileSync(resolve(root, 'artifact-assets/effect/managed/docs/package-config.md'), 'utf8')
+
+  expect(guidance).toContain('same canonical policy')
+  expect(guidance).toContain('diagnostics and tsc suggestions are enabled')
+  expect(guidance).toContain('the policy values do not')
+  expect(effectTsgoTargetProjection.languageServicePlugin).toMatchObject({
+    diagnostics: true,
+    includeSuggestionsInTsc: true,
+    ignoreEffectSuggestionsInTscExitCode: false,
+    ignoreEffectWarningsInTscExitCode: false,
+    ignoreEffectErrorsInTscExitCode: false,
+  })
 }))
 
 it.effect('covers every Effect v4 rule exposed by the pinned tsgo metadata', () => Effect.sync(() => {
@@ -40,7 +67,7 @@ it.effect('covers every Effect v4 rule exposed by the pinned tsgo metadata', () 
     .map(rule => [rule.name, strictSeverity(rule)] as const)
     .sort(([left], [right]) => left < right ? -1 : left > right ? 1 : 0))
 
-  expect(effectLanguageServicePlugin.diagnosticSeverity).toEqual(observed)
+  expect(canonicalEffectTsgoPolicy.diagnosticSeverity).toEqual(observed)
 }))
 
 function packageIdentity(packageName: string): { readonly name: string, readonly version: string } {

@@ -28,7 +28,10 @@ host and decides how a valid plan is applied.
 ## Source of truth
 
 - `src/prelude.ts`: Module descriptor and read-only plan.
-- `src/harness/Policy.ts`: canonical complete Effect language-service policy.
+- `src/harness/Policy.ts`: canonical complete Effect language-service policy
+  plus semantic-equivalent self and Target projections.
+- `tsconfig.effect.json`: checked-in, verified self projection consumed by the
+  root `tsconfig.json`; ordinary typechecking never imports `dist`.
 - `src/harness/EslintPolicy.ts`: canonical Effect ESLint rules and plugin,
   consumed unchanged by the public Target and repository self adapters; only
   their delivery and composition differ.

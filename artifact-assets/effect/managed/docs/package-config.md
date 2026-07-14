@@ -4,6 +4,12 @@ Run [adapt-effect-target](../skills/adapt-effect-target/SKILL.md) when selecting
 package roots or repairing TypeScript inheritance. The Harness declares the
 complete named language-service item at each approved root; the skill decides
 which roots actually author Effect and how secondary projects inherit it.
+The projected item is the same canonical policy that Effect Harness verifies
+for itself: diagnostics and tsc suggestions are enabled, every Effect
+diagnostic severity is explicit, and no warning, suggestion, or error is
+removed from the tsc exit code. Target placement and inheritance differ from
+Harness self-hosting, but the policy values do not. Do not replace the item
+with a partial plugin entry or local severity overrides.
 
 Dependencies are resolved before Apply. Review exact manifest and workspace
 lock changes, then replan. Apply performs only the approved frozen install and

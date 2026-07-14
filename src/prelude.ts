@@ -8,7 +8,7 @@ import {
 import { Effect } from 'effect'
 import * as TypeScript from 'typescript'
 
-import { effectLanguageServicePlugin } from './harness/Policy.ts'
+import { effectTsgoTargetProjection } from './harness/Policy.ts'
 import { pinnedReferenceOutputs } from './harness/SourcePins.ts'
 
 const routingBlock = `## Effect Harness\n\nFor Effect application, test, package, TypeScript, editor, or lint changes, read the current Effect integration's \`.prelude/**/managed/docs/index.md\` first. Use \`.prelude/**/managed/skills/adapt-effect-target/SKILL.md\` when package selection or target-owned TypeScript topology needs adaptation. Keep \`.prelude/**/feedback/**\` target-owned. Treat \`.prelude/**/repos/**\` as read-only source diagnostics: consult it when installed declarations and managed guidance are insufficient, but never import or edit it.\n`
@@ -77,7 +77,7 @@ function packageOutputs(packageRoot: string): ModulePlan['outputs'] {
     collectionPointer: '/compilerOptions/plugins',
     keyField: 'name',
     keyValue: '@effect/language-service',
-    item: effectLanguageServicePlugin,
+    item: effectTsgoTargetProjection.languageServicePlugin,
   }]
 }
 
