@@ -52,9 +52,7 @@ const editorPolicyOutputs = [
   },
 ] as const satisfies ModulePlan['outputs']
 
-const packageRequirements = [
-  { id: 'runtime', packageName: 'effect', range: '4.0.0-beta.97', section: 'dependencies' },
-  { id: 'platform-node', packageName: '@effect/platform-node', range: '4.0.0-beta.97', section: 'dependencies' },
+const packageDevRequirements = [
   { id: 'vitest', packageName: '@effect/vitest', range: '4.0.0-beta.97', section: 'devDependencies' },
   { id: 'tsgo', packageName: '@effect/tsgo', range: '0.19.0', section: 'devDependencies' },
   { id: 'native-typescript', packageName: '@typescript/native', range: 'npm:typescript@7.0.2', section: 'devDependencies' },
@@ -63,6 +61,8 @@ const packageRequirements = [
   { id: 'vitest-runner', packageName: 'vitest', range: '^4.1.8', section: 'devDependencies' },
   { id: 'typescript', packageName: 'typescript', range: 'npm:@typescript/typescript6@6.0.2', section: 'devDependencies' },
 ] as const satisfies ReadonlyArray<Omit<PackageRequirement, 'id' | 'packageRoot'> & { readonly id: string }>
+
+type RequirementSection = PackageRequirement['section']
 
 function packageRootKey(packageRoot: string): string {
   return Buffer.from(packageRoot, 'utf8').toString('hex')
@@ -81,9 +81,58 @@ function packageOutputs(packageRoot: string): ModulePlan['outputs'] {
   }]
 }
 
-function requirementsFor(packageRoot: string): ModulePlan['requirements'] {
+function hasManifestDependency(
+  manifest: Readonly<Record<string, unknown>> | undefined,
+  section: RequirementSection | 'peerDependencies',
+  packageName: string,
+): boolean {
+  const entries = manifest?.[section]
+  return typeof entries === 'object'
+    && entries !== null
+    && !Array.isArray(entries)
+    && typeof (entries as Readonly<Record<string, unknown>>)[packageName] === 'string'
+}
+
+function selectedSection(
+  manifest: Readonly<Record<string, unknown>> | undefined,
+  packageName: string,
+  fallback: RequirementSection,
+): RequirementSection {
+  if (hasManifestDependency(manifest, 'dependencies', packageName))
+    return 'dependencies'
+  if (hasManifestDependency(manifest, 'devDependencies', packageName))
+    return 'devDependencies'
+  if (hasManifestDependency(manifest, 'peerDependencies', packageName))
+    return 'devDependencies'
+  return fallback
+}
+
+function hasDeclaredDependency(
+  manifest: Readonly<Record<string, unknown>> | undefined,
+  packageName: string,
+): boolean {
+  return hasManifestDependency(manifest, 'dependencies', packageName)
+    || hasManifestDependency(manifest, 'devDependencies', packageName)
+    || hasManifestDependency(manifest, 'peerDependencies', packageName)
+}
+
+function requirementsFor(
+  packageRoot: string,
+  manifest: Readonly<Record<string, unknown>> | undefined,
+): ModulePlan['requirements'] {
   const rootKey = packageRootKey(packageRoot)
-  return packageRequirements.map(requirement => ({
+  const runtimeRequirements = [{
+    id: 'runtime',
+    packageName: 'effect',
+    range: '4.0.0-beta.97',
+    section: selectedSection(manifest, 'effect', 'dependencies'),
+  }]
+  const platformSection = selectedSection(manifest, '@effect/platform-node', 'dependencies')
+  const platformRequirements = manifest === undefined || hasDeclaredDependency(manifest, '@effect/platform-node')
+    ? [{ id: 'platform-node', packageName: '@effect/platform-node', range: '4.0.0-beta.97', section: platformSection }]
+    : []
+
+  return [...runtimeRequirements, ...platformRequirements, ...packageDevRequirements].map(requirement => ({
     ...requirement,
     id: `effect.${requirement.id}.${rootKey}`,
     packageRoot,
@@ -223,7 +272,12 @@ export const harnessModule = defineHarnessModule({
       path: 'eslint.config.mjs',
     })
     const outputs = context.integration.packageRoots.flatMap(packageOutputs)
-    const requirements = context.integration.packageRoots.flatMap(requirementsFor)
+    const requirements = (yield* Effect.forEach(
+      context.integration.packageRoots,
+      packageRoot => context.target.readPackageManifest(packageRoot).pipe(
+        Effect.map(manifest => requirementsFor(packageRoot, manifest)),
+      ),
+    )).flat()
     const checks = context.integration.packageRoots.flatMap(checksFor)
 
     return {

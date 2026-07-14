@@ -84,6 +84,52 @@ it.effect('shares Integration Outputs while planning policy per selected package
     )).toBe(false)
   }))
 
+it.effect('preserves peer-based library package semantics in Requirements', () =>
+  Effect.gen(function* () {
+    const packageRoot = 'packages/contracts'
+    const plan = yield* harnessModule.plan({
+      ...context,
+      integration: { ...context.integration, packageRoots: [packageRoot] },
+      target: {
+        ...context.target,
+        readPackageManifest: () => Effect.succeed({
+          peerDependencies: { effect: '4.0.0-beta.97' },
+          devDependencies: { effect: '4.0.0-beta.97' },
+        }),
+      },
+    })
+
+    expect(plan.requirements).toContainEqual(expect.objectContaining({
+      packageRoot,
+      packageName: 'effect',
+      section: 'devDependencies',
+    }))
+    expect(plan.requirements.some(requirement => requirement.packageName === '@effect/platform-node')).toBe(false)
+  }))
+
+it.effect('repairs peer-only Effect packages through devDependencies', () =>
+  Effect.gen(function* () {
+    const packageRoot = 'packages/runtime-contract'
+    const plan = yield* harnessModule.plan({
+      ...context,
+      integration: { ...context.integration, packageRoots: [packageRoot] },
+      target: {
+        ...context.target,
+        readPackageManifest: () => Effect.succeed({
+          peerDependencies: {
+            '@effect/platform-node': '4.0.0-beta.97',
+            'effect': '4.0.0-beta.97',
+          },
+        }),
+      },
+    })
+
+    expect(plan.requirements).toEqual(expect.arrayContaining([
+      expect.objectContaining({ packageRoot, packageName: 'effect', section: 'devDependencies' }),
+      expect.objectContaining({ packageRoot, packageName: '@effect/platform-node', section: 'devDependencies' }),
+    ]))
+  }))
+
 it.effect('projects the complete canonical language-service policy', () =>
   Effect.gen(function* () {
     const plan = yield* harnessModule.plan(context)
