@@ -38,7 +38,11 @@ it.effect('preserves both boundaries through Target, self, and test-file composi
   Effect.promise(async () => {
     const target = new ESLint({
       overrideConfigFile: true,
-      overrideConfig: [...effectHarnessEslintConfig],
+      overrideConfig: [
+        { name: 'target/custom', rules: { 'no-console': 'off' } },
+        ...effectHarnessEslintConfig,
+        { name: 'target/test-overlay', files: ['tests/**'], rules: { 'no-undef': 'off' } },
+      ],
     })
     const self = new ESLint({ cwd: artifactRoot })
     const source = [
