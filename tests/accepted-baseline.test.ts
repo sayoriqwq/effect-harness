@@ -13,6 +13,11 @@ import { pinnedReferenceOutputs } from '../src/harness/SourcePins.ts'
 const root = resolve(import.meta.dirname, '..')
 
 it.effect('models package roles, peer fallback, and optional platform semantics', () => Effect.sync(() => {
+  expect(acceptedEffectBaseline.typescriptTopology).toEqual({
+    primaryCompiler: 'nativeTypescript',
+    effectSemanticAuthority: 'tsgo',
+    compilerApiCompatibility: 'typescript',
+  })
   expect(Object.fromEntries(Object.entries(acceptedEffectBaseline.packages).map(([key, entry]) => [key, entry.role]))).toEqual({
     effect: 'runtime',
     platformNode: 'optional-platform',

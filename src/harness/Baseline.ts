@@ -32,6 +32,11 @@ const requiredDevToolTarget = {
  */
 export const acceptedEffectBaseline = {
   versions,
+  typescriptTopology: {
+    primaryCompiler: 'nativeTypescript',
+    effectSemanticAuthority: 'tsgo',
+    compilerApiCompatibility: 'typescript',
+  },
   packages: {
     effect: {
       id: 'runtime',

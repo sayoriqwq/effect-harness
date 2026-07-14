@@ -1,4 +1,6 @@
 export const managedBundlePaths = [
+  'data/baseline.json',
+  'data/tsgo-policy.json',
   'docs/diagnostic-layers.md',
   'docs/diagnostics.md',
   'docs/editor-policy.md',

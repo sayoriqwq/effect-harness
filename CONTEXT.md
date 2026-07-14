@@ -22,14 +22,17 @@ protocol as the only accepted shape for a new Baseline.
 _Avoid_: Compatibility window, dual-protocol host
 
 **Approved Package Selection**:
-The exact manifest and lock state reviewed and bound to a Plan before Prelude
-installs the selected dependency graph.
-_Avoid_: Package range intent, apply-time dependency resolution
+The exact Target manifest and lock state reviewed and authorized during Target
+Adaptation before the delivered skill applies the selected dependency graph.
+It is durable Target-owned evidence, not a Harness Output or Prelude install
+instruction.
+_Avoid_: Package range intent, Harness Requirement, Prelude-owned lockfile
 
 **Converged Integration**:
-An Integration whose Harness-owned Outputs, Approved Package Selection, and
-package-scoped policy all match one accepted Artifact version.
-_Avoid_: Partially applied Integration, green Plan
+An Integration whose stable Harness-owned Outputs match one accepted Artifact
+version and whose Target-owned authoring capability has been adapted and
+verified through the delivered skill with durable evidence.
+_Avoid_: Partially delivered Integration, green Plan, package-shaped inference
 
 **Output Atomicity**:
 The guarantee that one Harness-owned Output is replaced wholly, even though an
@@ -42,13 +45,15 @@ covering one or more explicitly selected package roots.
 _Avoid_: Package, repository
 
 **Target Adaptation**:
-The Target-aware selection and repair that maps Effect Harness policy onto a
-repository's actual package and configuration topology.
+The skill-owned observation, proposal, authorized mutation, and verification
+that maps Effect Harness Baseline and policy data onto a repository's actual
+package, TypeScript, compiler, lint, editor, and command topology.
 _Avoid_: Project discovery, Prelude policy inference
 
 **Control Handoff**:
-The transfer from Harness-authored adaptation guidance to Target-owned choices
-and executable configuration after a user-authorized skill completes.
+The transfer from delivered Harness-owned capability data and guidance to a
+user-authorized skill that owns Target-local choices, mutation, verification,
+and executable configuration.
 _Avoid_: Provider lifecycle, Target dispatcher
 
 **Root-scoped Observation**:

@@ -1,8 +1,8 @@
 /**
  * The complete Effect authoring policy for the accepted baseline.
  *
- * Prelude projection and Artifact verification consume this value directly;
- * checked-in self and managed configurations are verified against it.
+ * Self-use and Artifact verification consume this value directly; checked-in
+ * self and managed-data projections are verified against it.
  */
 export const canonicalEffectTsgoPolicy = {
   name: '@effect/language-service',
@@ -114,7 +114,7 @@ export const effectTsgoSelfProjection = {
   },
 } as const
 
-/** Policy item projected into each approved Target Package Root by Prelude. */
+/** Semantic-equivalent policy item consumed by Target adaptation verification. */
 export const effectTsgoTargetProjection = {
   languageServicePlugin: canonicalEffectTsgoPolicy,
 } as const

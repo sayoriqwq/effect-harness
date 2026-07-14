@@ -12,9 +12,12 @@ severity all matter to completion.
    `repos/tsgo/_packages/tsgo/src/metadata.json`.
 4. Follow [tsgo-source.md](./tsgo-source.md) to its implementation, quick fix,
    and fixture.
-5. Re-run the package-scoped Check that failed.
+5. Re-run the Target's real typecheck path that failed.
 
-Do not use Effect diagnostic suppression comments, local severity overrides, or
-weaker compiler settings to make the gate green. tsgo is the sole Harness
-authority for Effect and TypeScript semantics; Harness ESLint only protects the
-two delivered pinned-reference import boundaries.
+Fix diagnostics without weakening the canonical policy. Preserve existing
+Target-owned suppression decisions unless an audit was requested. Never add a
+suppression merely to make verification green; a new exception requires the
+smallest practical scope, an explained diagnostic and alternative, explicit
+authorization, and durable Target-owned rationale. tsgo owns suppression
+semantics and remains the sole Effect/TypeScript semantic authority; Harness
+ESLint only protects the two delivered pinned-reference import boundaries.

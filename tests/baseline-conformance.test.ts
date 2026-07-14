@@ -36,12 +36,17 @@ it.effect('keeps self and Target projections semantically identical', () => Effe
   expect(selfPlugin).toEqual(effectTsgoTargetProjection.languageServicePlugin)
 }))
 
-it.effect('keeps managed Target guidance aligned with the canonical projection', () => Effect.sync(() => {
-  const guidance = readFileSync(resolve(root, 'artifact-assets/effect/managed/docs/package-config.md'), 'utf8')
+it.effect('ships immutable managed data as exact projections of Harness-owned authority', () => Effect.sync(() => {
+  expect(readJson('artifact-assets/effect/managed/data/baseline.json')).toEqual(acceptedEffectBaseline)
+  expect(readJson('artifact-assets/effect/managed/data/tsgo-policy.json')).toEqual(canonicalEffectTsgoPolicy)
+}))
 
-  expect(guidance).toContain('same canonical policy')
-  expect(guidance).toContain('diagnostics and tsc suggestions are enabled')
-  expect(guidance).toContain('the policy values do not')
+it.effect('routes managed Target guidance to the canonical data projection', () => Effect.sync(() => {
+  const guidance = readFileSync(resolve(root, 'artifact-assets/effect/managed/docs/package-config.md'), 'utf8')
+  const managedPolicy = readJson('artifact-assets/effect/managed/data/tsgo-policy.json')
+
+  expect(guidance).toContain('../data/tsgo-policy.json')
+  expect(managedPolicy).toEqual(canonicalEffectTsgoPolicy)
   expect(effectTsgoTargetProjection.languageServicePlugin).toMatchObject({
     diagnostics: true,
     includeSuggestionsInTsc: true,

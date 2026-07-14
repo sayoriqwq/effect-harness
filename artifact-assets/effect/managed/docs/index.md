@@ -5,6 +5,10 @@ editor, lint, or diagnostic work in this Integration.
 
 ## Start here
 
+- Baseline package, compiler-role, or Source Pin data:
+  [`../data/baseline.json`](../data/baseline.json).
+- Complete canonical Effect-tsgo policy data:
+  [`../data/tsgo-policy.json`](../data/tsgo-policy.json).
 - First integration, upgrade, package selection, or tsconfig placement:
   [adapt-effect-target](../skills/adapt-effect-target/SKILL.md).
 - Effect implementation or tests: [effect-code.md](./effect-code.md), then
@@ -20,7 +24,7 @@ editor, lint, or diagnostic work in this Integration.
 
 ## Evidence order
 
-Use this order: the failing diagnostic or Check, managed policy, the delivered
+Use this order: the failing Target command, managed policy data, the delivered
 Effect source, then the delivered tsgo source for diagnostic internals. Do not
 scan large reference trees before the managed route identifies the relevant
 package, module, rule, or fixture.

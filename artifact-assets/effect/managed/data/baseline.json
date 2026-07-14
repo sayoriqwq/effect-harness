@@ -1,0 +1,83 @@
+{
+  "versions": {
+    "effect": "4.0.0-beta.97",
+    "tsgo": "0.19.0",
+    "typescript": "6.0.2",
+    "nativeTypescript": "7.0.2"
+  },
+  "typescriptTopology": {
+    "primaryCompiler": "nativeTypescript",
+    "effectSemanticAuthority": "tsgo",
+    "compilerApiCompatibility": "typescript"
+  },
+  "packages": {
+    "effect": {
+      "id": "runtime",
+      "packageName": "effect",
+      "range": "4.0.0-beta.97",
+      "installedIdentity": { "name": "effect", "version": "4.0.0-beta.97" },
+      "role": "runtime",
+      "target": { "presence": "required", "defaultSection": "dependencies", "peerFallbackSection": "devDependencies" },
+      "sourcePin": "effect"
+    },
+    "platformNode": {
+      "id": "platform-node",
+      "packageName": "@effect/platform-node",
+      "range": "4.0.0-beta.97",
+      "installedIdentity": { "name": "@effect/platform-node", "version": "4.0.0-beta.97" },
+      "role": "optional-platform",
+      "target": { "presence": "declared-or-manifest-unavailable", "defaultSection": "dependencies", "peerFallbackSection": "devDependencies" },
+      "sourcePin": "effect"
+    },
+    "effectVitest": {
+      "id": "vitest",
+      "packageName": "@effect/vitest",
+      "range": "4.0.0-beta.97",
+      "installedIdentity": { "name": "@effect/vitest", "version": "4.0.0-beta.97" },
+      "role": "effect-test-integration",
+      "target": { "presence": "required", "defaultSection": "devDependencies", "peerFallbackSection": "devDependencies" },
+      "sourcePin": "effect"
+    },
+    "tsgo": {
+      "id": "tsgo",
+      "packageName": "@effect/tsgo",
+      "range": "0.19.0",
+      "installedIdentity": { "name": "@effect/tsgo", "version": "0.19.0" },
+      "role": "effect-compiler-patch",
+      "target": { "presence": "required", "defaultSection": "devDependencies", "peerFallbackSection": "devDependencies" },
+      "sourcePin": "tsgo"
+    },
+    "typescript": {
+      "id": "typescript",
+      "packageName": "typescript",
+      "range": "npm:@typescript/typescript6@6.0.2",
+      "installedIdentity": { "name": "@typescript/typescript6", "version": "6.0.2" },
+      "role": "typescript-api",
+      "target": { "presence": "required", "defaultSection": "devDependencies", "peerFallbackSection": "devDependencies" },
+      "sourcePin": null
+    },
+    "nativeTypescript": {
+      "id": "native-typescript",
+      "packageName": "@typescript/native",
+      "range": "npm:typescript@7.0.2",
+      "installedIdentity": { "name": "typescript", "version": "7.0.2" },
+      "role": "native-compiler",
+      "target": { "presence": "required", "defaultSection": "devDependencies", "peerFallbackSection": "devDependencies" },
+      "sourcePin": null
+    }
+  },
+  "sourcePins": {
+    "effect": {
+      "publicationName": "effect",
+      "outputId": "effect.reference.effect",
+      "targetPath": "repos/effect",
+      "sourceUrl": "https://github.com/Effect-TS/effect-smol"
+    },
+    "tsgo": {
+      "publicationName": "tsgo",
+      "outputId": "effect.reference.tsgo",
+      "targetPath": "repos/tsgo",
+      "sourceUrl": "https://github.com/Effect-TS/tsgo"
+    }
+  }
+}

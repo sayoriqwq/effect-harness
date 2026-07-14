@@ -1,18 +1,16 @@
 # Quality and completion policy
 
-An Integration is complete only after a fresh Plan is converged and every
-declared package-scoped Check passes. The standard Checks are strict Effect
-type checking, lint with zero warnings, and the Target's verification command.
+Stable Prelude Output convergence is the prerequisite for Control Handoff, not
+proof that a Target toolchain works. Target Adaptation is complete only when:
 
-Failure routes:
+- the authorized package, lockfile, tsconfig, activation, ESLint, editor, and
+  verification changes match the actual repository topology;
+- the selected TypeScript 7 and Effect-tsgo identities and patch activation are
+  proven through real tools;
+- a representative unsuppressed Effect diagnostic reaches the Target's real
+  typecheck path and affects its exit code under the canonical policy;
+- the Target's own lint, test, and verification commands pass; and
+- durable Target-owned rationale and verification evidence are reviewed.
 
-- Effect or TypeScript diagnostic: [diagnostics.md](./diagnostics.md).
-- Test behavior: [effect-code.md](./effect-code.md) and
-  [effect-source.md](./effect-source.md).
-- ESLint conflict or composition: [diagnostic-layers.md](./diagnostic-layers.md)
-  and [package-config.md](./package-config.md).
-- Source provenance or route: [source-identity.md](./source-identity.md).
-- Package selection or tsconfig landing: run the Target Adaptation skill.
-
-Never replace a named stage with a weaker proxy command and never claim Gate
-completion from schema validity alone.
+Schema validity, installed packages, or the presence of a plugin item are not
+substitutes for actual execution.

@@ -9,6 +9,7 @@ One Integration Workspace contains three sibling zones:
 - `feedback/**`: Target-owned evidence and notes, never an Output and preserved
   across Apply and upgrade.
 
-The root routing block is Harness-owned inside `AGENTS.md`. Target package and
-executable configuration remain Target-owned except for the exact structured
-items declared as Prelude Outputs.
+The root routing block is Harness-owned inside `AGENTS.md`. Target package
+manifests, lockfiles, tsconfig files, compiler activation, executable lint
+configuration, editor state, verification scripts, and suppression rationale
+remain Target-owned and are adapted only after authorization.

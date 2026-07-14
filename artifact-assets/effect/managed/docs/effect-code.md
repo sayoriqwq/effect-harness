@@ -3,6 +3,11 @@
 Use installed `effect`, `@effect/platform-node`, and `@effect/vitest` packages.
 Never import the delivered `repos/**` reference trees.
 
+[`../data/baseline.json`](../data/baseline.json) is the machine-readable
+authority for package identities and roles. Formal TypeScript 7 is the primary
+compiler patched by Effect-tsgo; TypeScript 6 supplies compiler-API compatibility
+for tools that still require it and is not a second semantic authority.
+
 | Role | Package | Accepted range | Presence | Default section | Peer fallback |
 | --- | --- | --- | --- | --- | --- |
 | `runtime` | `effect` | `4.0.0-beta.97` | `required` | `dependencies` | `devDependencies` |

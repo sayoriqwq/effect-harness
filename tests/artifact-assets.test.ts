@@ -19,8 +19,14 @@ it.effect('ships the Target Adaptation skill in the managed bundle', () => Effec
   expect(existsSync(skillPath)).toBe(true)
   expect(existsSync(`${root}artifact-assets/effect/managed/skills/adapt-effect-target/agents/openai.yaml`)).toBe(true)
   const skill = readFileSync(skillPath, 'utf8')
-  expect(skill).toContain('`@effect-diagnostics` suppression directives')
-  expect(skill).toContain('local `overrides` or lowered')
+  expect(skill).toContain('../../data/baseline.json')
+  expect(skill).toContain('../../data/tsgo-policy.json')
+  expect(skill).toContain('authorization')
+  expect(skill).toContain('Control Handoff')
+  expect(skill).toContain('actual compiler')
+  expect(skill).toContain('durable')
+  expect(skill).toContain('Preserve existing suppression')
+  expect(skill).toContain('Never add suppression merely to make verification pass')
 }))
 
 it.effect('ships complete managed routes to delivered Effect and tsgo evidence', () => Effect.sync(() => {

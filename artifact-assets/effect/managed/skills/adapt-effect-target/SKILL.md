@@ -1,63 +1,73 @@
 ---
 name: adapt-effect-target
-description: Inspect a real repository, select the packages that author or compose Effect, and prepare reviewable Prelude V2 and TypeScript configuration changes. Use when first integrating or upgrading Effect Harness, when a monorepo package selection changes, or when the declared Effect tsconfig Output lands at the wrong project boundary.
+description: Adapt a delivered Effect Harness integration to a real Target repository through Control Handoff. Use for first integration, upgrades, package or project topology changes, compiler activation repair, or verification of Effect-tsgo behavior.
 ---
 
 # Adapt Effect Target
 
-Map the delivered Effect policy onto the Target's actual package and TypeScript
-topology, then hand control back through committed configuration and checks.
+Perform Target Adaptation only after Prelude delivers the stable Harness-owned
+managed tree, routing block, and pinned reference trees. The Target owns every
+repository-specific change.
 
-## Workflow
+## Authority
 
-1. Read `../../docs/index.md`, `../../docs/package-config.md`, and the Target's
-   root `AGENTS.md` before proposing changes.
-2. Inspect workspace manifests, package manifests, direct Effect imports,
-   Layer and Service composition, runnable entries, and the `extends` graph of
-   relevant tsconfig files. Do not infer selection from folder names alone.
-3. Select a package root when that package directly authors or composes Effect
-   programs. Leave a consumer unselected only when its boundary is genuinely
-   Effect-opaque, such as a Promise or plain domain interface.
-4. Present the proposed nonempty `packageRoots` and every Target-owned config
-   repair before editing. Explain why each selected root owns an Effect policy
-   landing and how secondary build, test, or runtime projects inherit it.
-5. After user approval, record the selection in `.prelude/config.jsonc` and
-   make only the approved Target-owned tsconfig or executable-config repairs.
-   Never edit delivered `managed/**` or `repos/**` content.
-6. Run the installed Prelude plan flow. Verify that the Plan contains one
-   Integration-scoped managed tree and pinned reference set, plus one complete
-   language-service policy Output and package-scoped Requirements and Checks
-   for every selected root. Resolve locator or ownership surprises before
-   Apply.
-7. Apply only the approved Plan, replan, then run the declared Target Checks.
-   Inspect the resulting plugin item for local `overrides` or lowered
-   `diagnosticSeverity` entries, and inspect relevant source changes for
-   `@effect-diagnostics` suppression directives. Do not claim convergence when
-   policy was weakened, Apply is incomplete, or a Check is skipped.
-8. Leave durable reasoning in committed config, reviewable diffs, and, when
-   useful, Target-owned `feedback/**`; do not leave the selection rationale
-   only in chat. Hand ongoing ownership back to the Target.
+Read `../../data/baseline.json` and `../../data/tsgo-policy.json`; never copy
+versions or policy values from prose or memory. The Baseline names formal
+TypeScript 7 as the primary compiler, Effect-tsgo as the sole Effect/TypeScript
+semantic authority, and TypeScript 6 as compiler-API compatibility. Preserve
+TypeScript 6 wherever current Target tooling still requires it.
 
-## Selection example
+Read `../../docs/index.md`, `../../docs/package-config.md`, and the Target's
+root instructions before acting. Treat delivered `managed/**` and `repos/**`
+as read-only evidence.
 
-For `packages/domain`, `packages/effect-runtime`, `apps/api`, and `apps/jobs`:
+## Control Handoff
 
-- Select `packages/effect-runtime` when it defines shared Layers and Services.
-- Select `apps/jobs` when it directly composes and runs Effect workflows.
-- Select `apps/api` if it builds Effect routes itself; otherwise leave it out
-  only when it consumes an Effect-opaque interface from `effect-runtime`.
-- Leave `packages/domain` out when it contains plain domain types and logic.
+1. **Observe.** Inspect the package manager, workspace manifests and lockfile,
+   direct Effect authoring and Effect-opaque boundaries, tsconfig inheritance,
+   build/test/editor projects, existing compiler and patch lifecycle, executable
+   ESLint composition, editors actually used, verification commands and CI, and
+   existing suppression decisions. Do not infer ownership from folder names.
+2. **Propose.** Present one reviewable adaptation covering selected package
+   roots, one toolchain root and activation owner, TypeScript 6 compatibility,
+   the complete policy landing and inheritance, package and lockfile changes,
+   Effect-tsgo activation, ESLint composition, relevant editor changes,
+   verification scripts and commands, intended suppression changes, and the
+   location of durable evidence.
+3. **Authorize.** Obtain explicit authorization for that proposal before any
+   mutation. If discovery changes the proposal materially, stop and authorize
+   the revised proposal.
+4. **Mutate.** Make only authorized Target-owned changes to manifests, lockfiles,
+   tsconfig files, activation or prepare scripts, executable ESLint config,
+   relevant editor config, verification scripts, and durable configuration or
+   `feedback/**` evidence. Install with the Target's package manager and preserve
+   the complete canonical policy item and severity values.
+5. **Verify.** Run the actual compiler and prove the selected TypeScript 7 and
+   pinned Effect-tsgo identities and activation. Exercise a representative
+   unsuppressed Effect diagnostic through the Target's real typecheck path and
+   confirm its exit code, then run the Target's own lint, tests, and verification
+   commands. Package presence or a plugin item alone is not proof.
+6. **Hand back.** Review the diff, record the toolchain and project-selection
+   rationale in committed Target-owned state, report exact verification evidence,
+   and return ongoing control to the Target.
 
-The package layout is evidence, not the answer. Confirm the actual imports,
-composition, execution, and tsconfig inheritance.
+## Suppression exceptions
+
+Suppression syntax and semantics belong to Effect-tsgo; permission and rationale
+belong to the Target. Preserve existing suppression decisions unless the Target
+requests an audit. Never add suppression merely to make verification pass.
+
+A new exception requires the explained diagnostic, the smallest practical
+scope, alternatives considered, explicit authorization, and durable
+Target-owned rationale. It must not lower the canonical policy for unsuppressed
+diagnostics.
 
 ## Guardrails
 
-- Never discover and silently claim every workspace package.
-- Never run Git fetch, clone, subtree, or `$pin` in the Target. Delivered
-  `repos/**` trees are read-only reference evidence owned by Effect Harness.
-- Never import delivered reference trees from application or test code.
-- Never weaken or suppress the canonical diagnostic policy to make a Check
-  pass; route failures through the managed diagnostic guidance.
-- Never describe Prelude core as proving business-topology coverage. This skill
-  owns selection correctness; Prelude owns safe materialization correctness.
+- Never mutate during observation or before authorization.
+- Never weaken, partially reproduce, or locally override the canonical policy.
+- Never patch once per package in a monorepo; use the authorized activation owner.
+- Never add package-manager, tsconfig, editor, executable-config, or activation
+  semantics to Prelude core or the Harness Module Plan.
+- Never import or edit delivered reference trees, and never run pin maintenance
+  commands in the Target.

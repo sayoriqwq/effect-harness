@@ -1,3 +1,7 @@
+---
+status: superseded by ADR-0007
+---
+
 # Resolve packages before apply
 
 Prelude core installs only an Approved Package Selection: exact manifest and

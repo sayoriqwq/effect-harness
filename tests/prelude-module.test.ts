@@ -3,8 +3,6 @@ import { expect, it } from '@effect/vitest'
 import { decodeModulePlan } from '@sayoriqwq/prelude-contract'
 import { Effect } from 'effect'
 
-import { acceptedEffectBaseline } from '../src/harness/Baseline.ts'
-import { effectTsgoTargetProjection } from '../src/harness/Policy.ts'
 import { harnessModule } from '../src/prelude.ts'
 
 const missing = <Value>() => Effect.sync<Value | undefined>(() => undefined)
@@ -31,229 +29,72 @@ const context: HarnessModuleContext = {
   },
 }
 
-it.effect('plans a schema-valid read-only Effect target transition', () =>
+it.effect('plans only stable Harness-owned Outputs through the public Module Interface', () =>
   Effect.gen(function* () {
     const plan = yield* harnessModule.plan(context)
+
     expect(decodeModulePlan(structuredClone(plan))).toEqual(plan)
     expect(harnessModule.descriptor.protocolVersion).toBe(2)
-    expect(plan.outputs).toHaveLength(8)
-    expect(plan.outputs[0]).toMatchObject({
-      kind: 'ManagedTree',
-      locator: { root: 'IntegrationWorkspace', path: 'managed' },
-    })
-    expect(plan.outputs.filter(output => output.kind === 'PinnedReferenceTree')).toEqual([
+    expect(plan).toMatchObject({ requirements: [], checks: [], issues: [] })
+    expect(plan.outputs).toEqual([
       expect.objectContaining({
+        kind: 'ManagedTree',
+        id: 'effect.managed',
+        locator: { root: 'IntegrationWorkspace', path: 'managed' },
+      }),
+      expect.objectContaining({
+        kind: 'ManagedBlock',
+        id: 'effect.agent-routing',
+        blockId: 'effect-harness-routing',
+        locator: { root: 'ControlRoot', path: 'AGENTS.md' },
+        content: expect.stringContaining('.prelude/'),
+      }),
+      expect.objectContaining({
+        kind: 'PinnedReferenceTree',
         id: 'effect.reference.effect',
         locator: { root: 'IntegrationWorkspace', path: 'repos/effect' },
         referenceOnly: true,
       }),
       expect.objectContaining({
+        kind: 'PinnedReferenceTree',
         id: 'effect.reference.tsgo',
         locator: { root: 'IntegrationWorkspace', path: 'repos/tsgo' },
         referenceOnly: true,
       }),
     ])
-    expect(plan.outputs[1]).toMatchObject({
-      blockId: 'effect-harness-routing',
-      locator: { root: 'ControlRoot', path: 'AGENTS.md' },
-      content: expect.stringContaining('.prelude/'),
-    })
-    expect(plan.requirements).toContainEqual(expect.objectContaining({
-      packageName: acceptedEffectBaseline.packages.platformNode.packageName,
-      range: acceptedEffectBaseline.packages.platformNode.range,
-      section: acceptedEffectBaseline.packages.platformNode.target.defaultSection,
-    }))
-    expect(plan.issues).toHaveLength(1)
-    expect(plan.issues[0]?.guidance).toBe('artifact-assets/effect/managed/docs/package-config.md')
   }))
 
-it.effect('shares Integration Outputs while planning policy per selected package root', () =>
+it.effect('does not inspect or plan Target-specific topology or executable configuration', () =>
   Effect.gen(function* () {
-    const packageRoots = ['apps/api', 'packages/effect-runtime'] as const
+    let targetReadCount = 0
     const plan = yield* harnessModule.plan({
       ...context,
-      integration: { ...context.integration, packageRoots: [...packageRoots] },
-    })
-
-    expect(plan.outputs.filter(output => output.kind === 'ManagedTree')).toHaveLength(1)
-    expect(plan.outputs.filter(output => output.kind === 'PinnedReferenceTree')).toHaveLength(2)
-    expect(plan.outputs.filter(output => output.kind === 'JsonKeyedItem')).toEqual(
-      packageRoots.map(packageRoot => expect.objectContaining({
-        locator: { root: 'PackageRoot', packageRoot, path: 'tsconfig.json' },
-      })),
-    )
-    expect(new Set(plan.requirements.map(requirement => requirement.packageRoot))).toEqual(new Set(packageRoots))
-    expect(new Set(plan.checks.map(check => check.packageRoot))).toEqual(new Set(packageRoots))
-    expect(plan.outputs.some(output =>
-      output.locator.root === 'IntegrationWorkspace'
-      && (output.locator.path === 'feedback' || output.locator.path.startsWith('feedback/')),
-    )).toBe(false)
-  }))
-
-it.effect('preserves peer-based library package semantics in Requirements', () =>
-  Effect.gen(function* () {
-    const packageRoot = 'packages/contracts'
-    const plan = yield* harnessModule.plan({
-      ...context,
-      integration: { ...context.integration, packageRoots: [packageRoot] },
+      integration: {
+        ...context.integration,
+        packageRoots: ['apps/api', 'packages/effect-runtime'],
+      },
       target: {
-        ...context.target,
-        readPackageManifest: () => Effect.succeed({
-          peerDependencies: { effect: acceptedEffectBaseline.packages.effect.range },
-          devDependencies: { effect: acceptedEffectBaseline.packages.effect.range },
+        readBytes: () => Effect.sync(() => {
+          targetReadCount += 1
+          return undefined
+        }),
+        readText: () => Effect.sync(() => {
+          targetReadCount += 1
+          return 'export default []'
+        }),
+        readDirectory: () => Effect.sync(() => {
+          targetReadCount += 1
+          return []
+        }),
+        readPackageManifest: () => Effect.sync(() => {
+          targetReadCount += 1
+          return { dependencies: { effect: '0.0.0' } }
         }),
       },
     })
 
-    expect(plan.requirements).toContainEqual(expect.objectContaining({
-      packageRoot,
-      packageName: 'effect',
-      section: 'devDependencies',
-    }))
-    expect(plan.requirements.some(requirement => requirement.packageName === '@effect/platform-node')).toBe(false)
-  }))
-
-it.effect('preserves application dependencies and its selected optional platform', () =>
-  Effect.gen(function* () {
-    const packageRoot = 'apps/api'
-    const plan = yield* harnessModule.plan({
-      ...context,
-      integration: { ...context.integration, packageRoots: [packageRoot] },
-      target: {
-        ...context.target,
-        readPackageManifest: () => Effect.succeed({
-          dependencies: {
-            '@effect/platform-node': acceptedEffectBaseline.packages.platformNode.range,
-            'effect': acceptedEffectBaseline.packages.effect.range,
-          },
-        }),
-      },
-    })
-
-    expect(plan.requirements).toEqual(expect.arrayContaining([
-      expect.objectContaining({
-        packageName: acceptedEffectBaseline.packages.effect.packageName,
-        range: acceptedEffectBaseline.packages.effect.range,
-        section: 'dependencies',
-      }),
-      expect.objectContaining({
-        packageName: acceptedEffectBaseline.packages.platformNode.packageName,
-        range: acceptedEffectBaseline.packages.platformNode.range,
-        section: 'dependencies',
-      }),
-    ]))
-  }))
-
-it.effect('repairs peer-only Effect packages through devDependencies', () =>
-  Effect.gen(function* () {
-    const packageRoot = 'packages/runtime-contract'
-    const plan = yield* harnessModule.plan({
-      ...context,
-      integration: { ...context.integration, packageRoots: [packageRoot] },
-      target: {
-        ...context.target,
-        readPackageManifest: () => Effect.succeed({
-          peerDependencies: {
-            '@effect/platform-node': acceptedEffectBaseline.packages.platformNode.range,
-            'effect': acceptedEffectBaseline.packages.effect.range,
-          },
-        }),
-      },
-    })
-
-    expect(plan.requirements).toEqual(expect.arrayContaining([
-      expect.objectContaining({ packageRoot, packageName: 'effect', section: 'devDependencies' }),
-      expect.objectContaining({ packageRoot, packageName: '@effect/platform-node', section: 'devDependencies' }),
-    ]))
-  }))
-
-it.effect('projects the complete canonical language-service policy', () =>
-  Effect.gen(function* () {
-    const plan = yield* harnessModule.plan(context)
-    const output = plan.outputs.find(candidate => candidate.kind === 'JsonKeyedItem')
-
-    expect(output).toMatchObject({
-      kind: 'JsonKeyedItem',
-      item: {
-        diagnosticSeverity: {
-          catchToIgnore: 'suggestion',
-          flatMapToMap: 'suggestion',
-        },
-      },
-    })
-
-    if (output?.kind !== 'JsonKeyedItem')
-      throw new Error('Effect language-service policy Output is absent')
-
-    expect(Object.keys(effectTsgoTargetProjection.languageServicePlugin.diagnosticSeverity)).toHaveLength(78)
-    expect(output.item).toEqual(effectTsgoTargetProjection.languageServicePlugin)
-  }))
-
-function planWithEslintConfig(content: string | undefined) {
-  return harnessModule.plan({
-    ...context,
-    target: { ...context.target, readText: () => Effect.succeed(content) },
-  })
-}
-
-it.effect('accepts a canonical ESLint import and composition', () =>
-  Effect.gen(function* () {
-    const plan = yield* planWithEslintConfig('import effectHarnessEslintConfig from \'@sayoriqwq/effect-harness/eslint\'\nexport default [...effectHarnessEslintConfig]')
-    expect(plan.issues).toEqual([])
-  }))
-
-it.effect('accepts an aliased ESLint import and composition', () =>
-  Effect.gen(function* () {
-    const plan = yield* planWithEslintConfig('import effectConfig from \'@sayoriqwq/effect-harness/eslint\'\nexport default [...effectConfig]')
-    expect(plan.issues).toEqual([])
-  }))
-
-it.effect('blocks comments that name the package without importing its binding', () =>
-  Effect.gen(function* () {
-    const plan = yield* planWithEslintConfig('// @sayoriqwq/effect-harness/eslint\nexport default [...effectHarnessEslintConfig]')
-    expect(plan.issues).toHaveLength(1)
-  }))
-
-it.effect('blocks comment pseudo-code that looks like an import and composition', () =>
-  Effect.gen(function* () {
-    const plan = yield* planWithEslintConfig('/*\nimport effectConfig from \'@sayoriqwq/effect-harness/eslint\'\nexport default [...effectConfig]\n*/\nexport default []')
-    expect(plan.issues).toHaveLength(1)
-  }))
-
-it.effect('blocks string pseudo-code that looks like an import and composition', () =>
-  Effect.gen(function* () {
-    const plan = yield* planWithEslintConfig('const example = "import effectConfig from \'@sayoriqwq/effect-harness/eslint\'; export default [...effectConfig]"\nexport default []')
-    expect(plan.issues).toHaveLength(1)
-  }))
-
-it.effect('blocks an imported ESLint config that is not composed', () =>
-  Effect.gen(function* () {
-    const plan = yield* planWithEslintConfig('import effectConfig from \'@sayoriqwq/effect-harness/eslint\'\nexport default []')
-    expect(plan.issues).toHaveLength(1)
-  }))
-
-it.effect('blocks a composition that spreads a different binding', () =>
-  Effect.gen(function* () {
-    const plan = yield* planWithEslintConfig('import effectConfig from \'@sayoriqwq/effect-harness/eslint\'\nconst otherConfig = []\nexport default [...otherConfig]')
-    expect(plan.issues).toHaveLength(1)
-  }))
-
-it.effect('blocks the non-iterable Antfu v9 array-spread composition', () =>
-  Effect.gen(function* () {
-    const plan = yield* planWithEslintConfig('import antfu from \'@antfu/eslint-config\'\nimport effectHarness from \'@sayoriqwq/effect-harness/eslint\'\nexport default [...antfu(), ...effectHarness]')
-    expect(plan.issues).toHaveLength(1)
-  }))
-
-it.effect('accepts the executable Antfu v9 append composition', () =>
-  Effect.gen(function* () {
-    const plan = yield* planWithEslintConfig('import antfu from \'@antfu/eslint-config\'\nimport effectHarness from \'@sayoriqwq/effect-harness/eslint\'\nexport default antfu().append(...effectHarness)')
-    expect(plan.issues).toEqual([])
-  }))
-
-it.effect('blocks absent and unrelated ESLint config', () =>
-  Effect.gen(function* () {
-    const absent = yield* planWithEslintConfig(undefined)
-    const other = yield* planWithEslintConfig('export default []')
-    expect(absent.issues).toHaveLength(1)
-    expect(other.issues).toHaveLength(1)
+    expect(targetReadCount).toBe(0)
+    expect(plan.outputs).toHaveLength(4)
+    expect(plan.outputs.some(output => output.kind === 'JsonKeyedItem' || output.kind === 'JsonValue')).toBe(false)
+    expect(plan).toMatchObject({ requirements: [], checks: [], issues: [] })
   }))

@@ -8,18 +8,17 @@ The module creates a read-only plan containing:
 
 - one complete Integration-scoped `managed/**` ManagedTree;
 - verified, reference-only pinned source snapshots under sibling `repos/**`;
-- a bounded Control Root agent-routing block;
-- package-scoped TypeScript policy for every explicitly approved Package Root;
-- Control Root editor exclusions, package requirements, target checks, and
-  blocking integration Issues.
+- a bounded Control Root agent-routing block.
 
 `feedback/**` remains target-owned and is never an Output. Pinned repositories
 are delivered offline from deterministic canonical archives stored as ordinary
 Artifact files and carry immutable source provenance; Target
 agents may inspect them but application and test code must not import them.
 Target adaptation is performed by the delivered managed skill,
-which externalizes package selection and TypeScript topology into approved
-Target configuration before handing control back to the Target.
+which reads immutable managed Baseline and canonical policy data, observes the
+real repository, proposes and obtains authorization for Target-owned package,
+lockfile, TypeScript, activation, lint, editor, and verification changes, proves
+actual tool behavior, and hands control back to the Target.
 
 ## Reference publication authority
 
@@ -48,7 +47,7 @@ host and decides how a valid plan is applied.
 - `src/harness/Baseline.ts`: accepted package versions, roles, Target
   requirement semantics, and Source Pin identities.
 - `src/harness/Policy.ts`: canonical complete Effect language-service policy
-  plus semantic-equivalent self and Target projections.
+  plus semantic-equivalent self and managed-data projections.
 - `tsconfig.effect.json`: checked-in, verified self projection consumed by the
   root `tsconfig.json`; ordinary typechecking never imports `dist`.
 - `src/harness/EslintPolicy.ts`: the two canonical pinned-reference import
@@ -62,7 +61,8 @@ host and decides how a valid plan is applied.
 - `src/eslint.ts`: stable, composable public adapter over the canonical minimal
   ESLint policy; root `eslint.config.mjs` consumes the same policy directly from
   source. Target owners choose every other lint rule.
-- `artifact-assets/effect/managed/**`: complete target documentation bundle.
+- `artifact-assets/effect/managed/**`: complete Target documentation, immutable
+  Baseline and canonical policy data, and the delivered Control Handoff skill.
 - `repos/effect/**`, `repos/tsgo/**`, and their subtree contracts: repository
   Source Pin inputs excluded from the published Artifact.
 

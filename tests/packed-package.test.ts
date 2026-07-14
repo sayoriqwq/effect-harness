@@ -71,7 +71,48 @@ it.effect('packs only the supported Artifact surface', () => Effect.sync(() => {
     renameSync(join(scopeDirectory, 'package'), installedArtifact)
     expect(lstatSync(installedArtifact).isSymbolicLink()).toBe(false)
     symlinkSync(join(root, 'node_modules/@antfu'), join(consumer, 'node_modules/@antfu'), 'dir')
+    symlinkSync(
+      join(root, 'node_modules/@sayoriqwq/prelude-contract'),
+      join(scopeDirectory, 'prelude-contract'),
+      'dir',
+    )
+    symlinkSync(join(root, 'node_modules/effect'), join(consumer, 'node_modules/effect'), 'dir')
     writeFileSync(join(consumer, 'package.json'), '{"type":"module"}\n')
+    writeFileSync(join(consumer, 'prelude-consumer.mjs'), [
+      'import * as publicModule from \'@sayoriqwq/effect-harness/prelude\'',
+      'import { Effect } from \'effect\'',
+      'let targetReadCount = 0',
+      'const missing = () => Effect.succeed(undefined)',
+      'const observed = () => Effect.sync(() => { targetReadCount += 1; return undefined })',
+      'const plan = await Effect.runPromise(publicModule.harnessModule.plan({',
+      '  integration: { integrationId: \'effect\', packageRoots: [\'apps/api\', \'packages/runtime\'] },',
+      '  artifact: { packageName: \'@sayoriqwq/effect-harness\', packageVersion: \'fixture\', module: \'@sayoriqwq/effect-harness/prelude\', resolutionId: \'fixture\' },',
+      '  host: { supportedProtocolVersions: [2], supportedFeatures: [...publicModule.harnessModule.descriptor.requiredFeatures] },',
+      '  artifactAssets: { readBytes: missing, readText: missing, readDirectory: missing },',
+      '  target: { readBytes: observed, readText: observed, readDirectory: observed, readPackageManifest: observed },',
+      '}))',
+      'console.log(JSON.stringify({',
+      '  exports: Object.keys(publicModule),',
+      '  targetReadCount,',
+      '  outputs: plan.outputs.map(({ kind, id }) => ({ kind, id })),',
+      '  requirements: plan.requirements, checks: plan.checks, issues: plan.issues,',
+      '}))',
+      '',
+    ].join('\n'))
+    const packedPrelude = JSON.parse(run('node', ['prelude-consumer.mjs'], consumer))
+    expect(packedPrelude).toEqual({
+      exports: ['harnessModule'],
+      targetReadCount: 0,
+      outputs: [
+        { kind: 'ManagedTree', id: 'effect.managed' },
+        { kind: 'ManagedBlock', id: 'effect.agent-routing' },
+        { kind: 'PinnedReferenceTree', id: 'effect.reference.effect' },
+        { kind: 'PinnedReferenceTree', id: 'effect.reference.tsgo' },
+      ],
+      requirements: [],
+      checks: [],
+      issues: [],
+    })
     writeFileSync(join(consumer, 'eslint.config.mjs'), [
       'import antfu from \'@antfu/eslint-config\'',
       'import effectHarness from \'@sayoriqwq/effect-harness/eslint\'',
