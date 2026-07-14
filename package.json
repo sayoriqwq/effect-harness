@@ -41,14 +41,20 @@
     "prepare": "effect-tsgo patch",
     "source-pin:publish:effect": "partita pin publish --name effect --prefix repos/effect --contract repos/effect.subtree.json --archive artifact-assets/effect/reference-archives/effect.pta --provenance artifact-assets/effect/reference-archives/effect.json",
     "source-pin:publish:tsgo": "partita pin publish --name tsgo --prefix repos/tsgo --contract repos/tsgo.subtree.json --archive artifact-assets/effect/reference-archives/tsgo.pta --provenance artifact-assets/effect/reference-archives/tsgo.json",
+    "source-pins:check-clean": "git diff --exit-code HEAD -- artifact-assets/effect/reference-archives/effect.pta artifact-assets/effect/reference-archives/effect.json artifact-assets/effect/reference-archives/tsgo.pta artifact-assets/effect/reference-archives/tsgo.json",
     "source-pins:publish": "pnpm source-pin:publish:effect && pnpm source-pin:publish:tsgo",
-    "test": "vitest run tests/*.test.ts",
-    "typecheck": "tsc --noEmit",
-    "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm lint --max-warnings 0 && pnpm knip"
+    "test": "vitest run",
+    "test:focused": "vitest run",
+    "typecheck": "pnpm typecheck:source && pnpm typecheck:tests && pnpm typecheck:tooling",
+    "typecheck:source": "tsc --noEmit -p tsconfig.build.json",
+    "typecheck:tests": "tsc6 --noEmit -p tsconfig.tests.json",
+    "typecheck:tooling": "tsc6 --noEmit -p tsconfig.tooling.json",
+    "verify": "pnpm build && pnpm source-pins:check-clean && pnpm typecheck && pnpm test && pnpm lint --max-warnings 0 && pnpm knip"
   },
   "knip": {
     "ignoreDependencies": [
-      "@effect/language-service"
+      "@effect/language-service",
+      "@effect/platform-node"
     ]
   },
   "dependencies": {

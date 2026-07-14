@@ -55,6 +55,27 @@ source.
 
 ## Verification
 
+The hard gate builds and packs the Artifact, typechecks the complete source,
+test, and tooling project graph, runs every test under `tests/**` (including
+packed distribution acceptance and policy conformance), then runs lint and
+unused-code analysis. Production source uses the patched native compiler with
+the canonical Effect policy. Repository test and tooling infrastructure uses
+the accepted TypeScript 6 compatibility compiler so Node fixture, process, and
+packaging orchestration remains strictly typechecked without being mistaken for
+Target Effect application code. Immediately after build, verification rejects
+any byte drift in the four tracked Effect/tsgo Source Pin publication files;
+unrelated worktree changes are outside that scoped cleanliness check.
+
 ```bash
 pnpm verify
+```
+
+For focused implementation loops, use the stable project boundaries or pass a
+test path without weakening the final gate:
+
+```bash
+pnpm typecheck:source
+pnpm typecheck:tests
+pnpm typecheck:tooling
+pnpm test:focused -- tests/prelude-module.test.ts
 ```
