@@ -70,6 +70,25 @@ unrelated worktree changes are outside that scoped cleanliness check.
 pnpm verify
 ```
 
+The release-level cross-repository Gate verifies every participating repository,
+then packs Prelude Contract, Partita, Effect Harness, and Prelude before
+exercising the complete publication and Target convergence chain. It uses the
+real bounded tsgo Source Pin, publishes it twice through the packed Partita CLI,
+compares those bytes with the packed Harness, and runs Prelude against isolated
+Targets with Git replaced by a failing sentinel. The Gate also proves
+archive-drift repair and preservation of Target-owned feedback through
+Prelude's packed Effect acceptance.
+
+The sibling repositories default to `../partita` and `../prelude`; CI or a
+release workspace may select explicit checkouts with `PARTITA_ROOT` and
+`PRELUDE_ROOT`.
+Set `CROSS_REPO_KEEP_TEMP=1` to preserve tarballs, publication evidence, and
+isolated Targets after a failure.
+
+```bash
+pnpm acceptance:cross-repo
+```
+
 For focused implementation loops, use the stable project boundaries or pass a
 test path without weakening the final gate:
 

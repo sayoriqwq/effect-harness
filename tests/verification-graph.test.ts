@@ -37,6 +37,7 @@ it.effect('runs the complete graph and keeps focused entry points', () => Effect
   const { scripts } = JSON.parse(manifest) as { scripts: Readonly<Record<string, string>> }
 
   expect(scripts).toMatchObject({
+    'acceptance:cross-repo': 'node --experimental-strip-types scripts/cross-repo-acceptance.ts',
     'test': 'vitest run',
     'test:focused': 'vitest run',
     'typecheck': 'pnpm typecheck:source && pnpm typecheck:tests && pnpm typecheck:tooling',

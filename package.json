@@ -33,6 +33,7 @@
   },
   "scripts": {
     "build": "pnpm source-pins:publish && tsdown --config tsdown.config.ts",
+    "acceptance:cross-repo": "node --experimental-strip-types scripts/cross-repo-acceptance.ts",
     "prepack": "pnpm build",
     "dev": "pnpm build",
     "knip": "knip",
