@@ -13,11 +13,13 @@ it in dependency order. The released baseline is Partita 0.2.2, Prelude Contract
 
 Partita owns generic Source Pin verification and publication; Effect Harness
 owns the concrete Effect and tsgo pin selection plus Target delivery policy;
-Prelude Contract owns the canonical archive wire contract; Prelude owns Target
-convergence and mutation. Raw repositories and their subtree contracts remain
-repository-only source-maintenance inputs. The npm Artifact transports only
-their verified Partita publications alongside the final managed bundle and
-public adapters.
+Prelude Contract owns the canonical archive wire contract; Prelude owns
+convergence and mutation of active Harness-owned Outputs. After stable Output
+delivery, the Effect Harness-delivered skill may mutate Target-owned surfaces
+only through explicit Control Handoff authorization. Raw repositories and their
+subtree contracts remain repository-only source-maintenance inputs. The npm
+Artifact transports only their verified Partita publications alongside the
+final managed bundle and public adapters.
 
 Before changing module planning, read `HARNESS.md`, `README.md`,
 `src/prelude.ts`, `src/eslint.ts`, and `artifact-assets/effect/managed/docs/`.
@@ -35,8 +37,9 @@ Before changing module planning, read `HARNESS.md`, `README.md`,
   application and test code must not import any pinned tree.
 - The retired provider profile, discovery API, provider record, and lifecycle
   surface are not supplied. Do not restore them.
-- The Artifact does not own target mutation, package installation, or a
-  target-local dispatcher.
+- The Harness Module does not own Target mutation, package installation, or a
+  target-local dispatcher. The delivered skill may adapt Target-owned surfaces
+  only after explicit authorization.
 
 ## Baseline
 

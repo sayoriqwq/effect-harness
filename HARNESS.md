@@ -33,19 +33,20 @@ tsgo Source Pin identities; `SourcePins.ts` binds each Partita publication to
 its Integration Workspace locator, routing, and `referenceOnly` Target meaning.
 Artifact packaging includes those already-published ordinary files and does not
 inspect or reinterpret Source Pin trees. [Prelude](https://github.com/yume-infra/prelude/blob/main/docs/v2-harness-convergence-contract.md#pinned-reference-trees)
-is the consumer and only Target mutation host: it validates offline, reports
-Reference Drift, applies complete-tree replacement after exact approval, and
-leaves sibling `feedback/**` untouched.
+is the consumer and only materialization host for active Harness-owned Outputs:
+it validates offline, reports Reference Drift, applies complete-tree replacement
+after exact approval, and leaves sibling `feedback/**` untouched.
 
 The retired provider profile, discovery protocol, provider record, and
-target-maintenance compatibility surface are absent. Prelude is the mutation
-host and decides how a valid plan is applied.
+target-maintenance compatibility surface are absent. Prelude decides how a valid
+plan is applied. After stable Output delivery, the delivered skill may mutate
+Target-owned surfaces only through explicit Control Handoff authorization.
 
 ## Source of truth
 
 - `src/prelude.ts`: Module descriptor and read-only plan.
 - `src/harness/Baseline.ts`: accepted package versions, roles, Target
-  requirement semantics, and Source Pin identities.
+  adaptation semantics, and Source Pin identities.
 - `src/harness/Policy.ts`: canonical complete Effect language-service policy
   plus semantic-equivalent self and managed-data projections.
 - `tsconfig.effect.json`: checked-in, verified self projection consumed by the
