@@ -25,11 +25,11 @@ jobs:
           fetch-depth: 0
           path: effect-harness
 
-      - name: Checkout Prelude 0.4.0 and Contract 0.2.2 Baseline
+      - name: Checkout Prelude Control Handoff Gate Baseline
         uses: actions/checkout@v4
         with:
           repository: yume-infra/prelude
-          ref: 487b1ad75e13b260eba501365aa0e97a492816c4
+          ref: 071e317697684dd26922d79ee47cbd9d9878069a
           path: prelude
 
       - name: Checkout Partita 0.2.2 Baseline

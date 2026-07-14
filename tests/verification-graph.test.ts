@@ -65,7 +65,7 @@ it.effect('pins the released cross-repository Baseline and gates npm publish on 
   expect(workspace).toContain('\'@sayoriqwq/partita\': 0.2.2')
   expect(workspace).toContain('\'@sayoriqwq/prelude-contract\': 0.2.2')
   expect(workflow).toContain('repository: yume-infra/prelude')
-  expect(workflow).toContain('ref: 487b1ad75e13b260eba501365aa0e97a492816c4')
+  expect(workflow).toContain('ref: 071e317697684dd26922d79ee47cbd9d9878069a')
   expect(workflow).toContain('repository: sayoriqwq/partita')
   expect(workflow).toContain('ref: df7b400b5d4c2fc21175d450a589f153be401485')
   expect(workflow).toContain('npm view "$package_spec" version')
