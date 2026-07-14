@@ -20,10 +20,10 @@ import {
 } from '@sayoriqwq/prelude-contract'
 import { defineConfig } from 'tsdown'
 
-const sourcePinNames = ['effect', 'tsgo'] as const
+const sourcePinNames = ['tsgo'] as const
 const archiveDirectory = 'dist/reference-archives'
 
-interface SourcePinContract {
+interface LegacySourcePinContract {
   readonly name: string
   readonly github: {
     readonly repository: string
@@ -55,7 +55,7 @@ export function buildReferenceArchives(options: BuildReferenceArchiveOptions = {
 
 function buildReferenceArchive(root: string, name: typeof sourcePinNames[number]) {
   const contractPath = resolve(root, `repos/${name}.subtree.json`)
-  const contract = JSON.parse(readFileSync(contractPath, 'utf8')) as SourcePinContract
+  const contract = JSON.parse(readFileSync(contractPath, 'utf8')) as LegacySourcePinContract
   const prefix = `repos/${name}`
   if (contract.name !== name || contract.local.prefix !== prefix)
     throw new Error(`Source Pin contract does not own ${prefix}`)
@@ -164,7 +164,7 @@ export default defineConfig({
   },
   tsconfig: 'tsconfig.build.json',
   plugins: [{
-    name: 'effect-harness-reference-archives',
+    name: 'effect-harness-legacy-tsgo-reference-archive',
     writeBundle() {
       buildReferenceArchives({ write: true })
     },

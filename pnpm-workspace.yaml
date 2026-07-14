@@ -7,6 +7,7 @@ cleanupUnusedCatalogs: true
 dedupeDirectDeps: true
 
 minimumReleaseAgeExclude:
+  - '@sayoriqwq/partita'
   - '@typescript/*'
   - typescript
 
@@ -20,8 +21,10 @@ trustPolicy: no-downgrade
 
 trustPolicyExclude:
   - '@effect/platform-node@4.0.0-beta.97'
+  - '@effect/platform-node-shared'
   - '@effect/platform-node-shared@4.0.0-beta.97'
   - '@effect/vitest@4.0.0-beta.97'
+  - effect
   - effect@4.0.0-beta.97
 
 packages: []
@@ -34,6 +37,7 @@ catalog:
   '@effect/platform-node': 4.0.0-beta.97
   '@effect/tsgo': 0.19.0
   '@effect/vitest': 4.0.0-beta.97
+  '@sayoriqwq/partita': 0.2.1
   '@sayoriqwq/prelude-contract': 0.2.0
   '@types/node': ^25.6.0
   '@typescript/native': npm:typescript@7.0.2

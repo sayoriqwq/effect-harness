@@ -1,26 +1,25 @@
 import type { PinnedReferenceTree } from '@sayoriqwq/prelude-contract'
+import { CANONICAL_TREE_ARCHIVE_FORMAT } from '@sayoriqwq/prelude-contract'
+
+import effectPinPublication from '../../prelude-assets/effect/reference-archives/effect.json' with { type: 'json' }
 
 /**
- * Immutable declarations derived from the Source Pin contracts.
+ * Immutable declarations derived from the Source Pin publications.
  *
- * Verification rebuilds each archive and digest with the Contract's canonical
- * framing. Planning only returns these plain declarations and never scans the
- * Artifact.
+ * Partita publishes Effect's archive and generic provenance. Effect Harness
+ * adds only its concrete Target delivery policy. tsgo remains on the legacy
+ * local archive path until its own migration ticket.
  */
 export const pinnedReferenceOutputs = [
   {
     kind: 'PinnedReferenceTree',
     id: 'effect.reference.effect',
     archive: {
-      path: 'dist/reference-archives/effect.pta',
-      format: 'prelude-canonical-tree-archive-v1',
+      path: 'prelude-assets/effect/reference-archives/effect.pta',
+      format: CANONICAL_TREE_ARCHIVE_FORMAT,
     },
     locator: { root: 'IntegrationWorkspace', path: 'repos/effect' },
-    provenance: {
-      sourceUrl: 'https://github.com/Effect-TS/effect-smol',
-      revision: 'f643dbb265093065dc0a61ca6133693dc2401678',
-      treeDigest: 'd797515e8ecb2e164deef65b6b7abde6445201ce9d1e9e584f39d634c2469e95',
-    },
+    provenance: effectPinPublication.provenance,
     referenceOnly: true,
   },
   {

@@ -37,13 +37,14 @@
     "node": ">=22.22.1"
   },
   "scripts": {
-    "build": "tsdown --config tsdown.config.ts",
+    "build": "pnpm source-pin:publish:effect && tsdown --config tsdown.config.ts",
     "prepack": "pnpm build",
     "dev": "pnpm build",
     "knip": "knip",
     "lint": "eslint",
     "lint:fix": "eslint --fix",
     "prepare": "effect-tsgo patch",
+    "source-pin:publish:effect": "partita pin publish --name effect --prefix repos/effect --contract repos/effect.subtree.json --archive prelude-assets/effect/reference-archives/effect.pta --provenance prelude-assets/effect/reference-archives/effect.json",
     "test": "vitest run tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm lint --max-warnings 0 && pnpm knip"
@@ -63,6 +64,7 @@
     "@effect/platform-node": "catalog:",
     "@effect/tsgo": "catalog:",
     "@effect/vitest": "catalog:",
+    "@sayoriqwq/partita": "catalog:",
     "@types/node": "catalog:",
     "@typescript/native": "catalog:",
     "eslint": "catalog:",

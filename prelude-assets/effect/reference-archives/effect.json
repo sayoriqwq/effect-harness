@@ -1,0 +1,12 @@
+{
+  "archive": {
+    "format": "prelude-canonical-tree-archive-v1"
+  },
+  "name": "effect",
+  "provenance": {
+    "sourceUrl": "https://github.com/Effect-TS/effect-smol",
+    "revision": "f643dbb265093065dc0a61ca6133693dc2401678",
+    "treeDigest": "d797515e8ecb2e164deef65b6b7abde6445201ce9d1e9e584f39d634c2469e95"
+  },
+  "schemaVersion": 1
+}

@@ -18,6 +18,9 @@ catalogs:
     '@effect/vitest':
       specifier: 4.0.0-beta.97
       version: 4.0.0-beta.97
+    '@sayoriqwq/partita':
+      specifier: 0.2.1
+      version: 0.2.1
     '@sayoriqwq/prelude-contract':
       specifier: 0.2.0
       version: 0.2.0
@@ -75,6 +78,9 @@ importers:
       '@effect/vitest':
         specifier: 'catalog:'
         version: 4.0.0-beta.97(effect@4.0.0-beta.97)(vitest@4.1.9(@types/node@25.9.4)(vite@8.1.0(@types/node@25.9.4)(jiti@2.7.0)(yaml@2.9.0)))
+      '@sayoriqwq/partita':
+        specifier: 'catalog:'
+        version: 0.2.1(ioredis@5.11.1)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.4
@@ -235,6 +241,13 @@ packages:
     engines: {node: '>=18.0.0'}
     peerDependencies:
       effect: ^4.0.0-beta.97
+
+  '@effect/platform-node@4.0.0-beta.92':
+    resolution: {integrity: sha512-ZNcwKqBb99yw+cj+KQBMgw0xoQl3GDbUtQjnN3cLsIRpfYS/AVcSp4wfURMczvX5PzoR131yOWkqds5Vmm5tLg==}
+    engines: {node: '>=18.0.0'}
+    peerDependencies:
+      effect: ^4.0.0-beta.92
+      ioredis: ^5.7.0
 
   '@effect/platform-node@4.0.0-beta.97':
     resolution: {integrity: sha512-Vd40VLh+Y08Bs37KWtbe9AgO2+t3RKZKGX9YC6ZKAcswu4tXR3CwSI7V2MN+GgS+ez/GLmqH1WrzDDlaIAxKPA==}
@@ -892,6 +905,10 @@ packages:
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
+  '@sayoriqwq/partita@0.2.1':
+    resolution: {integrity: sha512-tkFvLbcdiRIzw9xe86BNfoYAmYoFocRzuInuYfhMpCcacfN8ncxNbB6Dx1oaUoCPJyfQ5xrdRJdWfjXu8Afoow==}
+    hasBin: true
+
   '@sayoriqwq/prelude-contract@0.2.0':
     resolution: {integrity: sha512-3VbugtIZMUBxbX+4Tvq4OV9BtuE9FdI3tbzwPi8+BporymZseQCZ3NY1yRwTSNazOvWKDCZfbMiNoMoWdZHu+Q==}
     engines: {node: '>=22'}
@@ -1373,6 +1390,9 @@ packages:
     peerDependenciesMeta:
       oxc-resolver:
         optional: true
+
+  effect@4.0.0-beta.92:
+    resolution: {integrity: sha512-et6Fy8X9cxhzV/w4U372lB7YCP/B9a8FYVxlx9UMzSgnmwWKxpldnaHz7mHpZHh+OU+ENhU9DO/rTAakmT0sEA==}
 
   effect@4.0.0-beta.97:
     resolution: {integrity: sha512-pK03HpQVxGZOWdwDAy/iwvV8u3KYcUf2mOWyWqaut2zau8V2u6ejWP7b4BELjyUIiZWW1fl/s/VJpgZUcTjThg==}
@@ -2710,11 +2730,31 @@ snapshots:
     optionalDependencies:
       eslint: 10.6.0(jiti@2.7.0)
 
+  '@effect/platform-node-shared@4.0.0-beta.97(effect@4.0.0-beta.92)':
+    dependencies:
+      '@types/ws': 8.18.1
+      effect: 4.0.0-beta.92
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
   '@effect/platform-node-shared@4.0.0-beta.97(effect@4.0.0-beta.97)':
     dependencies:
       '@types/ws': 8.18.1
       effect: 4.0.0-beta.97
       ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+
+  '@effect/platform-node@4.0.0-beta.92(effect@4.0.0-beta.92)(ioredis@5.11.1)':
+    dependencies:
+      '@effect/platform-node-shared': 4.0.0-beta.97(effect@4.0.0-beta.92)
+      effect: 4.0.0-beta.92
+      ioredis: 5.11.1
+      mime: 4.1.0
+      undici: 8.7.0
     transitivePeerDependencies:
       - bufferutil
       - utf-8-validate
@@ -3199,6 +3239,20 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
+  '@sayoriqwq/partita@0.2.1(ioredis@5.11.1)':
+    dependencies:
+      '@effect/platform-node': 4.0.0-beta.92(effect@4.0.0-beta.92)(ioredis@5.11.1)
+      '@sayoriqwq/prelude-contract': 0.2.0(effect@4.0.0-beta.92)
+      effect: 4.0.0-beta.92
+    transitivePeerDependencies:
+      - bufferutil
+      - ioredis
+      - utf-8-validate
+
+  '@sayoriqwq/prelude-contract@0.2.0(effect@4.0.0-beta.92)':
+    dependencies:
+      effect: 4.0.0-beta.92
+
   '@sayoriqwq/prelude-contract@0.2.0(effect@4.0.0-beta.97)':
     dependencies:
       effect: 4.0.0-beta.97
@@ -3633,6 +3687,19 @@ snapshots:
   dts-resolver@2.1.3(oxc-resolver@11.21.3):
     optionalDependencies:
       oxc-resolver: 11.21.3
+
+  effect@4.0.0-beta.92:
+    dependencies:
+      '@standard-schema/spec': 1.1.0
+      fast-check: 4.9.0
+      find-my-way-ts: 0.1.6
+      ini: 7.0.0
+      kubernetes-types: 1.30.0
+      msgpackr: 2.0.4
+      multipasta: 0.2.8
+      toml: 4.1.2
+      uuid: 14.0.1
+      yaml: 2.9.0
 
   effect@4.0.0-beta.97:
     dependencies:
