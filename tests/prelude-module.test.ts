@@ -3,6 +3,7 @@ import { expect, it } from '@effect/vitest'
 import { decodeModulePlan } from '@sayoriqwq/prelude-contract'
 import { Effect } from 'effect'
 
+import { acceptedEffectBaseline } from '../src/harness/Baseline.ts'
 import { effectTsgoTargetProjection } from '../src/harness/Policy.ts'
 import { harnessModule } from '../src/prelude.ts'
 
@@ -57,6 +58,11 @@ it.effect('plans a schema-valid read-only Effect target transition', () =>
       locator: { root: 'ControlRoot', path: 'AGENTS.md' },
       content: expect.stringContaining('.prelude/'),
     })
+    expect(plan.requirements).toContainEqual(expect.objectContaining({
+      packageName: acceptedEffectBaseline.packages.platformNode.packageName,
+      range: acceptedEffectBaseline.packages.platformNode.range,
+      section: acceptedEffectBaseline.packages.platformNode.target.defaultSection,
+    }))
     expect(plan.issues).toHaveLength(1)
     expect(plan.issues[0]?.guidance).toBe('artifact-assets/effect/managed/docs/package-config.md')
   }))
@@ -93,8 +99,8 @@ it.effect('preserves peer-based library package semantics in Requirements', () =
       target: {
         ...context.target,
         readPackageManifest: () => Effect.succeed({
-          peerDependencies: { effect: '4.0.0-beta.97' },
-          devDependencies: { effect: '4.0.0-beta.97' },
+          peerDependencies: { effect: acceptedEffectBaseline.packages.effect.range },
+          devDependencies: { effect: acceptedEffectBaseline.packages.effect.range },
         }),
       },
     })
@@ -107,6 +113,37 @@ it.effect('preserves peer-based library package semantics in Requirements', () =
     expect(plan.requirements.some(requirement => requirement.packageName === '@effect/platform-node')).toBe(false)
   }))
 
+it.effect('preserves application dependencies and its selected optional platform', () =>
+  Effect.gen(function* () {
+    const packageRoot = 'apps/api'
+    const plan = yield* harnessModule.plan({
+      ...context,
+      integration: { ...context.integration, packageRoots: [packageRoot] },
+      target: {
+        ...context.target,
+        readPackageManifest: () => Effect.succeed({
+          dependencies: {
+            '@effect/platform-node': acceptedEffectBaseline.packages.platformNode.range,
+            'effect': acceptedEffectBaseline.packages.effect.range,
+          },
+        }),
+      },
+    })
+
+    expect(plan.requirements).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        packageName: acceptedEffectBaseline.packages.effect.packageName,
+        range: acceptedEffectBaseline.packages.effect.range,
+        section: 'dependencies',
+      }),
+      expect.objectContaining({
+        packageName: acceptedEffectBaseline.packages.platformNode.packageName,
+        range: acceptedEffectBaseline.packages.platformNode.range,
+        section: 'dependencies',
+      }),
+    ]))
+  }))
+
 it.effect('repairs peer-only Effect packages through devDependencies', () =>
   Effect.gen(function* () {
     const packageRoot = 'packages/runtime-contract'
@@ -117,8 +154,8 @@ it.effect('repairs peer-only Effect packages through devDependencies', () =>
         ...context.target,
         readPackageManifest: () => Effect.succeed({
           peerDependencies: {
-            '@effect/platform-node': '4.0.0-beta.97',
-            'effect': '4.0.0-beta.97',
+            '@effect/platform-node': acceptedEffectBaseline.packages.platformNode.range,
+            'effect': acceptedEffectBaseline.packages.effect.range,
           },
         }),
       },

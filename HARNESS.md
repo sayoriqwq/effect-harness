@@ -28,6 +28,8 @@ host and decides how a valid plan is applied.
 ## Source of truth
 
 - `src/prelude.ts`: Module descriptor and read-only plan.
+- `src/harness/Baseline.ts`: accepted package versions, roles, Target
+  requirement semantics, and Source Pin identities.
 - `src/harness/Policy.ts`: canonical complete Effect language-service policy
   plus semantic-equivalent self and Target projections.
 - `tsconfig.effect.json`: checked-in, verified self projection consumed by the
@@ -46,10 +48,10 @@ host and decides how a valid plan is applied.
 - `repos/effect/**`, `repos/tsgo/**`, and their subtree contracts: repository
   Source Pin inputs excluded from the published Artifact.
 
-The accepted package baseline is Effect `4.0.0-beta.97`, `@effect/tsgo`
-`0.19.0`, the TypeScript 6 compatibility API package
-`npm:@typescript/typescript6@6.0.2`, and the real native TypeScript 7 compiler
-`npm:typescript@7.0.2` installed as `@typescript/native`.
+`src/harness/Baseline.ts` is the only source definition of accepted package
+versions. The root manifest, pnpm catalog, and managed guidance are checked-in
+projections verified against it because those formats cannot import TypeScript
+source.
 
 ## Verification
 

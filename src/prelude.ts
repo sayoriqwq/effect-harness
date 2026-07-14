@@ -8,6 +8,7 @@ import {
 import { Effect } from 'effect'
 import * as TypeScript from 'typescript'
 
+import { acceptedEffectBaseline } from './harness/Baseline.ts'
 import { effectTsgoTargetProjection } from './harness/Policy.ts'
 import { pinnedReferenceOutputs } from './harness/SourcePins.ts'
 
@@ -52,14 +53,22 @@ const editorPolicyOutputs = [
   },
 ] as const satisfies ModulePlan['outputs']
 
-const packageDevRequirements = [
-  { id: 'vitest', packageName: '@effect/vitest', range: '4.0.0-beta.97', section: 'devDependencies' },
-  { id: 'tsgo', packageName: '@effect/tsgo', range: '0.19.0', section: 'devDependencies' },
-  { id: 'native-typescript', packageName: '@typescript/native', range: 'npm:typescript@7.0.2', section: 'devDependencies' },
+const baselineDevRequirements = [
+  acceptedEffectBaseline.packages.effectVitest,
+  acceptedEffectBaseline.packages.tsgo,
+  acceptedEffectBaseline.packages.nativeTypescript,
+  acceptedEffectBaseline.packages.typescript,
+].map(entry => ({
+  id: entry.id,
+  packageName: entry.packageName,
+  range: entry.range,
+  section: entry.target.defaultSection,
+})) satisfies ReadonlyArray<Omit<PackageRequirement, 'id' | 'packageRoot'> & { readonly id: string }>
+
+const deliveryToolRequirements = [
   { id: 'eslint', packageName: 'eslint', range: '^10.3.0', section: 'devDependencies' },
   { id: 'antfu-eslint-config', packageName: '@antfu/eslint-config', range: '^9.0.0', section: 'devDependencies' },
   { id: 'vitest-runner', packageName: 'vitest', range: '^4.1.8', section: 'devDependencies' },
-  { id: 'typescript', packageName: 'typescript', range: 'npm:@typescript/typescript6@6.0.2', section: 'devDependencies' },
 ] as const satisfies ReadonlyArray<Omit<PackageRequirement, 'id' | 'packageRoot'> & { readonly id: string }>
 
 type RequirementSection = PackageRequirement['section']
@@ -97,13 +106,14 @@ function selectedSection(
   manifest: Readonly<Record<string, unknown>> | undefined,
   packageName: string,
   fallback: RequirementSection,
+  peerFallback: RequirementSection,
 ): RequirementSection {
   if (hasManifestDependency(manifest, 'dependencies', packageName))
     return 'dependencies'
   if (hasManifestDependency(manifest, 'devDependencies', packageName))
     return 'devDependencies'
   if (hasManifestDependency(manifest, 'peerDependencies', packageName))
-    return 'devDependencies'
+    return peerFallback
   return fallback
 }
 
@@ -116,23 +126,44 @@ function hasDeclaredDependency(
     || hasManifestDependency(manifest, 'peerDependencies', packageName)
 }
 
+function shouldPlanBaselinePackage(
+  manifest: Readonly<Record<string, unknown>> | undefined,
+  entry: typeof acceptedEffectBaseline.packages.effect | typeof acceptedEffectBaseline.packages.platformNode,
+): boolean {
+  return entry.target.presence === 'required'
+    || manifest === undefined
+    || hasDeclaredDependency(manifest, entry.packageName)
+}
+
 function requirementsFor(
   packageRoot: string,
   manifest: Readonly<Record<string, unknown>> | undefined,
 ): ModulePlan['requirements'] {
   const rootKey = packageRootKey(packageRoot)
+  const runtime = acceptedEffectBaseline.packages.effect
+  const platform = acceptedEffectBaseline.packages.platformNode
   const runtimeRequirements = [{
-    id: 'runtime',
-    packageName: 'effect',
-    range: '4.0.0-beta.97',
-    section: selectedSection(manifest, 'effect', 'dependencies'),
+    id: runtime.id,
+    packageName: runtime.packageName,
+    range: runtime.range,
+    section: selectedSection(
+      manifest,
+      runtime.packageName,
+      runtime.target.defaultSection,
+      runtime.target.peerFallbackSection,
+    ),
   }]
-  const platformSection = selectedSection(manifest, '@effect/platform-node', 'dependencies')
-  const platformRequirements = manifest === undefined || hasDeclaredDependency(manifest, '@effect/platform-node')
-    ? [{ id: 'platform-node', packageName: '@effect/platform-node', range: '4.0.0-beta.97', section: platformSection }]
+  const platformSection = selectedSection(
+    manifest,
+    platform.packageName,
+    platform.target.defaultSection,
+    platform.target.peerFallbackSection,
+  )
+  const platformRequirements = shouldPlanBaselinePackage(manifest, platform)
+    ? [{ id: platform.id, packageName: platform.packageName, range: platform.range, section: platformSection }]
     : []
 
-  return [...runtimeRequirements, ...platformRequirements, ...packageDevRequirements].map(requirement => ({
+  return [...runtimeRequirements, ...platformRequirements, ...baselineDevRequirements, ...deliveryToolRequirements].map(requirement => ({
     ...requirement,
     id: `effect.${requirement.id}.${rootKey}`,
     packageRoot,

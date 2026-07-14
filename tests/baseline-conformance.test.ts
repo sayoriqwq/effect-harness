@@ -3,6 +3,7 @@ import { resolve } from 'node:path'
 import { expect, it } from '@effect/vitest'
 import { Effect } from 'effect'
 
+import { acceptedEffectBaseline } from '../src/harness/Baseline.ts'
 import {
   canonicalEffectTsgoPolicy,
   effectTsgoSelfProjection,
@@ -12,12 +13,9 @@ import {
 const root = resolve(import.meta.dirname, '..')
 
 it.effect('keeps the installed package graph on the accepted TS7 Effect baseline', () => Effect.sync(() => {
-  expect(packageIdentity('effect')).toEqual({ name: 'effect', version: '4.0.0-beta.97' })
-  expect(packageIdentity('@effect/platform-node')).toEqual({ name: '@effect/platform-node', version: '4.0.0-beta.97' })
-  expect(packageIdentity('@effect/vitest')).toEqual({ name: '@effect/vitest', version: '4.0.0-beta.97' })
-  expect(packageIdentity('@effect/tsgo')).toEqual({ name: '@effect/tsgo', version: '0.19.0' })
-  expect(packageIdentity('typescript')).toEqual({ name: '@typescript/typescript6', version: '6.0.2' })
-  expect(packageIdentity('@typescript/native')).toEqual({ name: 'typescript', version: '7.0.2' })
+  for (const entry of Object.values(acceptedEffectBaseline.packages)) {
+    expect(packageIdentity(entry.packageName)).toEqual(entry.installedIdentity)
+  }
 }))
 
 it.effect('self-hosts the verified source projection through tsconfig inheritance', () => Effect.sync(() => {

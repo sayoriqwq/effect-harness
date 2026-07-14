@@ -3,6 +3,20 @@
 Use installed `effect`, `@effect/platform-node`, and `@effect/vitest` packages.
 Never import the delivered `repos/**` reference trees.
 
+| Role | Package | Accepted range | Presence | Default section | Peer fallback |
+| --- | --- | --- | --- | --- | --- |
+| `runtime` | `effect` | `4.0.0-beta.97` | `required` | `dependencies` | `devDependencies` |
+| `optional-platform` | `@effect/platform-node` | `4.0.0-beta.97` | `declared-or-manifest-unavailable` | `dependencies` | `devDependencies` |
+| `effect-test-integration` | `@effect/vitest` | `4.0.0-beta.97` | `required` | `devDependencies` | `devDependencies` |
+| `effect-compiler-patch` | `@effect/tsgo` | `0.19.0` | `required` | `devDependencies` | `devDependencies` |
+| `typescript-api` | `typescript` | `npm:@typescript/typescript6@6.0.2` | `required` | `devDependencies` | `devDependencies` |
+| `native-compiler` | `@typescript/native` | `npm:typescript@7.0.2` | `required` | `devDependencies` | `devDependencies` |
+
+For peer-only libraries, the peer fallback provides local verification without
+changing the published runtime role. The optional platform follows the same
+fallback when declared only as a peer. Target adaptation owns package selection
+and placement; it does not change these accepted versions or roles.
+
 ## Working rules
 
 - Model services with the current Effect v4 service APIs and compose their
