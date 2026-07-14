@@ -16,7 +16,7 @@ const routingBlock = `## Effect Harness\n\nFor Effect application, test, package
 const managedTreeOutput = {
   kind: 'ManagedTree',
   id: 'effect.managed',
-  sourceRoot: 'prelude-assets/effect/managed',
+  sourceRoot: 'artifact-assets/effect/managed',
   locator: { root: 'IntegrationWorkspace', path: 'managed' },
 } as const satisfies ModulePlan['outputs'][number]
 
@@ -160,7 +160,7 @@ function eslintIntegrationIssue(content: string | undefined) {
     summary: 'Target ESLint config does not compose Effect Harness guardrails',
     detail: 'The target-owned eslint.config.mjs must import and include @sayoriqwq/effect-harness/eslint.',
     evidence: content === undefined ? 'eslint.config.mjs is absent.' : 'eslint.config.mjs does not reference the stable Effect Harness ESLint export.',
-    guidance: 'prelude-assets/effect/managed/docs/package-config.md',
+    guidance: 'artifact-assets/effect/managed/docs/package-config.md',
   }] as const
 }
 

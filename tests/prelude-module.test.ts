@@ -58,7 +58,7 @@ it.effect('plans a schema-valid read-only Effect target transition', () =>
       content: expect.stringContaining('.prelude/'),
     })
     expect(plan.issues).toHaveLength(1)
-    expect(plan.issues[0]?.guidance).toBe('prelude-assets/effect/managed/docs/package-config.md')
+    expect(plan.issues[0]?.guidance).toBe('artifact-assets/effect/managed/docs/package-config.md')
   }))
 
 it.effect('shares Integration Outputs while planning policy per selected package root', () =>

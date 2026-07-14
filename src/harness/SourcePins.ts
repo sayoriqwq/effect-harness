@@ -1,8 +1,8 @@
 import type { PinnedReferenceTree } from '@sayoriqwq/prelude-contract'
 import { CANONICAL_TREE_ARCHIVE_FORMAT } from '@sayoriqwq/prelude-contract'
 
-import effectPinPublication from '../../prelude-assets/effect/reference-archives/effect.json' with { type: 'json' }
-import tsgoPinPublication from '../../prelude-assets/effect/reference-archives/tsgo.json' with { type: 'json' }
+import effectPinPublication from '../../artifact-assets/effect/reference-archives/effect.json' with { type: 'json' }
+import tsgoPinPublication from '../../artifact-assets/effect/reference-archives/tsgo.json' with { type: 'json' }
 
 /**
  * Immutable declarations derived from the Source Pin publications.
@@ -15,7 +15,7 @@ export const pinnedReferenceOutputs = [
     kind: 'PinnedReferenceTree',
     id: 'effect.reference.effect',
     archive: {
-      path: 'prelude-assets/effect/reference-archives/effect.pta',
+      path: 'artifact-assets/effect/reference-archives/effect.pta',
       format: CANONICAL_TREE_ARCHIVE_FORMAT,
     },
     locator: { root: 'IntegrationWorkspace', path: 'repos/effect' },
@@ -26,7 +26,7 @@ export const pinnedReferenceOutputs = [
     kind: 'PinnedReferenceTree',
     id: 'effect.reference.tsgo',
     archive: {
-      path: 'prelude-assets/effect/reference-archives/tsgo.pta',
+      path: 'artifact-assets/effect/reference-archives/tsgo.pta',
       format: CANONICAL_TREE_ARCHIVE_FORMAT,
     },
     locator: { root: 'IntegrationWorkspace', path: 'repos/tsgo' },

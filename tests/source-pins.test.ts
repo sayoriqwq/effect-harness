@@ -10,7 +10,7 @@ import { pinnedReferenceOutputs } from '../src/harness/SourcePins.ts'
 const repositoryRoot = resolve(import.meta.dirname, '..')
 
 it.effect('consumes both Partita publications with Harness delivery policy', () => Effect.sync(() => {
-  const publicationRoot = resolve(repositoryRoot, 'prelude-assets/effect/reference-archives')
+  const publicationRoot = resolve(repositoryRoot, 'artifact-assets/effect/reference-archives')
   const pins = [
     { name: 'effect', id: 'effect.reference.effect', targetPath: 'repos/effect' },
     { name: 'tsgo', id: 'effect.reference.tsgo', targetPath: 'repos/tsgo' },
@@ -40,7 +40,7 @@ it.effect('consumes both Partita publications with Harness delivery policy', () 
       kind: 'PinnedReferenceTree',
       id: pin.id,
       archive: {
-        path: `prelude-assets/effect/reference-archives/${pin.name}.pta`,
+        path: `artifact-assets/effect/reference-archives/${pin.name}.pta`,
         format: publication.archive.format,
       },
       locator: { root: 'IntegrationWorkspace', path: pin.targetPath },

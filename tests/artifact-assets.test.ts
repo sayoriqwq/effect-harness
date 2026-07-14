@@ -3,39 +3,28 @@ import { fileURLToPath } from 'node:url'
 import { expect, it } from '@effect/vitest'
 import { Effect } from 'effect'
 
+import { managedBundlePaths } from './managed-bundle.ts'
+
 const root = fileURLToPath(new URL('..', import.meta.url))
 const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 
-it.effect('declares and retains Artifact-internal source diagnostics for packing', () => Effect.sync(() => {
-  expect(packageJson.files).toEqual(expect.arrayContaining([
-    'diagnostics',
-    'repos/effect',
-    'repos/tsgo',
-    'repos/effect.subtree.json',
-    'repos/tsgo.subtree.json',
-  ]))
-  expect(existsSync(`${root}repos/effect/LLMS.md`)).toBe(true)
-  expect(existsSync(`${root}repos/tsgo/README.md`)).toBe(true)
-  expect(existsSync(`${root}repos/effect.subtree.json`)).toBe(true)
-  expect(existsSync(`${root}repos/tsgo.subtree.json`)).toBe(true)
-  expect(existsSync(`${root}diagnostics/index.md`)).toBe(true)
-
-  const diagnosticsIndex = readFileSync(`${root}diagnostics/index.md`, 'utf8')
-  expect(diagnosticsIndex).toContain('Integration Workspace `managed/**`')
-  expect(diagnosticsIndex).not.toContain('`effect/managed/**`')
+it.effect('declares only coherent Artifact distribution roots', () => Effect.sync(() => {
+  expect(packageJson.files).toEqual(['artifact-assets', 'dist'])
+  expect(existsSync(`${root}diagnostics`)).toBe(false)
+  expect(existsSync(`${root}prelude-assets`)).toBe(false)
 }))
 
 it.effect('ships the Target Adaptation skill in the managed bundle', () => Effect.sync(() => {
-  const skillPath = `${root}prelude-assets/effect/managed/skills/adapt-effect-target/SKILL.md`
+  const skillPath = `${root}artifact-assets/effect/managed/skills/adapt-effect-target/SKILL.md`
   expect(existsSync(skillPath)).toBe(true)
-  expect(existsSync(`${root}prelude-assets/effect/managed/skills/adapt-effect-target/agents/openai.yaml`)).toBe(true)
+  expect(existsSync(`${root}artifact-assets/effect/managed/skills/adapt-effect-target/agents/openai.yaml`)).toBe(true)
   const skill = readFileSync(skillPath, 'utf8')
   expect(skill).toContain('`@effect-diagnostics` suppression directives')
   expect(skill).toContain('local `overrides` or lowered')
 }))
 
 it.effect('ships complete managed routes to delivered Effect and tsgo evidence', () => Effect.sync(() => {
-  const managedDocs = `${root}prelude-assets/effect/managed/docs/`
+  const managedDocs = `${root}artifact-assets/effect/managed/docs/`
   for (const route of [
     'diagnostic-layers.md',
     'effect-source.md',
@@ -59,6 +48,12 @@ it.effect('ships complete managed routes to delivered Effect and tsgo evidence',
   expect(deliveredRoutes.length).toBeGreaterThan(0)
   for (const route of deliveredRoutes) {
     expect(existsSync(`${root}${route}`), `dangling managed route: ${route}`).toBe(true)
+  }
+}))
+
+it.effect('preserves the complete managed Target bundle during the asset-root rename', () => Effect.sync(() => {
+  for (const path of managedBundlePaths) {
+    expect(existsSync(`${root}artifact-assets/effect/managed/${path}`), path).toBe(true)
   }
 }))
 

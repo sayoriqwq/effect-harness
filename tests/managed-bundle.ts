@@ -1,0 +1,16 @@
+export const managedBundlePaths = [
+  'docs/diagnostic-layers.md',
+  'docs/diagnostics.md',
+  'docs/editor-policy.md',
+  'docs/effect-code.md',
+  'docs/effect-source.md',
+  'docs/feedback-loop.md',
+  'docs/index.md',
+  'docs/managed-surfaces.md',
+  'docs/package-config.md',
+  'docs/quality-policy.md',
+  'docs/source-identity.md',
+  'docs/tsgo-source.md',
+  'skills/adapt-effect-target/agents/openai.yaml',
+  'skills/adapt-effect-target/SKILL.md',
+] as const

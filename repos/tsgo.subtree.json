@@ -22,7 +22,7 @@
     "verify": "npx --yes @sayoriqwq/partita pin verify --name tsgo --prefix repos/tsgo --contract repos/tsgo.subtree.json"
   },
   "agent": {
-    "route": "prelude-assets/effect/managed/docs/tsgo-source.md"
+    "route": "artifact-assets/effect/managed/docs/tsgo-source.md"
   },
   "editorPolicy": {
     "autoImportExclude": "block",

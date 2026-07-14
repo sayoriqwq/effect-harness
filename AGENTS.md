@@ -13,26 +13,25 @@ Harness owns the concrete Effect and tsgo pin selection plus Target delivery
 policy; Prelude Contract owns the canonical archive wire contract; Prelude owns
 Target convergence and mutation.
 
-The raw repositories, root diagnostics, current asset-root name, duplicated
-policy, and partial verification graph below describe migration inputs, not the
-desired final publication surface. Keep their current safety boundaries until
-the ticket that owns each migration changes them.
+The raw repositories, duplicated policy, and partial verification graph below
+describe migration inputs, not the desired final publication surface. Keep
+their current safety boundaries until the ticket that owns each migration
+changes them.
 
 Before changing module planning, read `HARNESS.md`, `README.md`,
-`src/prelude.ts`, `src/eslint.ts`, and `prelude-assets/effect/managed/docs/`.
+`src/prelude.ts`, `src/eslint.ts`, and `artifact-assets/effect/managed/docs/`.
 
 ## Boundaries
 
 - Planning is read-only and returns Contract plain data.
-- `prelude-assets/effect/managed/**` is the complete Artifact-managed target
+- `artifact-assets/effect/managed/**` is the complete Artifact-managed target
   bundle. Do not shorten, replace, or project pinned source diagnostics there.
 - Integration Workspace `feedback/**` is target-owned and must never be
   planned as an Output.
-- Pinned `repos/effect/**` and `repos/tsgo/**`, their subtree contracts, and
-  `diagnostics/**` are Artifact-internal source diagnostics shipped with the
-  npm package. The Module may project verified snapshots as reference-only
-  `PinnedReferenceTree` Outputs through canonical archive files; application
-  and test code must not import any pinned tree.
+- Pinned `repos/effect/**` and `repos/tsgo/**` plus their subtree contracts are
+  source-maintenance inputs excluded from the npm package. The Module projects
+  their Partita publications as reference-only `PinnedReferenceTree` Outputs;
+  application and test code must not import any pinned tree.
 - The retired provider profile, discovery API, provider record, and lifecycle
   surface are not supplied. Do not restore them.
 - The Artifact does not own target mutation, package installation, or a

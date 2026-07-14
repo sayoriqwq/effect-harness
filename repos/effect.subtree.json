@@ -22,7 +22,7 @@
     "verify": "npx --yes @sayoriqwq/partita pin verify --name effect --prefix repos/effect --contract repos/effect.subtree.json"
   },
   "agent": {
-    "route": "prelude-assets/effect/managed/docs/effect-source.md"
+    "route": "artifact-assets/effect/managed/docs/effect-source.md"
   },
   "editorPolicy": {
     "autoImportExclude": "block",
