@@ -161,6 +161,14 @@ function assertHarnessArtifact(tarball: string): void {
     readonly exports: Readonly<Record<string, unknown>>
   }
   assert.deepEqual(Object.keys(manifest.exports), ['./prelude', './eslint'])
+  for (const path of [
+    'package/artifact-assets/effect/managed/data/baseline.json',
+    'package/artifact-assets/effect/managed/data/tsgo-policy.json',
+    'package/artifact-assets/effect/managed/skills/adapt-effect-target/SKILL.md',
+    'package/artifact-assets/effect/managed/skills/adapt-effect-target/agents/openai.yaml',
+  ]) {
+    assert.equal(entries.has(path), true, `Packed Harness is missing ${path}`)
+  }
   assert.equal(entries.has('package/artifact-assets/effect/managed/docs/index.md'), true)
   assert.equal(entries.has('package/artifact-assets/effect/reference-archives/effect.pta'), true)
   assert.equal(entries.has('package/artifact-assets/effect/reference-archives/effect.json'), true)
@@ -168,6 +176,40 @@ function assertHarnessArtifact(tarball: string): void {
   assert.equal(entries.has('package/artifact-assets/effect/reference-archives/tsgo.json'), true)
   assert.equal([...entries].some(entry => entry.startsWith('package/repos/')), false)
   assert.equal([...entries].some(entry => entry.startsWith('package/diagnostics/')), false)
+  const baselinePath = 'artifact-assets/effect/managed/data/baseline.json'
+  const policyPath = 'artifact-assets/effect/managed/data/tsgo-policy.json'
+  const baselineBytes = runBytes('tar', ['-xOf', tarball, `package/${baselinePath}`], { cwd: harnessRoot })
+  const policyBytes = runBytes('tar', ['-xOf', tarball, `package/${policyPath}`], { cwd: harnessRoot })
+  assert.deepEqual(baselineBytes, readFileSync(join(harnessRoot, baselinePath)))
+  assert.deepEqual(policyBytes, readFileSync(join(harnessRoot, policyPath)))
+  const baseline = JSON.parse(baselineBytes.toString()) as {
+    readonly versions: Readonly<Record<string, string>>
+    readonly typescriptTopology: Readonly<Record<string, string>>
+  }
+  assert.deepEqual(baseline.versions, {
+    effect: '4.0.0-beta.97',
+    tsgo: '0.19.0',
+    typescript: '6.0.2',
+    nativeTypescript: '7.0.2',
+  })
+  assert.deepEqual(baseline.typescriptTopology, {
+    primaryCompiler: 'nativeTypescript',
+    effectSemanticAuthority: 'tsgo',
+    compilerApiCompatibility: 'typescript',
+  })
+  const policy = JSON.parse(policyBytes.toString()) as Readonly<Record<string, unknown>>
+  assert.equal(policy.name, '@effect/language-service')
+  assert.equal(policy.diagnostics, true)
+  assert.equal(policy.includeSuggestionsInTsc, true)
+  assert.equal(policy.ignoreEffectSuggestionsInTscExitCode, false)
+  assert.equal(policy.ignoreEffectWarningsInTscExitCode, false)
+  assert.equal(policy.ignoreEffectErrorsInTscExitCode, false)
+  const skill = runText('tar', ['-xOf', tarball, 'package/artifact-assets/effect/managed/skills/adapt-effect-target/SKILL.md'], { cwd: harnessRoot })
+  for (const phase of ['Observe', 'Propose', 'Authorize', 'Mutate', 'Verify', 'Hand back'])
+    assert.equal(skill.includes(`**${phase}.**`), true, `Control Handoff skill is missing ${phase}`)
+  assert.equal(skill.includes('one toolchain root and activation owner'), true)
+  assert.equal(skill.includes('Never patch once per package in a monorepo'), true)
+  assert.equal(skill.includes('Never add suppression merely to make verification pass'), true)
   assert.deepEqual(
     runBytes('tar', ['-xOf', tarball, 'package/artifact-assets/effect/reference-archives/tsgo.pta'], { cwd: harnessRoot }),
     readFileSync(join(publicationRoot, 'first.pta')),
