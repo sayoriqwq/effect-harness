@@ -1,9 +1,5 @@
 import antfu from '@antfu/eslint-config'
-import {
-  effectHarnessEslintPlugin,
-  effectTestEslintPolicy,
-  sharedEffectEslintPolicy,
-} from './src/harness/EslintPolicy.ts'
+import { sharedEffectEslintPolicy } from './src/harness/EslintPolicy.ts'
 
 export default antfu(
   {
@@ -19,43 +15,14 @@ export default antfu(
   },
   {
     name: 'effect-harness/source',
-    files: ['bin/**/*.ts', 'src/**/*.ts', 'tests/**/*.{js,mjs,ts}'],
-    plugins: {
-      'effect-harness': effectHarnessEslintPlugin,
-    },
+    files: ['bin/**/*.{js,mjs,ts}', 'src/**/*.{js,mjs,ts}', 'tests/**/*.{js,mjs,ts}'],
     rules: {
       'antfu/no-top-level-await': 'off',
-      ...sharedEffectEslintPolicy.rules,
       'no-restricted-imports': [
         'error',
-        {
-          paths: sharedEffectEslintPolicy.restrictedImports.paths,
-          patterns: sharedEffectEslintPolicy.restrictedImports.patterns,
-        },
-      ],
-      'no-restricted-syntax': [
-        'error',
-        ...sharedEffectEslintPolicy.restrictedSyntax,
+        sharedEffectEslintPolicy.restrictedImports,
       ],
       'test/no-import-node-test': 'off',
-    },
-  },
-  {
-    name: 'effect-harness/effect-vitest-tests',
-    files: ['tests/**/*.test.{js,mjs,ts}'],
-    rules: {
-      'no-restricted-imports': ['error', {
-        paths: [
-          ...sharedEffectEslintPolicy.restrictedImports.paths,
-          ...effectTestEslintPolicy.restrictedImportPaths,
-        ],
-        patterns: sharedEffectEslintPolicy.restrictedImports.patterns,
-      }],
-      'no-restricted-syntax': [
-        'error',
-        ...sharedEffectEslintPolicy.restrictedSyntax,
-        ...effectTestEslintPolicy.restrictedSyntax,
-      ],
     },
   },
 )

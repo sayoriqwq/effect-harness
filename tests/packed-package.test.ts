@@ -78,8 +78,10 @@ it.effect('packs only the supported Artifact surface', () => Effect.sync(() => {
       'export default antfu().append(...effectHarness)',
       '',
     ].join('\n'))
-    writeFileSync(join(consumer, 'example.js'), 'export const answer = 42\n')
-    expect(run(join(root, 'node_modules/.bin/eslint'), ['example.js'], consumer)).toBe('')
+    writeFileSync(join(consumer, 'safe.js'), 'export const answer = { disableValidation: true }\n')
+    writeFileSync(join(consumer, 'reference-import.js'), 'import source from \'repos/effect/src/Effect.ts\'\nexport { source }\n')
+    expect(run(join(root, 'node_modules/.bin/eslint'), ['safe.js'], consumer)).toBe('')
+    expect(() => run(join(root, 'node_modules/.bin/eslint'), ['reference-import.js'], consumer)).toThrow(/no-restricted-imports/u)
   }
   finally {
     rmSync(packDirectory, { recursive: true, force: true })

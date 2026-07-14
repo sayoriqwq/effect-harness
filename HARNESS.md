@@ -21,6 +21,23 @@ Target adaptation is performed by the delivered managed skill,
 which externalizes package selection and TypeScript topology into approved
 Target configuration before handing control back to the Target.
 
+## Reference publication authority
+
+The [Prelude Contract package](https://github.com/yume-infra/prelude/blob/main/packages/harness-contract/README.md#canonical-tree-archive-protocol)
+is the single normative owner of canonical archive framing, logical tree digest,
+safety limits, canonicality, and compatibility. [Partita](https://github.com/sayoriqwq/partita#pins)
+is the producer that verifies Git-index-authoritative Source Pins and publishes
+archive/provenance pairs through that Contract.
+
+Effect Harness is the composer. `Baseline.ts` selects the concrete Effect and
+tsgo Source Pin identities; `SourcePins.ts` binds each Partita publication to
+its Integration Workspace locator, routing, and `referenceOnly` Target meaning.
+Artifact packaging includes those already-published ordinary files and does not
+inspect or reinterpret Source Pin trees. [Prelude](https://github.com/yume-infra/prelude/blob/main/docs/v2-harness-convergence-contract.md#pinned-reference-trees)
+is the consumer and only Target mutation host: it validates offline, reports
+Reference Drift, applies complete-tree replacement after exact approval, and
+leaves sibling `feedback/**` untouched.
+
 The retired provider profile, discovery protocol, provider record, and
 target-maintenance compatibility surface are absent. Prelude is the mutation
 host and decides how a valid plan is applied.
@@ -34,16 +51,17 @@ host and decides how a valid plan is applied.
   plus semantic-equivalent self and Target projections.
 - `tsconfig.effect.json`: checked-in, verified self projection consumed by the
   root `tsconfig.json`; ordinary typechecking never imports `dist`.
-- `src/harness/EslintPolicy.ts`: canonical Effect ESLint rules and plugin,
-  consumed unchanged by the public Target and repository self adapters; only
-  their delivery and composition differ.
+- `src/harness/EslintPolicy.ts`: the two canonical pinned-reference import
+  boundaries, consumed unchanged by the public Target and repository self
+  adapters; only their delivery and surrounding composition differ.
 - `src/harness/SourcePins.ts`: derived immutable pinned-reference declarations.
 - `artifact-assets/effect/reference-archives/*.{pta,json}`: Partita-published
-  Effect and tsgo archives with generic provenance consumed by the Module.
+  Effect and tsgo publications with generic provenance consumed by the Module.
 - `tsdown.config.ts`: package bundling without Source Pin inspection or archive
   composition.
-- `src/eslint.ts`: stable, composable public adapter over the canonical ESLint
-  policy; root `eslint.config.mjs` consumes the same policy directly from source.
+- `src/eslint.ts`: stable, composable public adapter over the canonical minimal
+  ESLint policy; root `eslint.config.mjs` consumes the same policy directly from
+  source. Target owners choose every other lint rule.
 - `artifact-assets/effect/managed/**`: complete target documentation bundle.
 - `repos/effect/**`, `repos/tsgo/**`, and their subtree contracts: repository
   Source Pin inputs excluded from the published Artifact.

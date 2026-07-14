@@ -15,5 +15,6 @@ severity all matter to completion.
 5. Re-run the package-scoped Check that failed.
 
 Do not use Effect diagnostic suppression comments, local severity overrides, or
-weaker compiler settings to make the gate green. When ESLint conflicts with a
-supported tsgo rewrite, tsgo wins and the syntax rule must be narrowed.
+weaker compiler settings to make the gate green. tsgo is the sole Harness
+authority for Effect and TypeScript semantics; Harness ESLint only protects the
+two delivered pinned-reference import boundaries.

@@ -27,4 +27,7 @@ export default antfu().append(...effectHarness)
 ```
 
 Antfu v9 returns a `FlatConfigComposer`; do not spread `antfu()` into an array.
-ESLint owns syntax and repository boundaries, while tsgo owns Effect semantics.
+Append the Harness export so later host or test overlays cannot replace its two
+pinned-reference import boundaries. Those two boundaries are the complete
+Harness-owned ESLint policy. tsgo owns Effect and TypeScript semantics; the
+Target owns and customizes every other ESLint rule.

@@ -4,16 +4,21 @@ import { ESLint } from 'eslint'
 
 import effectHarnessEslintConfig from '../src/eslint.ts'
 
-it.effect('does not contradict the supported Effect.ignore tsgo rewrite', () =>
+it.effect('publishes only the two pinned-reference boundaries', () =>
   Effect.promise(async () => {
     const eslint = new ESLint({
       overrideConfigFile: true,
       overrideConfig: [...effectHarnessEslintConfig],
     })
-    const [result] = await eslint.lintText(
-      'import { Effect } from \'effect\'\nexport const ignored = Effect.ignore\n',
-      { filePath: 'src/ignore.js' },
+    const [allowed] = await eslint.lintText(
+      'export const options = { disableValidation: true }; export const legacy = Effect.catchAllCause\n',
+      { filePath: 'src/target-policy.js' },
+    )
+    const [blocked] = await eslint.lintText(
+      'import effectSource from \'repos/effect/src/Effect.ts\'; import tsgoSource from \'../repos/tsgo/internal/rules/index.ts\'; export { effectSource, tsgoSource }\n',
+      { filePath: 'src/reference-imports.js' },
     )
 
-    expect(result?.messages).toEqual([])
+    expect(allowed?.messages).toEqual([])
+    expect(blocked?.messages.filter(message => message.ruleId === 'no-restricted-imports')).toHaveLength(2)
   }))

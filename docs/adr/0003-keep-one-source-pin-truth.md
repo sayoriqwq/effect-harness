@@ -1,6 +1,7 @@
 # Keep one Source Pin truth
 
-Status: superseded in part by [GitHub issue #13](https://github.com/sayoriqwq/effect-harness/issues/13).
+Status: accepted successor architecture, implemented by [GitHub issue
+#13](https://github.com/sayoriqwq/effect-harness/issues/13).
 
 The original decision correctly required one provenance truth and prohibited
 Target-side Git maintenance, but it assigned generic Source Pin maintenance and
@@ -16,18 +17,23 @@ those responsibilities:
 - Prelude remains the only Target convergence and mutation host.
 
 Issues [#14](https://github.com/sayoriqwq/effect-harness/issues/14) through
-[#22](https://github.com/sayoriqwq/effect-harness/issues/22) implement this
-transition in dependency order. Until the owning ticket migrates a surface, the
-current repository files remain migration inputs rather than a second
-authority.
+[#22](https://github.com/sayoriqwq/effect-harness/issues/22) completed this
+transition in dependency order. The normative wire protocol is documented by
+[Prelude Contract](https://github.com/yume-infra/prelude/blob/main/packages/harness-contract/README.md#canonical-tree-archive-protocol),
+the [Partita producer](https://github.com/sayoriqwq/partita#pins) documents
+publication, this Harness documents composition in [`HARNESS.md`](../../HARNESS.md),
+and [Prelude](https://github.com/yume-infra/prelude/blob/main/docs/v2-harness-convergence-contract.md#pinned-reference-trees)
+documents consumption.
 
 ## Historical decision
 
-Effect Harness maintains each upstream GitHub repository as a Source Pin using
-the pin workflow, a git-subtree prefix, and its sibling subtree contract. The
-Artifact build derives immutable source and revision provenance from that
-contract, verifies the materialized prefix, and computes the snapshot tree
-digest. Prelude only delivers the resulting Pinned Reference Tree offline; it
-does not fetch Git, run pin commands in the Target, inject subtree metadata, or
+Effect Harness maintains each selected upstream GitHub repository as a Source
+Pin using the pin workflow, a git-subtree prefix, and its sibling subtree
+contract. Partita verifies that materialized prefix against the Git index and
+contract revision, then publishes the canonical archive and provenance through
+Prelude Contract. Effect Harness composes those ordinary publication files with
+concrete Target policy; it does not compute a second digest or scan the pin at
+runtime. Prelude delivers the resulting Pinned Reference Tree offline; it does
+not fetch Git, run pin commands in the Target, inject subtree metadata, or
 create another update authority. This preserves one provenance truth while
-separating Harness source maintenance from Target convergence.
+separating Source Pin production, Harness composition, and Target convergence.
