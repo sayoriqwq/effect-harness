@@ -204,7 +204,10 @@ function assertHarnessArtifact(tarball: string): void {
   assert.equal(policy.ignoreEffectSuggestionsInTscExitCode, false)
   assert.equal(policy.ignoreEffectWarningsInTscExitCode, false)
   assert.equal(policy.ignoreEffectErrorsInTscExitCode, false)
-  const skill = runText('tar', ['-xOf', tarball, 'package/artifact-assets/effect/managed/skills/adapt-effect-target/SKILL.md'], { cwd: harnessRoot })
+  const skillPath = 'artifact-assets/effect/managed/skills/adapt-effect-target/SKILL.md'
+  const skillBytes = runBytes('tar', ['-xOf', tarball, `package/${skillPath}`], { cwd: harnessRoot })
+  assert.deepEqual(skillBytes, readFileSync(join(harnessRoot, skillPath)))
+  const skill = skillBytes.toString()
   for (const phase of ['Observe', 'Propose', 'Authorize', 'Mutate', 'Verify', 'Hand back'])
     assert.equal(skill.includes(`**${phase}.**`), true, `Control Handoff skill is missing ${phase}`)
   assert.equal(skill.includes('one toolchain root and activation owner'), true)
