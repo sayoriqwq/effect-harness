@@ -37,7 +37,7 @@
     "node": ">=22.22.1"
   },
   "scripts": {
-    "build": "pnpm source-pin:publish:effect && tsdown --config tsdown.config.ts",
+    "build": "pnpm source-pins:publish && tsdown --config tsdown.config.ts",
     "prepack": "pnpm build",
     "dev": "pnpm build",
     "knip": "knip",
@@ -45,6 +45,8 @@
     "lint:fix": "eslint --fix",
     "prepare": "effect-tsgo patch",
     "source-pin:publish:effect": "partita pin publish --name effect --prefix repos/effect --contract repos/effect.subtree.json --archive prelude-assets/effect/reference-archives/effect.pta --provenance prelude-assets/effect/reference-archives/effect.json",
+    "source-pin:publish:tsgo": "partita pin publish --name tsgo --prefix repos/tsgo --contract repos/tsgo.subtree.json --archive prelude-assets/effect/reference-archives/tsgo.pta --provenance prelude-assets/effect/reference-archives/tsgo.json",
+    "source-pins:publish": "pnpm source-pin:publish:effect && pnpm source-pin:publish:tsgo",
     "test": "vitest run tests/*.test.ts",
     "typecheck": "tsc --noEmit",
     "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm lint --max-warnings 0 && pnpm knip"

@@ -1,0 +1,12 @@
+{
+  "archive": {
+    "format": "prelude-canonical-tree-archive-v1"
+  },
+  "name": "tsgo",
+  "provenance": {
+    "sourceUrl": "https://github.com/Effect-TS/tsgo",
+    "revision": "f0d48a67515048d277feb2c184c41cd7cffa51a4",
+    "treeDigest": "f76adab084de0de584e0a565679b3afca2b48674a28e36c7dd6398846fd2bd9d"
+  },
+  "schemaVersion": 1
+}

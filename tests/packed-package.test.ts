@@ -30,7 +30,8 @@ it.effect('packs only the supported Artifact surface', () => Effect.sync(() => {
       'package/dist/eslint.d.ts',
       'package/prelude-assets/effect/reference-archives/effect.pta',
       'package/prelude-assets/effect/reference-archives/effect.json',
-      'package/dist/reference-archives/tsgo.pta',
+      'package/prelude-assets/effect/reference-archives/tsgo.pta',
+      'package/prelude-assets/effect/reference-archives/tsgo.json',
       'package/prelude-assets/effect/managed/skills/adapt-effect-target/SKILL.md',
       'package/repos/effect/LLMS.md',
       'package/repos/tsgo/README.md',
@@ -44,6 +45,7 @@ it.effect('packs only the supported Artifact surface', () => Effect.sync(() => {
     expect([...entries].every(path => !path.startsWith('package/scripts/'))).toBe(true)
     expect([...entries].every(path => !path.startsWith('package/prelude-assets/guidance/'))).toBe(true)
     expect([...entries].every(path => path !== 'package/dist/index.js' && path !== 'package/dist/index.d.ts')).toBe(true)
+    expect(entries.has('package/dist/reference-archives/tsgo.pta')).toBe(false)
     expect([...entries].every(path => path !== 'package/repos/tsgo/typescript-go' && !path.startsWith('package/repos/tsgo/typescript-go/'))).toBe(true)
     expect(prelude).toContain('archive:')
     expect(prelude).not.toContain('closure:')

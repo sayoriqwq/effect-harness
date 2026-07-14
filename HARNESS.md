@@ -30,10 +30,10 @@ host and decides how a valid plan is applied.
 - `src/prelude.ts`: Module descriptor and read-only plan.
 - `src/harness/Policy.ts`: canonical complete Effect language-service policy.
 - `src/harness/SourcePins.ts`: derived immutable pinned-reference declarations.
-- `prelude-assets/effect/reference-archives/effect.{pta,json}`: Partita-published
-  Effect archive and generic provenance consumed by the Module.
-- `tsdown.config.ts`: package build and legacy tsgo archive composition during
-  the Effect-first publication transition.
+- `prelude-assets/effect/reference-archives/*.{pta,json}`: Partita-published
+  Effect and tsgo archives with generic provenance consumed by the Module.
+- `tsdown.config.ts`: package bundling without Source Pin inspection or archive
+  composition.
 - `src/eslint.ts`: stable, composable ESLint config API.
 - `prelude-assets/effect/managed/**`: complete target documentation bundle.
 - `repos/effect/**`, `repos/tsgo/**`, their subtree contracts, and
