@@ -89,8 +89,11 @@ as a link without being followed; it is never allowed in a Managed Tree.
 _Avoid_: Dereferenced link, external link, managed symlink
 
 **Source Pin**:
-The authoritative GitHub git-subtree relationship maintained by Effect Harness
-through a sibling subtree contract and its materialized source prefix.
+The authoritative GitHub git-subtree relationship whose generic planning,
+verification, deterministic publication, and provenance metadata are owned by
+Partita. Effect Harness selects the concrete Effect and tsgo pins and combines
+their published artifacts with Harness-specific Baseline identity and Target
+delivery policy.
 _Avoid_: Target pin, package version pin, downloaded source copy
 
 **Reference Drift**:
