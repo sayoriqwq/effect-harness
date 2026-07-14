@@ -32,7 +32,7 @@ it.effect('packs only the supported Artifact surface', () => Effect.sync(() => {
     const prelude = run('tar', ['-xOf', tarball, 'package/dist/prelude.js'], root)
 
     expect(Object.keys(packageJson.exports)).toEqual(['./prelude', './eslint'])
-    expect(packageJson.dependencies?.['@sayoriqwq/prelude-contract']).toBe('0.2.0')
+    expect(packageJson.dependencies?.['@sayoriqwq/prelude-contract']).toBe('0.2.2')
     expect(packageJson.dependencies?.['@effect/platform-node']).toBeUndefined()
     for (const path of [
       'package/dist/prelude.js',

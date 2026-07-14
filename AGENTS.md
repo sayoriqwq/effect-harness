@@ -9,7 +9,7 @@ interfaces are exactly `@sayoriqwq/effect-harness/prelude` (named
 [GitHub issue #13](https://github.com/sayoriqwq/effect-harness/issues/13) is the
 completed target architecture. Issues #14 through #23 implemented and documented
 it in dependency order. The released baseline is Partita 0.2.2, Prelude Contract
-0.2.2, Effect Harness 0.2.1, and Prelude 0.4.0.
+0.2.2, Effect Harness 0.3.0, and Prelude 0.4.0.
 
 Partita owns generic Source Pin verification and publication; Effect Harness
 owns the concrete Effect and tsgo pin selection plus Target delivery policy;

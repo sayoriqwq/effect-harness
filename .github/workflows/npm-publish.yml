@@ -14,12 +14,30 @@ jobs:
   publish:
     name: Publish @sayoriqwq/effect-harness
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: effect-harness
 
     steps:
-      - name: Checkout
+      - name: Checkout Effect Harness
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          path: effect-harness
+
+      - name: Checkout Prelude 0.4.0 and Contract 0.2.2 Baseline
+        uses: actions/checkout@v4
+        with:
+          repository: yume-infra/prelude
+          ref: 487b1ad75e13b260eba501365aa0e97a492816c4
+          path: prelude
+
+      - name: Checkout Partita 0.2.2 Baseline
+        uses: actions/checkout@v4
+        with:
+          repository: sayoriqwq/partita
+          ref: df7b400b5d4c2fc21175d450a589f153be401485
+          path: partita
 
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
@@ -33,12 +51,33 @@ jobs:
           node-version: 24.15.0
           registry-url: https://registry.npmjs.org
           cache: pnpm
+          cache-dependency-path: |
+            effect-harness/pnpm-lock.yaml
+            prelude/pnpm-lock.yaml
+            partita/pnpm-lock.yaml
 
-      - name: Install dependencies
+      - name: Install Effect Harness dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Verify
-        run: pnpm verify
+      - name: Install Prelude dependencies
+        run: pnpm --dir ../prelude install --frozen-lockfile
+
+      - name: Install Partita dependencies
+        run: pnpm --dir ../partita install --frozen-lockfile
+
+      - name: Reject an already published package version
+        run: |
+          package_spec=$(node -p "const p=require('./package.json'); p.name + '@' + p.version")
+          if npm view "$package_spec" version >/dev/null 2>&1; then
+            echo "$package_spec is already published" >&2
+            exit 1
+          fi
+
+      - name: Run release-level cross-repository acceptance
+        run: pnpm acceptance:cross-repo
+        env:
+          PRELUDE_ROOT: ${{ github.workspace }}/prelude
+          PARTITA_ROOT: ${{ github.workspace }}/partita
 
       - name: Check package contents
         run: pnpm pack --dry-run

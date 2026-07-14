@@ -19,11 +19,11 @@ catalogs:
       specifier: 4.0.0-beta.97
       version: 4.0.0-beta.97
     '@sayoriqwq/partita':
-      specifier: 0.2.1
-      version: 0.2.1
+      specifier: 0.2.2
+      version: 0.2.2
     '@sayoriqwq/prelude-contract':
-      specifier: 0.2.0
-      version: 0.2.0
+      specifier: 0.2.2
+      version: 0.2.2
     '@types/node':
       specifier: ^25.6.0
       version: 25.9.4
@@ -58,7 +58,7 @@ importers:
     dependencies:
       '@sayoriqwq/prelude-contract':
         specifier: 'catalog:'
-        version: 0.2.0(effect@4.0.0-beta.97)
+        version: 0.2.2(effect@4.0.0-beta.97)
       effect:
         specifier: 'catalog:'
         version: 4.0.0-beta.97
@@ -80,7 +80,7 @@ importers:
         version: 4.0.0-beta.97(effect@4.0.0-beta.97)(vitest@4.1.9(@types/node@25.9.4)(vite@8.1.0(@types/node@25.9.4)(jiti@2.7.0)(yaml@2.9.0)))
       '@sayoriqwq/partita':
         specifier: 'catalog:'
-        version: 0.2.1(ioredis@5.11.1)
+        version: 0.2.2(ioredis@5.11.1)
       '@types/node':
         specifier: 'catalog:'
         version: 25.9.4
@@ -905,12 +905,18 @@ packages:
   '@rolldown/pluginutils@1.0.1':
     resolution: {integrity: sha512-2j9bGt5Jh8hj+vPtgzPtl72j0yRxHAyumoo6TNfAjsLB04UtpSvPbPcDcBMxz7n+9CYB0c1GxQFxYRg2jimqGw==}
 
-  '@sayoriqwq/partita@0.2.1':
-    resolution: {integrity: sha512-tkFvLbcdiRIzw9xe86BNfoYAmYoFocRzuInuYfhMpCcacfN8ncxNbB6Dx1oaUoCPJyfQ5xrdRJdWfjXu8Afoow==}
+  '@sayoriqwq/partita@0.2.2':
+    resolution: {integrity: sha512-n1c8vYWY2OrpzTy4L6j74jB98AECvzzIjqut1cKsXCEPJt9xnBAWoK0ELG+ZTwcTp8QsaFOCIxoszn4WJM90Lg==}
     hasBin: true
 
   '@sayoriqwq/prelude-contract@0.2.0':
     resolution: {integrity: sha512-3VbugtIZMUBxbX+4Tvq4OV9BtuE9FdI3tbzwPi8+BporymZseQCZ3NY1yRwTSNazOvWKDCZfbMiNoMoWdZHu+Q==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      effect: 4.0.0-beta.97
+
+  '@sayoriqwq/prelude-contract@0.2.2':
+    resolution: {integrity: sha512-JR5X00nz0vTW0FALWUIPRahl46BLan2yRkq93v7XPvj8c0vYpqWEUV+vv3AfemBSb5EgseV1aHAVpU8Vu8IgZg==}
     engines: {node: '>=22'}
     peerDependencies:
       effect: 4.0.0-beta.97
@@ -3239,7 +3245,7 @@ snapshots:
 
   '@rolldown/pluginutils@1.0.1': {}
 
-  '@sayoriqwq/partita@0.2.1(ioredis@5.11.1)':
+  '@sayoriqwq/partita@0.2.2(ioredis@5.11.1)':
     dependencies:
       '@effect/platform-node': 4.0.0-beta.92(effect@4.0.0-beta.92)(ioredis@5.11.1)
       '@sayoriqwq/prelude-contract': 0.2.0(effect@4.0.0-beta.92)
@@ -3253,7 +3259,7 @@ snapshots:
     dependencies:
       effect: 4.0.0-beta.92
 
-  '@sayoriqwq/prelude-contract@0.2.0(effect@4.0.0-beta.97)':
+  '@sayoriqwq/prelude-contract@0.2.2(effect@4.0.0-beta.97)':
     dependencies:
       effect: 4.0.0-beta.97
 

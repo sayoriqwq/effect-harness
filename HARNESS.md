@@ -100,6 +100,10 @@ Prelude's packed Effect acceptance.
 The sibling repositories default to `../partita` and `../prelude`; CI or a
 release workspace may select explicit checkouts with `PARTITA_ROOT` and
 `PRELUDE_ROOT`.
+The npm publish workflow checks out immutable Partita `0.2.2` and Prelude
+`0.4.0`/Contract `0.2.2` release commits, installs all three repositories, and
+runs this Gate before its single publish step. It fails closed when the package
+version already exists on npm, so a rerun cannot silently duplicate a release.
 Set `CROSS_REPO_KEEP_TEMP=1` to preserve tarballs, publication evidence, and
 isolated Targets after a failure.
 

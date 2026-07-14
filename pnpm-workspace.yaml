@@ -20,6 +20,7 @@ shellEmulator: true
 trustPolicy: no-downgrade
 
 trustPolicyExclude:
+  - '@effect/platform-node@4.0.0-beta.92'
   - '@effect/platform-node@4.0.0-beta.97'
   - '@effect/platform-node-shared'
   - '@effect/platform-node-shared@4.0.0-beta.97'
@@ -37,8 +38,8 @@ catalog:
   '@effect/platform-node': 4.0.0-beta.97
   '@effect/tsgo': 0.19.0
   '@effect/vitest': 4.0.0-beta.97
-  '@sayoriqwq/partita': 0.2.1
-  '@sayoriqwq/prelude-contract': 0.2.0
+  '@sayoriqwq/partita': 0.2.2
+  '@sayoriqwq/prelude-contract': 0.2.2
   '@types/node': ^25.6.0
   '@typescript/native': npm:typescript@7.0.2
   effect: 4.0.0-beta.97

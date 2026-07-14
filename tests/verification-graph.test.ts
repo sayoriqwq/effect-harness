@@ -56,6 +56,23 @@ it.effect('runs the complete graph and keeps focused entry points', () => Effect
   ]))
 }))
 
+it.effect('pins the released cross-repository Baseline and gates npm publish on packed acceptance', () => Effect.sync(() => {
+  const workspace = TypeScript.sys.readFile(resolve(root, 'pnpm-workspace.yaml'))
+  const workflow = TypeScript.sys.readFile(resolve(root, '.github/workflows/npm-publish.yml'))
+  if (workspace === undefined || workflow === undefined)
+    throw new Error('release Baseline inputs are absent')
+
+  expect(workspace).toContain('\'@sayoriqwq/partita\': 0.2.2')
+  expect(workspace).toContain('\'@sayoriqwq/prelude-contract\': 0.2.2')
+  expect(workflow).toContain('repository: yume-infra/prelude')
+  expect(workflow).toContain('ref: 487b1ad75e13b260eba501365aa0e97a492816c4')
+  expect(workflow).toContain('repository: sayoriqwq/partita')
+  expect(workflow).toContain('ref: df7b400b5d4c2fc21175d450a589f153be401485')
+  expect(workflow).toContain('npm view "$package_spec" version')
+  expect(workflow).toContain('run: pnpm acceptance:cross-repo')
+  expect(workflow.indexOf('run: pnpm acceptance:cross-repo')).toBeLessThan(workflow.indexOf('run: npm publish'))
+}))
+
 function parsedProjectFiles(configName: string): ReadonlyArray<string> {
   const configPath = resolve(root, configName)
   const result = TypeScript.readConfigFile(configPath, TypeScript.sys.readFile)
