@@ -4,19 +4,20 @@ This repository publishes an Effect v4 Prelude Harness Artifact. Its public
 interfaces are exactly `@sayoriqwq/effect-harness/prelude` (named
 `harnessModule`) and `@sayoriqwq/effect-harness/eslint`.
 
-## Active architecture transition
+## Completed architecture baseline
 
 [GitHub issue #13](https://github.com/sayoriqwq/effect-harness/issues/13) is the
-accepted target architecture. Issues #14 through #22 implement it in dependency
-order. Partita owns generic Source Pin verification and publication; Effect
-Harness owns the concrete Effect and tsgo pin selection plus Target delivery
-policy; Prelude Contract owns the canonical archive wire contract; Prelude owns
-Target convergence and mutation.
+completed target architecture. Issues #14 through #23 implemented and documented
+it in dependency order. The released baseline is Partita 0.2.2, Prelude Contract
+0.2.2, Effect Harness 0.2.1, and Prelude 0.4.0.
 
-The raw repositories, duplicated policy, and partial verification graph below
-describe migration inputs, not the desired final publication surface. Keep
-their current safety boundaries until the ticket that owns each migration
-changes them.
+Partita owns generic Source Pin verification and publication; Effect Harness
+owns the concrete Effect and tsgo pin selection plus Target delivery policy;
+Prelude Contract owns the canonical archive wire contract; Prelude owns Target
+convergence and mutation. Raw repositories and their subtree contracts remain
+repository-only source-maintenance inputs. The npm Artifact transports only
+their verified Partita publications alongside the final managed bundle and
+public adapters.
 
 Before changing module planning, read `HARNESS.md`, `README.md`,
 `src/prelude.ts`, `src/eslint.ts`, and `artifact-assets/effect/managed/docs/`.
