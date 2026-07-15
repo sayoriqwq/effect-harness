@@ -41,6 +41,40 @@ const packsRoot = join(runRoot, 'packs')
 const packedInputsPath = join(runRoot, 'packed-inputs.prepare.json')
 const harnessTempRoot = phase === 'prepare' ? mkdtempSync(join(harnessRoot, 'effect-harness-cross-repo-')) : undefined
 
+const PackedArtifactSchema = Schema.Struct({
+  path: Schema.String,
+  sha256: Schema.String,
+})
+
+const PackedInputsEvidenceSchema = Schema.Struct({
+  schemaVersion: Schema.Literal(1),
+  phase: Schema.Literal('PREPARE'),
+  runRoot: Schema.String,
+  artifacts: Schema.Struct({
+    contractTarball: PackedArtifactSchema,
+    partitaTarball: PackedArtifactSchema,
+    harnessTarball: PackedArtifactSchema,
+    preludeTarball: PackedArtifactSchema,
+  }),
+})
+
+const PreparedTargetEvidenceSchema = Schema.Struct({
+  planHash: Schema.String,
+  targetRoot: Schema.String,
+  observedStateBinding: Schema.Struct({ executionHash: Schema.String }),
+  commands: Schema.Array(Schema.Unknown),
+})
+
+const decodePackedInputsEvidence = Schema.decodeUnknownSync(PackedInputsEvidenceSchema, {
+  errors: 'all',
+  onExcessProperty: 'error',
+})
+
+const decodePreparedTargetEvidence = Schema.decodeUnknownSync(PreparedTargetEvidenceSchema, {
+  errors: 'all',
+  onExcessProperty: 'preserve',
+})
+
 try {
   assertRepository(partitaRoot, '@sayoriqwq/partita')
   assertRepository(preludeRoot, 'prelude-workspace')
@@ -116,40 +150,6 @@ interface PackedInputs {
   readonly harnessTarball: string
   readonly preludeTarball: string
 }
-
-const PackedArtifactSchema = Schema.Struct({
-  path: Schema.String,
-  sha256: Schema.String,
-})
-
-const PackedInputsEvidenceSchema = Schema.Struct({
-  schemaVersion: Schema.Literal(1),
-  phase: Schema.Literal('PREPARE'),
-  runRoot: Schema.String,
-  artifacts: Schema.Struct({
-    contractTarball: PackedArtifactSchema,
-    partitaTarball: PackedArtifactSchema,
-    harnessTarball: PackedArtifactSchema,
-    preludeTarball: PackedArtifactSchema,
-  }),
-})
-
-const PreparedTargetEvidenceSchema = Schema.Struct({
-  planHash: Schema.String,
-  targetRoot: Schema.String,
-  observedStateBinding: Schema.Struct({ executionHash: Schema.String }),
-  commands: Schema.Array(Schema.Unknown),
-})
-
-const decodePackedInputsEvidence = Schema.decodeUnknownSync(PackedInputsEvidenceSchema, {
-  errors: 'all',
-  onExcessProperty: 'error',
-})
-
-const decodePreparedTargetEvidence = Schema.decodeUnknownSync(PreparedTargetEvidenceSchema, {
-  errors: 'all',
-  onExcessProperty: 'preserve',
-})
 
 function preparePackedInputs(): PackedInputs {
   assert.notEqual(harnessTempRoot, undefined)
