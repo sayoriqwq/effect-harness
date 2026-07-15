@@ -256,8 +256,19 @@ function installPackedPartita(partitaTarball: string, contractTarball: string): 
       '@sayoriqwq/partita': `file:${partitaTarball}`,
     },
   }, null, 2)}\n`)
-  writeFileSync(join(root, 'pnpm-workspace.yaml'), `overrides:\n  '@sayoriqwq/prelude-contract': 'file:${contractTarball}'\n  '@effect/platform-node@4.0.0-beta.92>@effect/platform-node-shared': '4.0.0-beta.97'\ntrustPolicy: no-downgrade\ntrustPolicyExclude:\n  - effect@4.0.0-beta.92\n  - effect@4.0.0-beta.97\n  - '@effect/platform-node@4.0.0-beta.92'\n  - '@effect/platform-node-shared@4.0.0-beta.97'\n`)
-  run('pnpm', ['install', '--ignore-scripts', '--reporter', 'append-only'], {
+  writeFileSync(join(root, 'pnpm-workspace.yaml'), `overrides:\n  '@sayoriqwq/prelude-contract': 'file:${contractTarball}'\n  '@effect/platform-node@4.0.0-beta.92>@effect/platform-node-shared': '4.0.0-beta.97'\n  '@effect/platform-node@4.0.0-beta.97>@effect/platform-node-shared': '4.0.0-beta.97'\ntrustPolicy: no-downgrade\ntrustPolicyExclude:\n  - effect@4.0.0-beta.92\n  - effect@4.0.0-beta.97\n  - '@effect/platform-node@4.0.0-beta.92'\n  - '@effect/platform-node@4.0.0-beta.97'\n  - '@effect/platform-node-shared@4.0.0-beta.97'\n`)
+  run('pnpm', [
+    'install',
+    '--ignore-scripts',
+    '--reporter',
+    'append-only',
+    '--trust-policy-exclude',
+    'effect@4.0.0-beta.97',
+    '--trust-policy-exclude',
+    '@effect/platform-node@4.0.0-beta.97',
+    '--trust-policy-exclude',
+    '@effect/platform-node-shared@4.0.0-beta.97',
+  ], {
     cwd: root,
     env: { ...process.env, CI: '1' },
   })
