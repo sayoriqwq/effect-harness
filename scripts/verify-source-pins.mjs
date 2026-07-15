@@ -1,5 +1,5 @@
-import { execFileSync } from 'node:child_process'
 import { deepEqual } from 'node:assert/strict'
+import { execFileSync } from 'node:child_process'
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -17,11 +17,16 @@ function run(command, args, cwd) {
 
 for (const pin of pins) {
   run(partita, [
-    'pin', 'verify',
-    '--root', root,
-    '--name', pin.name,
-    '--prefix', pin.prefix,
-    '--contract', `${pin.prefix}.subtree.json`,
+    'pin',
+    'verify',
+    '--root',
+    root,
+    '--name',
+    pin.name,
+    '--prefix',
+    pin.prefix,
+    '--contract',
+    `${pin.prefix}.subtree.json`,
   ], root)
 
   const temporaryRoot = mkdtempSync(join(tmpdir(), 'effect-harness-source-pins-'))
@@ -34,13 +39,20 @@ for (const pin of pins) {
     const archive = `.source-pin-verification/${pin.name}.pta`
     const provenance = `.source-pin-verification/${pin.name}.json`
     run(partita, [
-      'pin', 'publish',
-      '--root', clone,
-      '--name', pin.name,
-      '--prefix', pin.prefix,
-      '--contract', `${pin.prefix}.subtree.json`,
-      '--archive', archive,
-      '--provenance', provenance,
+      'pin',
+      'publish',
+      '--root',
+      clone,
+      '--name',
+      pin.name,
+      '--prefix',
+      pin.prefix,
+      '--contract',
+      `${pin.prefix}.subtree.json`,
+      '--archive',
+      archive,
+      '--provenance',
+      provenance,
     ], clone)
 
     const expectedArchive = resolve(root, `artifact-assets/effect/reference-archives/${pin.name}.pta`)
@@ -49,21 +61,27 @@ for (const pin of pins) {
     const actualProvenance = join(outputDirectory, `${pin.name}.json`)
     try {
       deepEqual(readFileSync(actualArchive), readFileSync(expectedArchive))
-    } catch {
+    }
+    catch {
       throw new Error(`Tracked ${pin.name} Source Pin archive is stale`)
     }
     try {
       deepEqual(readFileSync(actualProvenance), readFileSync(expectedProvenance))
-    } catch {
+    }
+    catch {
       throw new Error(`Tracked ${pin.name} Source Pin provenance is stale`)
     }
-  } finally {
+  }
+  finally {
     rmSync(temporaryRoot, { recursive: true, force: true })
   }
 }
 
 run('git', [
-  'diff', '--exit-code', 'HEAD', '--',
+  'diff',
+  '--exit-code',
+  'HEAD',
+  '--',
   'artifact-assets/effect/reference-archives/effect.pta',
   'artifact-assets/effect/reference-archives/effect.json',
   'artifact-assets/effect/reference-archives/tsgo.pta',
