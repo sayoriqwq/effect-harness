@@ -21,8 +21,17 @@ const harnessRoot = resolve(import.meta.dirname, '../..')
 const infraRoot = resolve(harnessRoot, '..')
 const partitaRoot = resolve(process.env.PARTITA_ROOT ?? join(infraRoot, 'partita'))
 const preludeRoot = resolve(process.env.PRELUDE_ROOT ?? join(infraRoot, 'prelude'))
+const phase = process.env.CROSS_REPO_PHASE ?? 'prepare'
+const requestedRunRoot = process.env.CROSS_REPO_ROOT
 const keepTemp = process.env.CROSS_REPO_KEEP_TEMP === '1'
-const runRoot = mkdtempSync(join(tmpdir(), 'effect-harness-cross-repo-'))
+if (phase !== 'prepare' && phase !== 'apply')
+  throw new Error(`CROSS_REPO_PHASE must be prepare or apply, got ${phase}`)
+if (phase === 'apply' && requestedRunRoot === undefined)
+  throw new Error('CROSS_REPO_ROOT is required for APPLY')
+const preserveWorkspace = keepTemp || phase === 'prepare' || phase === 'apply'
+const runRoot = requestedRunRoot === undefined
+  ? mkdtempSync(join(tmpdir(), 'effect-harness-cross-repo-'))
+  : resolve(requestedRunRoot)
 const packsRoot = join(runRoot, 'packs')
 const harnessTempRoot = mkdtempSync(join(harnessRoot, 'effect-harness-cross-repo-'))
 const publicationRoot = join(harnessTempRoot, 'publication')
@@ -54,20 +63,22 @@ try {
       EFFECT_HARNESS_TARBALL: harnessTarball,
       PRELUDE_CONTRACT_TARBALL: contractTarball,
       PRELUDE_CLI_TARBALL: preludeTarball,
+      PRELUDE_GATE_PHASE: phase,
+      PRELUDE_GATE_ROOT: join(runRoot, 'targets'),
+      PRELUDE_GATE_APPROVALS: process.env.CROSS_REPO_APPROVALS,
       PATH: `${gitSentinel.bin}:${process.env.PATH ?? ''}`,
-      ...(keepTemp
-        ? {
-            PRELUDE_GATE_ROOT: join(runRoot, 'targets'),
-            PRELUDE_KEEP_TEMP: '1',
-          }
-        : {}),
+      PRELUDE_KEEP_TEMP: '1',
       TARGET_GIT_SENTINEL_LOG: gitSentinel.log,
     },
   })
   assert.equal(existsSync(gitSentinel.log), false, 'Target convergence must not invoke Git')
 
   process.stdout.write([
-    'Cross-repository packed acceptance passed.',
+    phase === 'prepare'
+      ? 'Cross-repository packed acceptance PREPARE complete; awaiting exact approval.'
+      : 'Cross-repository packed acceptance passed after exact approval.',
+    `Phase: ${phase}`,
+    `Workspace: ${runRoot}`,
     `Partita: ${partitaTarball}`,
     `Prelude Contract: ${contractTarball}`,
     `Effect Harness: ${harnessTarball}`,
@@ -76,17 +87,20 @@ try {
   ].join('\n'))
 }
 finally {
-  if (keepTemp && existsSync(harnessTempRoot))
+  if (preserveWorkspace && existsSync(harnessTempRoot))
     cpSync(harnessTempRoot, join(runRoot, 'publication-evidence'), { recursive: true })
   rmSync(harnessTempRoot, { recursive: true, force: true })
-  if (keepTemp)
+  if (preserveWorkspace)
     console.error(`Preserved cross-repository acceptance workspace: ${runRoot}`)
   else
     rmSync(runRoot, { recursive: true, force: true })
 }
 
 function verifyRepositories(): void {
-  run('pnpm', ['verify'], { cwd: partitaRoot })
+  run('pnpm', ['verify:code'], { cwd: partitaRoot })
+  const partitaAggregate = runAllowingExpectedFailure('pnpm', ['verify'], { cwd: partitaRoot })
+  assert.notEqual(partitaAggregate.status, 0, 'Partita aggregate verify should remain red while Integration is unconverged')
+  assert.match(`${partitaAggregate.stdout}\n${partitaAggregate.stderr}`, /Integration drift/u)
   run('pnpm', ['verify'], { cwd: preludeRoot })
   run('pnpm', ['verify'], { cwd: harnessRoot })
 }
@@ -240,6 +254,12 @@ interface RunOptions {
   readonly env?: NodeJS.ProcessEnv
 }
 
+interface SpawnResult {
+  readonly status: number | null
+  readonly stdout: string
+  readonly stderr: string
+}
+
 function run(command: string, args: ReadonlyArray<string>, options: RunOptions): void {
   const result = spawnSync(command, args, {
     cwd: options.cwd,
@@ -254,6 +274,22 @@ function run(command: string, args: ReadonlyArray<string>, options: RunOptions):
   }
   process.stdout.write(result.stdout ?? '')
   process.stderr.write(result.stderr ?? '')
+}
+
+function runAllowingExpectedFailure(command: string, args: ReadonlyArray<string>, options: RunOptions): SpawnResult {
+  const result = spawnSync(command, args, {
+    cwd: options.cwd,
+    encoding: 'utf8',
+    env: options.env ?? process.env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  })
+  process.stdout.write(result.stdout ?? '')
+  process.stderr.write(result.stderr ?? '')
+  return {
+    status: result.status,
+    stdout: result.stdout ?? '',
+    stderr: result.stderr ?? '',
+  }
 }
 
 function runText(command: string, args: ReadonlyArray<string>, options: RunOptions): string {

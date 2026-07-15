@@ -34,15 +34,20 @@ it.effect('runs the complete graph and keeps focused entry points', () => Effect
 
   expect(scripts).toMatchObject({
     'acceptance:cross-repo': 'node --experimental-strip-types tests/acceptance/cross-repo.ts',
+    'source-pins:verify': 'node scripts/verify-source-pins.mjs',
     'test': 'vitest run',
     'test:focused': 'vitest run',
     'typecheck': 'pnpm typecheck:source && pnpm typecheck:tests && pnpm typecheck:tooling',
     'typecheck:source': 'tsc --noEmit -p tsconfig.build.json',
     'typecheck:tests': 'tsc6 --noEmit -p tsconfig.tests.json',
     'typecheck:tooling': 'tsc6 --noEmit -p tsconfig.tooling.json',
-    'source-pins:check-clean': 'git diff --exit-code HEAD -- artifact-assets/effect/reference-archives/effect.pta artifact-assets/effect/reference-archives/effect.json artifact-assets/effect/reference-archives/tsgo.pta artifact-assets/effect/reference-archives/tsgo.json',
-    'verify': 'pnpm build && pnpm source-pins:check-clean && pnpm typecheck && pnpm test && pnpm lint --max-warnings 0 && pnpm knip',
+    'build': 'pnpm source-pins:verify && tsdown --config tsdown.config.ts',
+    'verify': 'pnpm build && pnpm typecheck && pnpm test && pnpm lint --max-warnings 0 && pnpm knip',
   })
+
+  for (const command of [scripts.build, scripts.verify]) {
+    expect(command).not.toMatch(/publish|apply|install|prepare|fix|migrate|suppress|\bCI\b/u)
+  }
 
   const vitestConfig = TypeScript.sys.readFile(resolve(root, 'vitest.config.ts'))
   expect(vitestConfig).toContain('include: [\'tests/**/*.test.ts\']')
@@ -54,6 +59,32 @@ it.effect('runs the complete graph and keeps focused entry points', () => Effect
     'tests/eslint-policy.test.ts',
     'tests/packed-package.test.ts',
   ]))
+}))
+
+it.effect('checks source-pin freshness through an isolated read-only publication route', () => Effect.sync(() => {
+  const verifier = TypeScript.sys.readFile(resolve(root, 'scripts/verify-source-pins.mjs'))
+  if (verifier === undefined)
+    throw new Error('source-pin verifier is absent')
+
+  expect(verifier).toContain("'pin', 'publish'")
+  expect(verifier).toContain("run('git', ['clone'")
+  expect(verifier).toContain('mkdtempSync')
+  expect(verifier).toContain('finally')
+  expect(verifier).toContain('deepEqual')
+  expect(verifier).not.toContain('source-pins:publish')
+}))
+
+it.effect('does not report packed PREPARE as a false green acceptance', () => Effect.sync(() => {
+  const acceptance = TypeScript.sys.readFile(resolve(root, 'tests/acceptance/cross-repo.ts'))
+  if (acceptance === undefined)
+    throw new Error('cross-repository acceptance runner is absent')
+
+  expect(acceptance).toContain('CROSS_REPO_PHASE')
+  expect(acceptance).toContain('CROSS_REPO_ROOT')
+  expect(acceptance).toContain('CROSS_REPO_APPROVALS')
+  expect(acceptance).toContain('PREPARE complete; awaiting exact approval.')
+  expect(acceptance).toContain('passed after exact approval.')
+  expect(acceptance).toContain('Partita aggregate verify should remain red while Integration is unconverged')
 }))
 
 it.effect('pins the released cross-repository Baseline and gates npm publish on packed acceptance', () => Effect.sync(() => {

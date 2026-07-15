@@ -32,7 +32,7 @@
     "node": ">=22.22.1"
   },
   "scripts": {
-    "build": "pnpm source-pins:publish && tsdown --config tsdown.config.ts",
+    "build": "pnpm source-pins:verify && tsdown --config tsdown.config.ts",
     "acceptance:cross-repo": "node --experimental-strip-types tests/acceptance/cross-repo.ts",
     "prepack": "pnpm build",
     "dev": "pnpm build",
@@ -42,7 +42,7 @@
     "prepare": "effect-tsgo patch",
     "source-pin:publish:effect": "partita pin publish --name effect --prefix repos/effect --contract repos/effect.subtree.json --archive artifact-assets/effect/reference-archives/effect.pta --provenance artifact-assets/effect/reference-archives/effect.json",
     "source-pin:publish:tsgo": "partita pin publish --name tsgo --prefix repos/tsgo --contract repos/tsgo.subtree.json --archive artifact-assets/effect/reference-archives/tsgo.pta --provenance artifact-assets/effect/reference-archives/tsgo.json",
-    "source-pins:check-clean": "git diff --exit-code HEAD -- artifact-assets/effect/reference-archives/effect.pta artifact-assets/effect/reference-archives/effect.json artifact-assets/effect/reference-archives/tsgo.pta artifact-assets/effect/reference-archives/tsgo.json",
+    "source-pins:verify": "node scripts/verify-source-pins.mjs",
     "source-pins:publish": "pnpm source-pin:publish:effect && pnpm source-pin:publish:tsgo",
     "test": "vitest run",
     "test:focused": "vitest run",
@@ -50,7 +50,7 @@
     "typecheck:source": "tsc --noEmit -p tsconfig.build.json",
     "typecheck:tests": "tsc6 --noEmit -p tsconfig.tests.json",
     "typecheck:tooling": "tsc6 --noEmit -p tsconfig.tooling.json",
-    "verify": "pnpm build && pnpm source-pins:check-clean && pnpm typecheck && pnpm test && pnpm lint --max-warnings 0 && pnpm knip"
+    "verify": "pnpm build && pnpm typecheck && pnpm test && pnpm lint --max-warnings 0 && pnpm knip"
   },
   "knip": {
     "ignoreDependencies": [
