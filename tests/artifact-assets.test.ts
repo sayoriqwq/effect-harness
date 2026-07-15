@@ -29,6 +29,40 @@ it.effect('ships the Target Adaptation skill in the managed bundle', () => Effec
   expect(skill).toContain('Never add suppression merely to make verification pass')
 }))
 
+it.effect('separates authorized Effect code-gate adaptation from Integration verification', () => Effect.sync(() => {
+  const skillPath = `${root}artifact-assets/effect/managed/skills/adapt-effect-target/SKILL.md`
+  const skill = readFileSync(skillPath, 'utf8')
+  const normalized = skill.replaceAll(/\s+/g, ' ').toLowerCase()
+
+  expect(normalized).toContain('verify:integration')
+  expect(normalized).toContain('verify:code')
+  expect(normalized).toContain('integration gate')
+  expect(normalized).toContain('code gate')
+  expect(normalized).toContain('preserve')
+  expect(normalized).toContain('root aggregate')
+  expect(normalized).toContain('composed check')
+  expect(normalized).toContain('must never call')
+  expect(normalized).toContain('re-enter')
+  expect(normalized).toContain('prelude check')
+  expect(normalized).toContain('explicit authorization')
+  expect(normalized).toContain('only after authorization')
+  expect(normalized).toContain('discovery and verification are read-only')
+  expect(normalized).toContain('never automatically approve')
+  expect(normalized).toContain('never automatically apply')
+  expect(normalized).toContain('never automatically install')
+  expect(normalized).toContain('never automatically fix')
+  expect(normalized).toContain('never automatically migrate')
+  expect(normalized).toContain('never automatically suppress')
+  expect(normalized).toContain('integration gate: <exact command>')
+  expect(normalized).toContain('code gate: <exact command>')
+  expect(normalized).toContain('must not claim complete')
+  expect(normalized).toContain('either gate fails')
+
+  expect(skill.indexOf('4. **Authorize.**')).toBeLessThan(skill.indexOf('5. **Mutate.**'))
+  expect(skill.indexOf('5. **Mutate.**')).toBeLessThan(skill.indexOf('6. **Verify.**'))
+  expect(skill.indexOf('6. **Verify.**')).toBeLessThan(skill.indexOf('7. **Hand back.**'))
+}))
+
 it.effect('ships complete managed routes to delivered Effect and tsgo evidence', () => Effect.sync(() => {
   const managedDocs = `${root}artifact-assets/effect/managed/docs/`
   for (const route of [
