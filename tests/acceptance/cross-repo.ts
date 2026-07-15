@@ -11,6 +11,7 @@ import {
   mkdtempSync,
   readdirSync,
   readFileSync,
+  realpathSync,
   rmSync,
   writeFileSync,
 } from 'node:fs'
@@ -34,8 +35,8 @@ if (phase === 'apply' && process.env.CROSS_REPO_APPROVALS === undefined)
   throw new Error('CROSS_REPO_APPROVALS is required for APPLY')
 const preserveWorkspace = keepTemp || phase === 'prepare' || phase === 'apply'
 const runRoot = requestedRunRoot === undefined
-  ? mkdtempSync(join(tmpdir(), 'effect-harness-cross-repo-'))
-  : resolve(requestedRunRoot)
+  ? realpathSync(mkdtempSync(join(tmpdir(), 'effect-harness-cross-repo-')))
+  : realpathSync(resolve(requestedRunRoot))
 const packsRoot = join(runRoot, 'packs')
 const packedInputsPath = join(runRoot, 'packed-inputs.prepare.json')
 const harnessTempRoot = phase === 'prepare' ? mkdtempSync(join(harnessRoot, 'effect-harness-cross-repo-')) : undefined
