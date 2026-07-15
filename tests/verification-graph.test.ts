@@ -85,6 +85,8 @@ it.effect('does not report packed PREPARE as a false green acceptance', () => Ef
   expect(acceptance).toContain('CROSS_REPO_APPROVALS')
   expect(acceptance).toContain('must be explicitly set to prepare or apply')
   expect(acceptance).toContain('readPackedInputs')
+  expect(acceptance).toMatch(/'--config\.ignore-scripts=true', 'pack'/u)
+  expect(acceptance).toContain('effect@4.0.0-beta.97')
   expect(acceptance).not.toContain('if (phase === \'apply\')\n    verifyRepositories()')
   expect(acceptance).toContain('PREPARE complete; awaiting exact approval.')
   expect(acceptance).toContain('passed after exact approval.')

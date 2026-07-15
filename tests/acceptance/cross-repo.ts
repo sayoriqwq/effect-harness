@@ -240,7 +240,7 @@ function assertRepository(root: string, expectedName: string): void {
 
 function pack(packageRoot: string, destination: string): string {
   const before = new Set(readdirSync(destination))
-  run('pnpm', ['pack', '--pack-destination', destination], { cwd: packageRoot })
+  run('pnpm', ['--config.ignore-scripts=true', 'pack', '--pack-destination', destination], { cwd: packageRoot })
   const created = readdirSync(destination).filter(entry => entry.endsWith('.tgz') && !before.has(entry))
   assert.equal(created.length, 1, `Expected one tarball from ${packageRoot}`)
   return join(destination, created[0]!)
@@ -256,7 +256,7 @@ function installPackedPartita(partitaTarball: string, contractTarball: string): 
       '@sayoriqwq/partita': `file:${partitaTarball}`,
     },
   }, null, 2)}\n`)
-  writeFileSync(join(root, 'pnpm-workspace.yaml'), `overrides:\n  '@sayoriqwq/prelude-contract': 'file:${contractTarball}'\n  '@effect/platform-node@4.0.0-beta.92>@effect/platform-node-shared': '4.0.0-beta.97'\ntrustPolicy: no-downgrade\ntrustPolicyExclude:\n  - effect@4.0.0-beta.92\n  - '@effect/platform-node@4.0.0-beta.92'\n  - '@effect/platform-node-shared@4.0.0-beta.97'\n`)
+  writeFileSync(join(root, 'pnpm-workspace.yaml'), `overrides:\n  '@sayoriqwq/prelude-contract': 'file:${contractTarball}'\n  '@effect/platform-node@4.0.0-beta.92>@effect/platform-node-shared': '4.0.0-beta.97'\ntrustPolicy: no-downgrade\ntrustPolicyExclude:\n  - effect@4.0.0-beta.92\n  - effect@4.0.0-beta.97\n  - '@effect/platform-node@4.0.0-beta.92'\n  - '@effect/platform-node-shared@4.0.0-beta.97'\n`)
   run('pnpm', ['install', '--ignore-scripts', '--reporter', 'append-only'], {
     cwd: root,
     env: { ...process.env, CI: '1' },
