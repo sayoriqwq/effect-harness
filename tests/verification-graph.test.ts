@@ -71,6 +71,7 @@ it.effect('checks source-pin freshness through an isolated read-only publication
   expect(verifier).toContain('mkdtempSync')
   expect(verifier).toContain('finally')
   expect(verifier).toContain('deepEqual')
+  expect(verifier).toContain("'diff', '--exit-code', 'HEAD'")
   expect(verifier).not.toContain('source-pins:publish')
 }))
 
@@ -82,6 +83,9 @@ it.effect('does not report packed PREPARE as a false green acceptance', () => Ef
   expect(acceptance).toContain('CROSS_REPO_PHASE')
   expect(acceptance).toContain('CROSS_REPO_ROOT')
   expect(acceptance).toContain('CROSS_REPO_APPROVALS')
+  expect(acceptance).toContain('must be explicitly set to prepare or apply')
+  expect(acceptance).toContain('readPackedInputs')
+  expect(acceptance).toContain("if (phase === 'apply')\n    verifyRepositories()")
   expect(acceptance).toContain('PREPARE complete; awaiting exact approval.')
   expect(acceptance).toContain('passed after exact approval.')
   expect(acceptance).toContain('Partita aggregate verify should remain red while Integration is unconverged')

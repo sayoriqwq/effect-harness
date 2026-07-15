@@ -62,4 +62,12 @@ for (const pin of pins) {
   }
 }
 
+run('git', [
+  'diff', '--exit-code', 'HEAD', '--',
+  'artifact-assets/effect/reference-archives/effect.pta',
+  'artifact-assets/effect/reference-archives/effect.json',
+  'artifact-assets/effect/reference-archives/tsgo.pta',
+  'artifact-assets/effect/reference-archives/tsgo.json',
+], root)
+
 console.log('Effect Harness Source Pin publications are current (read-only verification).')

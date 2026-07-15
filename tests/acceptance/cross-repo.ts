@@ -2,6 +2,7 @@ import type { Buffer } from 'node:buffer'
 
 import { strict as assert } from 'node:assert'
 import { spawnSync } from 'node:child_process'
+import { createHash } from 'node:crypto'
 import {
   chmodSync,
   cpSync,
@@ -21,41 +22,37 @@ const harnessRoot = resolve(import.meta.dirname, '../..')
 const infraRoot = resolve(harnessRoot, '..')
 const partitaRoot = resolve(process.env.PARTITA_ROOT ?? join(infraRoot, 'partita'))
 const preludeRoot = resolve(process.env.PRELUDE_ROOT ?? join(infraRoot, 'prelude'))
-const phase = process.env.CROSS_REPO_PHASE ?? 'prepare'
+const phase = process.env.CROSS_REPO_PHASE
 const requestedRunRoot = process.env.CROSS_REPO_ROOT
 const keepTemp = process.env.CROSS_REPO_KEEP_TEMP === '1'
 if (phase !== 'prepare' && phase !== 'apply')
-  throw new Error(`CROSS_REPO_PHASE must be prepare or apply, got ${phase}`)
+  throw new Error(`CROSS_REPO_PHASE must be explicitly set to prepare or apply, got ${phase ?? 'missing'}`)
 if (phase === 'apply' && requestedRunRoot === undefined)
   throw new Error('CROSS_REPO_ROOT is required for APPLY')
+if (phase === 'apply' && process.env.CROSS_REPO_APPROVALS === undefined)
+  throw new Error('CROSS_REPO_APPROVALS is required for APPLY')
 const preserveWorkspace = keepTemp || phase === 'prepare' || phase === 'apply'
 const runRoot = requestedRunRoot === undefined
   ? mkdtempSync(join(tmpdir(), 'effect-harness-cross-repo-'))
   : resolve(requestedRunRoot)
 const packsRoot = join(runRoot, 'packs')
-const harnessTempRoot = mkdtempSync(join(harnessRoot, 'effect-harness-cross-repo-'))
-const publicationRoot = join(harnessTempRoot, 'publication')
+const packedInputsPath = join(runRoot, 'packed-inputs.prepare.json')
+const harnessTempRoot = phase === 'prepare' ? mkdtempSync(join(harnessRoot, 'effect-harness-cross-repo-')) : undefined
 
 try {
   assertRepository(partitaRoot, '@sayoriqwq/partita')
   assertRepository(preludeRoot, 'prelude-workspace')
   mkdirSync(packsRoot, { recursive: true })
-  mkdirSync(publicationRoot, { recursive: true })
-  verifyRepositories()
-
-  const contractTarball = pack(join(preludeRoot, 'packages/harness-contract'), packsRoot)
-  const partitaTarball = pack(partitaRoot, packsRoot)
-  const partita = installPackedPartita(partitaTarball, contractTarball)
-
-  publishFixture(partita, 'first')
-  publishFixture(partita, 'second')
-  assertPublicationDeterminism()
-
-  const harnessTarball = pack(harnessRoot, packsRoot)
-  assertHarnessArtifact(harnessTarball)
-
-  const preludeTarball = pack(join(preludeRoot, 'apps/cli'), packsRoot)
+  const packedInputs = phase === 'prepare'
+    ? preparePackedInputs()
+    : readPackedInputs()
+  if (phase === 'apply')
+    verifyRepositories()
+  const { contractTarball, partitaTarball, harnessTarball, preludeTarball } = packedInputs
   const gitSentinel = installGitSentinel()
+  const approvalEnvironment = process.env.CROSS_REPO_APPROVALS === undefined
+    ? {}
+    : { PRELUDE_GATE_APPROVALS: process.env.CROSS_REPO_APPROVALS }
   run('pnpm', ['acceptance:packed-effect'], {
     cwd: preludeRoot,
     env: {
@@ -65,13 +62,15 @@ try {
       PRELUDE_CLI_TARBALL: preludeTarball,
       PRELUDE_GATE_PHASE: phase,
       PRELUDE_GATE_ROOT: join(runRoot, 'targets'),
-      PRELUDE_GATE_APPROVALS: process.env.CROSS_REPO_APPROVALS,
+      ...approvalEnvironment,
       PATH: `${gitSentinel.bin}:${process.env.PATH ?? ''}`,
       PRELUDE_KEEP_TEMP: '1',
       TARGET_GIT_SENTINEL_LOG: gitSentinel.log,
     },
   })
   assert.equal(existsSync(gitSentinel.log), false, 'Target convergence must not invoke Git')
+  if (phase === 'prepare')
+    writeApprovalCommandEvidence()
 
   process.stdout.write([
     phase === 'prepare'
@@ -87,9 +86,10 @@ try {
   ].join('\n'))
 }
 finally {
-  if (preserveWorkspace && existsSync(harnessTempRoot))
+  if (preserveWorkspace && harnessTempRoot !== undefined && existsSync(harnessTempRoot))
     cpSync(harnessTempRoot, join(runRoot, 'publication-evidence'), { recursive: true })
-  rmSync(harnessTempRoot, { recursive: true, force: true })
+  if (harnessTempRoot !== undefined)
+    rmSync(harnessTempRoot, { recursive: true, force: true })
   if (preserveWorkspace)
     console.error(`Preserved cross-repository acceptance workspace: ${runRoot}`)
   else
@@ -108,6 +108,108 @@ function verifyRepositories(): void {
   }
   run('pnpm', ['verify'], { cwd: preludeRoot })
   run('pnpm', ['verify'], { cwd: harnessRoot })
+}
+
+interface PackedInputs {
+  readonly contractTarball: string
+  readonly partitaTarball: string
+  readonly harnessTarball: string
+  readonly preludeTarball: string
+}
+
+function preparePackedInputs(): PackedInputs {
+  assert.notEqual(harnessTempRoot, undefined)
+  const publicationRoot = join(harnessTempRoot!, 'publication')
+  mkdirSync(publicationRoot, { recursive: true })
+  verifyRepositories()
+
+  const contractTarball = pack(join(preludeRoot, 'packages/harness-contract'), packsRoot)
+  const partitaTarball = pack(partitaRoot, packsRoot)
+  const partita = installPackedPartita(partitaTarball, contractTarball)
+  publishFixture(partita, publicationRoot, 'first')
+  publishFixture(partita, publicationRoot, 'second')
+  assertPublicationDeterminism(publicationRoot)
+
+  const harnessTarball = pack(harnessRoot, packsRoot)
+  assertHarnessArtifact(harnessTarball, publicationRoot)
+  const preludeTarball = pack(join(preludeRoot, 'apps/cli'), packsRoot)
+  const inputs = { contractTarball, partitaTarball, harnessTarball, preludeTarball }
+  writeFileSync(packedInputsPath, `${JSON.stringify({
+    schemaVersion: 1,
+    phase: 'PREPARE',
+    runRoot,
+    artifacts: Object.fromEntries(Object.entries(inputs).map(([name, path]) => [name, { path, sha256: sha256(path) }])),
+  }, null, 2)}\n`)
+  return inputs
+}
+
+function readPackedInputs(): PackedInputs {
+  const evidence = JSON.parse(readFileSync(packedInputsPath, 'utf8')) as {
+    readonly schemaVersion?: number
+    readonly phase?: string
+    readonly runRoot?: string
+    readonly artifacts?: Record<string, { readonly path?: string, readonly sha256?: string }>
+  }
+  assert.equal(evidence.schemaVersion, 1)
+  assert.equal(evidence.phase, 'PREPARE')
+  assert.equal(evidence.runRoot, runRoot)
+  const readArtifact = (name: keyof PackedInputs): string => {
+    const artifact = evidence.artifacts?.[name]
+    assert.equal(typeof artifact?.path, 'string', `Missing packed ${name} path`)
+    assert.equal(typeof artifact?.sha256, 'string', `Missing packed ${name} digest`)
+    const path = resolve(artifact!.path!)
+    assert.equal(path.startsWith(`${packsRoot}/`), true, `Packed ${name} escapes the approved workspace`)
+    assert.equal(existsSync(path), true, `Packed ${name} is missing`)
+    assert.equal(sha256(path), artifact!.sha256, `Packed ${name} changed after PREPARE`)
+    return path
+  }
+  return {
+    contractTarball: readArtifact('contractTarball'),
+    partitaTarball: readArtifact('partitaTarball'),
+    harnessTarball: readArtifact('harnessTarball'),
+    preludeTarball: readArtifact('preludeTarball'),
+  }
+}
+
+function writeApprovalCommandEvidence(): void {
+  const approvals = Object.fromEntries(['single', 'monorepo'].map((name) => {
+    const evidence = JSON.parse(readFileSync(join(runRoot, 'targets', `${name}.prepare.json`), 'utf8')) as {
+      readonly planHash?: string
+      readonly targetRoot?: string
+      readonly observedStateBinding?: { readonly executionHash?: string }
+      readonly commands?: ReadonlyArray<unknown>
+    }
+    assert.match(evidence.planHash ?? '', /^[a-f0-9]{64}$/u)
+    assert.equal(evidence.targetRoot, join(runRoot, 'targets', name))
+    assert.equal(evidence.observedStateBinding?.executionHash, evidence.planHash)
+    assert.equal(Array.isArray(evidence.commands), true)
+    return [name, {
+      planHash: evidence.planHash,
+      targetRoot: evidence.targetRoot,
+      observedStateBinding: evidence.observedStateBinding,
+      commands: evidence.commands,
+      additionalApprovalBoundaries: [
+        'managed-drift-repair',
+        'artifact-upgrade-repair',
+        'pinned-reference-drift-repair',
+      ],
+    }]
+  }))
+  writeFileSync(join(runRoot, 'cross-repo.apply.json'), `${JSON.stringify({
+    schemaVersion: 1,
+    phase: 'APPLY',
+    cwd: harnessRoot,
+    env: {
+      CROSS_REPO_PHASE: 'apply',
+      CROSS_REPO_ROOT: runRoot,
+      CROSS_REPO_APPROVALS: JSON.stringify(approvals),
+    },
+    argv: ['pnpm', 'acceptance:cross-repo'],
+  }, null, 2)}\n`)
+}
+
+function sha256(path: string): string {
+  return createHash('sha256').update(readFileSync(path)).digest('hex')
 }
 
 function assertRepository(root: string, expectedName: string): void {
@@ -145,7 +247,7 @@ function installPackedPartita(partitaTarball: string, contractTarball: string): 
   return cli
 }
 
-function publishFixture(partita: string, outputName: string): void {
+function publishFixture(partita: string, publicationRoot: string, outputName: string): void {
   run(partita, ['pin', 'verify', '--root', harnessRoot, '--name', 'tsgo'], { cwd: harnessRoot })
   run(partita, [
     'pin',
@@ -161,7 +263,7 @@ function publishFixture(partita: string, outputName: string): void {
   ], { cwd: harnessRoot })
 }
 
-function assertPublicationDeterminism(): void {
+function assertPublicationDeterminism(publicationRoot: string): void {
   assert.deepEqual(
     readFileSync(join(publicationRoot, 'first.pta')),
     readFileSync(join(publicationRoot, 'second.pta')),
@@ -174,7 +276,7 @@ function assertPublicationDeterminism(): void {
   )
 }
 
-function assertHarnessArtifact(tarball: string): void {
+function assertHarnessArtifact(tarball: string, publicationRoot: string): void {
   const entries = new Set(runText('tar', ['-tf', tarball], { cwd: harnessRoot }).split('\n').filter(Boolean))
   const manifest = JSON.parse(runText('tar', ['-xOf', tarball, 'package/package.json'], { cwd: harnessRoot })) as {
     readonly exports: Readonly<Record<string, unknown>>

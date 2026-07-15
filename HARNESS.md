@@ -89,6 +89,14 @@ unrelated worktree changes are outside that scoped cleanliness check.
 pnpm verify
 ```
 
+`pnpm verify` is read-only with respect to Source Pin publication. Its build
+step runs `source-pins:verify`, which first runs Partita's read-only pin
+verification, then creates a disposable isolated Git clone, publishes each
+pin only inside that clone, and byte-compares the temporary archive and
+provenance with the tracked Artifact publications. The explicit
+`source-pins:publish` commands remain maintainer-only publication commands and
+are never part of build, test, or verify.
+
 The release-level cross-repository Gate verifies every participating repository,
 then packs Prelude Contract, Partita, Effect Harness, and Prelude before
 exercising the complete publication and Target convergence chain. It uses the
