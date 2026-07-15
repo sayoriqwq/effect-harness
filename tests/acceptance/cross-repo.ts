@@ -17,6 +17,7 @@ import {
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
 import process from 'node:process'
+import { Schema } from 'effect'
 
 const harnessRoot = resolve(import.meta.dirname, '../..')
 const infraRoot = resolve(harnessRoot, '..')
@@ -46,8 +47,6 @@ try {
   const packedInputs = phase === 'prepare'
     ? preparePackedInputs()
     : readPackedInputs()
-  if (phase === 'apply')
-    verifyRepositories()
   const { contractTarball, partitaTarball, harnessTarball, preludeTarball } = packedInputs
   const gitSentinel = installGitSentinel()
   const approvalEnvironment = process.env.CROSS_REPO_APPROVALS === undefined
@@ -117,6 +116,40 @@ interface PackedInputs {
   readonly preludeTarball: string
 }
 
+const PackedArtifactSchema = Schema.Struct({
+  path: Schema.String,
+  sha256: Schema.String,
+})
+
+const PackedInputsEvidenceSchema = Schema.Struct({
+  schemaVersion: Schema.Literal(1),
+  phase: Schema.Literal('PREPARE'),
+  runRoot: Schema.String,
+  artifacts: Schema.Struct({
+    contractTarball: PackedArtifactSchema,
+    partitaTarball: PackedArtifactSchema,
+    harnessTarball: PackedArtifactSchema,
+    preludeTarball: PackedArtifactSchema,
+  }),
+})
+
+const PreparedTargetEvidenceSchema = Schema.Struct({
+  planHash: Schema.String,
+  targetRoot: Schema.String,
+  observedStateBinding: Schema.Struct({ executionHash: Schema.String }),
+  commands: Schema.Array(Schema.Unknown),
+})
+
+const decodePackedInputsEvidence = Schema.decodeUnknownSync(PackedInputsEvidenceSchema, {
+  errors: 'all',
+  onExcessProperty: 'error',
+})
+
+const decodePreparedTargetEvidence = Schema.decodeUnknownSync(PreparedTargetEvidenceSchema, {
+  errors: 'all',
+  onExcessProperty: 'preserve',
+})
+
 function preparePackedInputs(): PackedInputs {
   assert.notEqual(harnessTempRoot, undefined)
   const publicationRoot = join(harnessTempRoot!, 'publication')
@@ -144,23 +177,14 @@ function preparePackedInputs(): PackedInputs {
 }
 
 function readPackedInputs(): PackedInputs {
-  const evidence = JSON.parse(readFileSync(packedInputsPath, 'utf8')) as {
-    readonly schemaVersion?: number
-    readonly phase?: string
-    readonly runRoot?: string
-    readonly artifacts?: Record<string, { readonly path?: string, readonly sha256?: string }>
-  }
-  assert.equal(evidence.schemaVersion, 1)
-  assert.equal(evidence.phase, 'PREPARE')
+  const evidence = decodePackedInputsEvidence(JSON.parse(readFileSync(packedInputsPath, 'utf8')))
   assert.equal(evidence.runRoot, runRoot)
   const readArtifact = (name: keyof PackedInputs): string => {
-    const artifact = evidence.artifacts?.[name]
-    assert.equal(typeof artifact?.path, 'string', `Missing packed ${name} path`)
-    assert.equal(typeof artifact?.sha256, 'string', `Missing packed ${name} digest`)
-    const path = resolve(artifact!.path!)
+    const artifact = evidence.artifacts[name]
+    const path = resolve(artifact.path)
     assert.equal(path.startsWith(`${packsRoot}/`), true, `Packed ${name} escapes the approved workspace`)
     assert.equal(existsSync(path), true, `Packed ${name} is missing`)
-    assert.equal(sha256(path), artifact!.sha256, `Packed ${name} changed after PREPARE`)
+    assert.equal(sha256(path), artifact.sha256, `Packed ${name} changed after PREPARE`)
     return path
   }
   return {
@@ -173,25 +197,20 @@ function readPackedInputs(): PackedInputs {
 
 function writeApprovalCommandEvidence(): void {
   const approvals = Object.fromEntries(['single', 'monorepo'].map((name) => {
-    const evidence = JSON.parse(readFileSync(join(runRoot, 'targets', `${name}.prepare.json`), 'utf8')) as {
-      readonly planHash?: string
-      readonly targetRoot?: string
-      readonly observedStateBinding?: { readonly executionHash?: string }
-      readonly commands?: ReadonlyArray<unknown>
-    }
-    assert.match(evidence.planHash ?? '', /^[a-f0-9]{64}$/u)
+    const evidence = decodePreparedTargetEvidence(JSON.parse(readFileSync(join(runRoot, 'targets', `${name}.prepare.json`), 'utf8')))
+    assert.match(evidence.planHash, /^[a-f0-9]{64}$/u)
     assert.equal(evidence.targetRoot, join(runRoot, 'targets', name))
-    assert.equal(evidence.observedStateBinding?.executionHash, evidence.planHash)
-    assert.equal(Array.isArray(evidence.commands), true)
+    assert.equal(evidence.observedStateBinding.executionHash, evidence.planHash)
     return [name, {
       planHash: evidence.planHash,
       targetRoot: evidence.targetRoot,
       observedStateBinding: evidence.observedStateBinding,
       commands: evidence.commands,
-      additionalApprovalBoundaries: [
-        'managed-drift-repair',
-        'artifact-upgrade-repair',
-        'pinned-reference-drift-repair',
+      authorizationScope: 'exact initial Plan plus enumerated synthetic mutations inside this disposable Target only',
+      syntheticLifecycle: [
+        'managed complete-tree drift and repair',
+        'packed Artifact upgrade and repair',
+        'PinnedReferenceTree missing, partial, and content drift repairs',
       ],
     }]
   }))

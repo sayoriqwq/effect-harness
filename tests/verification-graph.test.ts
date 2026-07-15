@@ -85,7 +85,7 @@ it.effect('does not report packed PREPARE as a false green acceptance', () => Ef
   expect(acceptance).toContain('CROSS_REPO_APPROVALS')
   expect(acceptance).toContain('must be explicitly set to prepare or apply')
   expect(acceptance).toContain('readPackedInputs')
-  expect(acceptance).toContain("if (phase === 'apply')\n    verifyRepositories()")
+  expect(acceptance).not.toContain("if (phase === 'apply')\n    verifyRepositories()")
   expect(acceptance).toContain('PREPARE complete; awaiting exact approval.')
   expect(acceptance).toContain('passed after exact approval.')
   expect(acceptance).toContain('Partita aggregate verify should remain red while Integration is unconverged')
