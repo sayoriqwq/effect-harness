@@ -75,7 +75,7 @@ it.effect('checks source-pin freshness through an isolated read-only publication
   expect(verifier).not.toContain('source-pins:publish')
 }))
 
-it.effect('does not report packed PREPARE as a false green acceptance', () => Effect.sync(() => {
+it.effect('keeps packed PREPARE separate and accepts either converged or expected-drift Partita preflight', () => Effect.sync(() => {
   const acceptance = TypeScript.sys.readFile(resolve(root, 'tests/acceptance/cross-repo.ts'))
   if (acceptance === undefined)
     throw new Error('cross-repository acceptance runner is absent')
@@ -91,7 +91,9 @@ it.effect('does not report packed PREPARE as a false green acceptance', () => Ef
   expect(acceptance).not.toContain('if (phase === \'apply\')\n    verifyRepositories()')
   expect(acceptance).toContain('PREPARE complete; awaiting exact approval.')
   expect(acceptance).toContain('passed after exact approval.')
-  expect(acceptance).toContain('Partita aggregate verify should remain red while Integration is unconverged')
+  expect(acceptance).toContain('if (partitaAggregate.status !== 0)')
+  expect(acceptance).toContain('/Integration drift/u')
+  expect(acceptance).not.toContain('Partita aggregate verify should remain red')
 }))
 
 it.effect('pins the released cross-repository Baseline and gates npm publish on packed acceptance', () => Effect.sync(() => {
